@@ -11,7 +11,7 @@ export default function Page() {
   const [messages, setMessages] = useState<Message[]>([]);
 
   return (
-    <div>
+    <div className = "page">
       {/* 1. ChatWindow에 messages prop 전달 */}
       <ChatWindow messages={messages} /> 
       {/* 2. InputBox에 onSend prop 전달 */}
