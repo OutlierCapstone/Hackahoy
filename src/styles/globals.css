@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "NeoDunggeunmo";
+  font-style: normal;
+  font-weight: 400;
+  src: url("@/assets/fonts/NeoDunggeunmoPro-Regular.woff") format("woff");
+}
+
 :root {
-  --background: #ffb6c1;
+  --background: #ffb0bc;
   --foreground: #4a2c2a;
 }
 
@@ -12,7 +19,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #ffb6c1;
+    --background: #ffb0bc;
     --foreground: #4a2c2a;
   }
 }
@@ -20,5 +27,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Press Start 2P", monospace;
+  font-family: "NeoDunggeunmo", monospace;
 }
