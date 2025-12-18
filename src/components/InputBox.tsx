@@ -1,6 +1,9 @@
+// components/InputBox.tsx
+
 "use client";
 
 import { useState } from "react";
+import styles from "@/components/InputBox.module.css";
 
 type Props = {
   onSend: (text: string) => void;
@@ -26,18 +29,14 @@ export default function InputBox({ onSend }: Props) {
   };
 
   return (
-    <div style={{ display: "flex", gap: "10px", padding: "10px" }}>
-      <input
-        type="text"
-        style={{ flex: 1, padding: "10px" }}
+    <div className = {styles.container}>
+      <input className={styles.input}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="메시지를 입력하세요"
       />
-      <button onClick={send}>
-        SEND
-      </button>
+      <button className={styles.button} onClick={send}>SEND</button>
     </div>
   );
 }

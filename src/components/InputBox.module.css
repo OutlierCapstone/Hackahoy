@@ -1,0 +1,29 @@
+.container {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+}
+
+.input {
+  flex: 1;
+  background: #fff5dc;
+  border: 4px solid #7a4a2e;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: inherit;
+  box-shadow: 3px 3px 0 #c48b6a;
+}
+
+.button {
+  background: #ff9eb5;
+  border: 4px solid #c45a7e;
+  padding: 12px 20px;
+  cursor: pointer;
+  color:#fee5dc;
+  box-shadow: 4px 4px 0 #c48b6a;
+}
+
+.button:active {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
