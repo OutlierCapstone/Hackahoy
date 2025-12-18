@@ -1,0 +1,42 @@
+.container { /* 스크롤 영역 */
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.row { /* 메시지 한 줄 */
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.user {
+  justify-content: flex-end;
+}
+
+.bot {
+  justify-content: flex-start;
+}
+
+.bubble {
+  background: #fff5dc;
+  border: 3px solid #7a4a2e;
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 70%;
+  box-shadow: 4px 4px 0 #c48b6a;
+  line-height: 1.6;
+  white-space: pre-wrap;      /* 줄바꿈 허용 */
+  word-break: break-word;     /* 단어 길면 강제로 자름 */
+  overflow-wrap: break-word;  /* 최신 표준 */
+}
+
+.pirateImage {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  alt: "Pirate Icon";
+}
