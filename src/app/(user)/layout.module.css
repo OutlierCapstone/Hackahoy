@@ -1,0 +1,22 @@
+.pageRoot {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 배경은 각 페이지(MapView 등)에서 깔 수도 있고,
+   공통 배경이 필요하면 여기서도 깔 수 있음 */
+.bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}

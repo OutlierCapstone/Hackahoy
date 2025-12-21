@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/common/AuthContext";
-import AdminShell from "@/components/common/admin/AdminShell";
 import styles from "./users.module.css";
 
 type Row = {
@@ -29,7 +28,7 @@ const MOCK_USERS: Row[] = [
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth(); // logout 제거
 
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<Row[]>(MOCK_USERS);
@@ -63,133 +62,78 @@ export default function AdminUsersPage() {
     alert("저장(데모): 콘솔 확인");
   };
 
-  const onLogout = async () => {
-    await logout();
-    router.push("/");
-  };
-
   return (
-    <AdminShell>
-      <main className={styles.page}>
-        <div className={styles.bg} aria-hidden />
+    <section className={styles.board}>
+      <div className={styles.headerRow}>
+        <div className={styles.title}>
+          Users (Ban) : {user?.nickname ?? "ADMIN"}
+        </div>
 
-        <button
-          className={styles.homeBtn}
-          onClick={() => router.push("/")}
-          aria-label="HOME"
-        >
-          <Image src="/assets/ui/home.png" alt="HOME" width={86} height={46} />
-        </button>
-
-        <button
-          className={styles.logoutBtn}
-          onClick={onLogout}
-          aria-label="LOGOUT"
-        >
-          <Image
-            src="/assets/ui/logout.png"
-            alt="LOGOUT"
-            width={96}
-            height={44}
+        <div className={styles.searchWrap}>
+          <input
+            className={styles.searchInput}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="search user..."
           />
-        </button>
+          <button type="button" className={styles.enterBtn} aria-label="ENTER">
+            <Image
+              src="/assets/ui/enter.png"
+              alt="ENTER"
+              width={46}
+              height={24}
+            />
+          </button>
+        </div>
+      </div>
 
-        <section className={styles.board}>
-          <div className={styles.headerRow}>
-            <div className={styles.title}>
-              Users (Ban) : {user?.nickname ?? "ADMIN"}
-            </div>
+      <div className={styles.table}>
+        <div className={`${styles.row} ${styles.head}`}>
+          <div className={styles.cell}>닉네임</div>
+          <div className={styles.cell}>권한</div>
+          <div className={styles.cell}>banned</div>
+        </div>
 
-            <div className={styles.searchWrap}>
-              <input
-                className={styles.searchInput}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="search user..."
-              />
+        {filtered.map((r) => (
+          <div key={r.id} className={styles.row}>
+            <div className={styles.cell}>{r.nickname}</div>
+
+            <div className={styles.cell}>
               <button
                 type="button"
-                className={styles.enterBtn}
-                aria-label="ENTER"
+                className={styles.roleBtn}
+                onClick={() => toggleRole(r.id)}
               >
-                <Image
-                  src="/assets/ui/enter.png"
-                  alt="ENTER"
-                  width={46}
-                  height={24}
-                />
+                {r.role === "ADMIN" ? "Admin" : "User"}
+                <span className={styles.roleArrow}>↕</span>
+              </button>
+            </div>
+
+            <div className={styles.cell}>
+              <button
+                type="button"
+                className={styles.banBox}
+                onClick={() => toggleBanned(r.id)}
+              >
+                {r.banned && <span className={styles.banCheck}>✓</span>}
               </button>
             </div>
           </div>
+        ))}
+      </div>
 
-          <div className={styles.table}>
-            <div className={`${styles.row} ${styles.head}`}>
-              <div className={styles.cell}>닉네임</div>
-              <div className={styles.cell}>권한</div>
-              <div className={styles.cell}>banned</div>
-            </div>
+      <div className={styles.footer}>
+        <button
+          className={styles.backAdminBtn}
+          onClick={() => router.push("/admin")}
+        >
+          <Image src="/assets/ui/back.png" alt="BACK" width={86} height={46} />
+        </button>
 
-            {filtered.map((r) => (
-              <div key={r.id} className={styles.row}>
-                <div className={styles.cell}>{r.nickname}</div>
-
-                <div className={styles.cell}>
-                  <button
-                    type="button"
-                    className={styles.roleBtn}
-                    onClick={() => toggleRole(r.id)}
-                  >
-                    {r.role === "ADMIN" ? "Admin" : "User"}
-                    <span className={styles.roleArrow}>↕</span>
-                  </button>
-                </div>
-
-                <div className={styles.cell}>
-                  <button
-                    type="button"
-                    className={styles.banBox}
-                    onClick={() => toggleBanned(r.id)}
-                  >
-                    {r.banned && <span className={styles.banCheck}>✓</span>}
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {filtered.length < 6 &&
-              Array.from({ length: 6 - filtered.length }).map((_, i) => (
-                <div key={`empty-${i}`} className={styles.row}>
-                  <div className={styles.cell}>&nbsp;</div>
-                  <div className={styles.cell} />
-                  <div className={styles.cell} />
-                </div>
-              ))}
-          </div>
-
-          <div className={styles.footer}>
-            <button
-              className={styles.backAdminBtn}
-              onClick={() => router.push("/admin")}
-            >
-              <Image
-                src="/assets/ui/back.png"
-                alt="BACK"
-                width={86}
-                height={46}
-              />
-            </button>
-
-            <button className={styles.saveBtn} onClick={onSave}>
-              <Image
-                src="/assets/ui/save.png"
-                alt="SAVE"
-                width={92}
-                height={48}
-              />
-            </button>
-          </div>
-        </section>
-      </main>
-    </AdminShell>
+        <button className={styles.saveBtn} onClick={onSave}>
+          <Image src="/assets/ui/save.png" alt="SAVE" width={92} height={48} />
+        </button>
+      </div>
+    </section>
   );
 }

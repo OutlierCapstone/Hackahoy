@@ -6,7 +6,6 @@
   background: #000;
 }
 
-/* 배경 */
 .bg {
   position: absolute;
   inset: 0;
@@ -14,6 +13,7 @@
   background-position: center;
   image-rendering: pixelated;
   z-index: 0;
+  pointer-events: none; /* ✅ 추가: 배경이 클릭 먹지 않게 */
 }
 
 /* 가운데 정렬 */

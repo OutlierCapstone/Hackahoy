@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/common/AuthContext";
-import AdminShell from "@/components/common/admin/AdminShell";
 import styles from "./logs.module.css";
 
 type LogRow = {
@@ -42,7 +41,6 @@ const MOCK_LOGS: LogRow[] = [
 export default function AdminLogsPage() {
   const router = useRouter();
   const { logout } = useAuth();
-
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
@@ -56,96 +54,134 @@ export default function AdminLogsPage() {
     );
   }, [q]);
 
-  const onLogout = async () => {
-    await logout();
+  const onLogout = () => {
+    logout();
     router.push("/");
   };
 
   return (
-    <AdminShell>
-      <main className={styles.page}>
-        <div className={styles.bg} aria-hidden />
+    <main className={styles.pageRoot}>
+      <div className={styles.bg} aria-hidden />
 
-        <button
-          className={styles.homeBtn}
-          onClick={() => router.push("/")}
-          aria-label="HOME"
-        >
-          <Image src="/assets/ui/home.png" alt="HOME" width={86} height={46} />
-        </button>
+      {/* 상단 고정 내비게이션 (BACK / HOME / LOGOUT) */}
+      <header
+        className={styles.topBar}
+        role="navigation"
+        aria-label="Admin Top"
+      >
+        <div className={styles.topSlot}>
+          <button
+            type="button"
+            className={styles.navBtn}
+            onClick={() => router.back()}
+            aria-label="Back"
+            title="Back"
+          >
+            <Image
+              src="/assets/ui/back.png"
+              alt="BACK"
+              width={96}
+              height={42}
+              priority
+            />
+          </button>
+        </div>
 
-        <button
-          className={styles.logoutBtn}
-          onClick={onLogout}
-          aria-label="LOGOUT"
-        >
-          <Image
-            src="/assets/ui/logout.png"
-            alt="LOGOUT"
-            width={96}
-            height={44}
-          />
-        </button>
+        <div className={styles.topSlot}>
+          <button
+            type="button"
+            className={styles.navBtn}
+            onClick={() => router.push("/admin")}
+            aria-label="Home"
+            title="Home"
+          >
+            <Image
+              src="/assets/ui/home.png"
+              alt="HOME"
+              width={96}
+              height={42}
+              priority
+            />
+          </button>
 
-        <section className={styles.board}>
+          <button
+            type="button"
+            className={styles.navBtn}
+            onClick={onLogout}
+            aria-label="Logout"
+            title="Logout"
+          >
+            <Image
+              src="/assets/ui/logout.png"
+              alt="LOGOUT"
+              width={120}
+              height={42}
+              priority
+            />
+          </button>
+        </div>
+      </header>
+
+      {/* 콘텐츠 */}
+      <section className={styles.stage}>
+        <div className={styles.card}>
           <div className={styles.headerRow}>
-            <div className={styles.title}>Logs</div>
+            <h1 className={styles.title}>Admin Logs</h1>
 
             <div className={styles.searchWrap}>
+              <label className={styles.searchLabel} htmlFor="logSearch">
+                Search
+              </label>
               <input
-                className={styles.searchInput}
+                id="logSearch"
+                className={styles.search}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="search logs..."
+                placeholder="actor / action / target"
+                autoComplete="off"
               />
-              <button
-                type="button"
-                className={styles.enterBtn}
-                aria-label="ENTER"
-              >
-                <Image
-                  src="/assets/ui/enter.png"
-                  alt="ENTER"
-                  width={46}
-                  height={24}
-                />
-              </button>
             </div>
           </div>
 
-          <div className={styles.table}>
-            <div className={`${styles.row} ${styles.head}`}>
-              <div className={styles.cell}>time</div>
-              <div className={styles.cell}>actor</div>
-              <div className={styles.cell}>action</div>
-              <div className={styles.cell}>target</div>
-            </div>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.thTime}>TIME</th>
+                  <th className={styles.thActor}>ACTOR</th>
+                  <th className={styles.thAction}>ACTION</th>
+                  <th className={styles.thTarget}>TARGET</th>
+                </tr>
+              </thead>
 
-            {filtered.map((l) => (
-              <div key={l.id} className={styles.row}>
-                <div className={styles.cell}>{l.time}</div>
-                <div className={styles.cell}>{l.actor}</div>
-                <div className={styles.cell}>{l.action}</div>
-                <div className={styles.cell}>{l.target ?? "-"}</div>
-              </div>
-            ))}
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td className={styles.empty} colSpan={4}>
+                      No logs found.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((row) => (
+                    <tr key={row.id} className={styles.tr}>
+                      <td className={styles.tdMono}>{row.time}</td>
+                      <td className={styles.td}>{row.actor}</td>
+                      <td className={styles.tdBadge}>
+                        <span className={styles.badge}>{row.action}</span>
+                      </td>
+                      <td className={styles.td}>{row.target ?? "-"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
 
-          <div className={styles.footer}>
-            <button
-              className={styles.backAdminBtn}
-              onClick={() => router.push("/admin")}
-            >
-              <Image
-                src="/assets/ui/back.png"
-                alt="BACK"
-                width={86}
-                height={46}
-              />
-            </button>
+          <div className={styles.footerNote}>
+            Tip: 검색은 actor/action/target 전체에 적용됩니다.
           </div>
-        </section>
-      </main>
-    </AdminShell>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -1,36 +1,3 @@
-.page {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-.bg {
-  position: absolute;
-  inset: 0;
-  background: #1f6396;
-  background-image: url("/assets/backgrounds/admin-bg.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-}
-
-.homeBtn,
-.logoutBtn {
-  position: absolute;
-  top: 22px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  z-index: 30;
-}
-.homeBtn {
-  left: 26px;
-}
-.logoutBtn {
-  right: 26px;
-}
-
 .board {
   position: absolute;
   left: 50%;

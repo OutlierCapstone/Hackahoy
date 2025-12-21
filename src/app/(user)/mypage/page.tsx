@@ -40,8 +40,8 @@ export default function MyPage() {
   const provider = (safeUser.oauthProvider ?? "kakao").toUpperCase();
   const email = safeUser.email ?? "";
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logout(); // logout은 async가 아니므로 await 제거
     router.push("/");
   };
 
@@ -58,31 +58,7 @@ export default function MyPage() {
 
   return (
     <main className={styles.pageRoot}>
-      {/* ✅ MapView와 동일한 방식: 버튼 자체를 absolute anchor로 고정 */}
-      <div className={styles.topBar}>
-        <button
-          type="button"
-          className={`${styles.topBarButton} ${styles.homeButton}`}
-          onClick={() => router.push("/")}
-          aria-label="HOME"
-        >
-          <Image src="/assets/ui/home.png" alt="HOME" width={72} height={40} />
-        </button>
-
-        <button
-          type="button"
-          className={`${styles.topBarButton} ${styles.logoutButton}`}
-          onClick={handleLogout}
-          aria-label="LOGOUT"
-        >
-          <Image
-            src="/assets/ui/logout.png"
-            alt="LOGOUT"
-            width={152}
-            height={80}
-          />
-        </button>
-      </div>
+      {/* ❌ topBar 삭제: HOME/LOGOUT은 AppTopNav가 /mypage에서 자동 표시 */}
 
       {/* 중앙 카드 */}
       <div className={styles.card}>

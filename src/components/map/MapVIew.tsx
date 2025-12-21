@@ -3,21 +3,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import IslandMarker from "./IslandMaker";
 import { islands } from "../../domain/islands";
-import { loginApi } from "@/lib/api/auth";
 import { useAuth } from "@/components/common/AuthContext";
 import DevAdminLoginButton from "@/components/dev/DevAdminLoginButton";
 
 export default function MapView() {
-  const [showLogin, setShowLogin] = useState(false);
-  const { login, user } = useAuth();
-  const router = useRouter();
-  const isLoggedIn = !!user;
+  // ✅ openLoginModal 추가: 다른 페이지에서 "/"로 넘어온 경우 자동으로 모달 열기 위해 필요
+  const { login, user, loginModalOpen, closeLoginModal, openLoginModal } =
+    useAuth();
 
-  // ✅ Admin 권한 체크
-  const isAdmin = user?.role === "ADMIN";
+  const isLoggedIn = !!user;
 
   // Kakao / Naver SDK 준비 여부
   const [kakaoReady, setKakaoReady] = useState(false);
@@ -25,6 +21,32 @@ export default function MapView() {
 
   // 네이버 로그인 인스턴스 저장용
   const naverLoginRef = useRef<any>(null);
+
+  /**
+   * ✅ (추가) 다른 페이지에서 LOGIN 클릭 → "/"로 이동한 뒤
+   * sessionStorage 플래그를 보고 자동으로 로그인 모달을 열어줌
+   *
+   * AppTopNav/TopNav 쪽에서 아래처럼 처리한다고 가정:
+   * - 홈이 아닌 페이지에서 LOGIN 클릭 시:
+   *   sessionStorage.setItem("open_login_modal_once", "1");
+   *   router.push("/");
+   *
+   * 그러면 MapView가 마운트되고 여기서 플래그를 감지해 openLoginModal() 호출
+   */
+  useEffect(() => {
+    if (isLoggedIn) return;
+
+    try {
+      const flag = sessionStorage.getItem("open_login_modal_once");
+      if (flag === "1") {
+        sessionStorage.removeItem("open_login_modal_once");
+        openLoginModal?.();
+      }
+    } catch (e) {
+      // sessionStorage 접근 불가 환경 대비(거의 없음)
+      console.error(e);
+    }
+  }, [isLoggedIn, openLoginModal]);
 
   /* ------------------------------------
    *  Kakao SDK 로드 & init
@@ -34,10 +56,8 @@ export default function MapView() {
 
     const w = window as any;
     if (w.Kakao) {
-      console.log("Kakao already exists:", w.Kakao);
       if (!w.Kakao.isInitialized()) {
         w.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY);
-        console.log("Kakao.init done (already exists)");
       }
       setKakaoReady(true);
       return;
@@ -49,11 +69,8 @@ export default function MapView() {
 
     script.onload = () => {
       const w2 = window as any;
-      console.log("Kakao script loaded, window.Kakao =", w2.Kakao);
-
       if (w2.Kakao && !w2.Kakao.isInitialized()) {
         w2.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY);
-        console.log("Kakao.init done (onload)");
       }
       setKakaoReady(true);
     };
@@ -84,8 +101,6 @@ export default function MapView() {
       return;
     }
 
-    console.log("[NAVER] init with", { clientId, callbackUrl });
-
     const naverLogin = new w.naver.LoginWithNaverId({
       clientId,
       callbackUrl,
@@ -103,11 +118,10 @@ export default function MapView() {
   useEffect(() => {
     function handleMessage(ev: MessageEvent) {
       if (!ev.data || typeof ev.data !== "object") return;
-      if (ev.data.type !== "naver-login-success") return;
+      if ((ev.data as any).type !== "naver-login-success") return;
 
       const profile = (ev.data as any).profile;
 
-      // ✅ AuthContext 타입에 맞게 role 포함
       const fakeUser = {
         userId: profile.id,
         nickname: profile.nickname ?? "네이버유저",
@@ -119,7 +133,7 @@ export default function MapView() {
 
       const fakeToken = "dev-jwt-token-naver";
       login(fakeToken, fakeUser);
-      setShowLogin(false);
+      // login() 내부에서 모달 자동 닫힘
     }
 
     window.addEventListener("message", handleMessage);
@@ -141,7 +155,6 @@ export default function MapView() {
     const Kakao = w.Kakao;
 
     if (!Kakao) {
-      console.error("Kakao SDK not found on window:", w);
       alert(
         "카카오 SDK가 로드되지 않았습니다. 새로고침 후 다시 시도해 주세요."
       );
@@ -149,7 +162,6 @@ export default function MapView() {
     }
 
     if (!Kakao.Auth || typeof Kakao.Auth.login !== "function") {
-      console.error("Kakao.Auth.login not available:", Kakao.Auth);
       alert("카카오 로그인 기능을 사용할 수 없습니다.");
       return;
     }
@@ -164,24 +176,21 @@ export default function MapView() {
           Kakao.API.request({
             url: "/v2/user/me",
             success: (res: any) => {
-              console.log("Kakao user info:", res);
-
               const nickname = res.properties?.nickname;
               const email = res.kakao_account?.email;
 
-              // ✅ AuthContext 타입에 맞게 role 포함
               const fakeUser = {
                 userId: "u_dev",
                 nickname: nickname ?? "예빈",
                 level: 1,
                 role: "USER" as const,
                 oauthProvider: "kakao" as const,
-                email: email ?? "amir@naver.com",
+                email: email ?? "unknown@kakao.com",
               };
 
-              const fakeToken = "dev-jwt-token";
+              const fakeToken = "dev-jwt-token-kakao";
               login(fakeToken, fakeUser);
-              setShowLogin(false);
+              // login() 내부에서 모달 자동 닫힘
             },
             fail: (error: any) => {
               console.error("Kakao user info error:", error);
@@ -206,14 +215,8 @@ export default function MapView() {
   async function handleNaverLogin() {
     if (!naverReady || !naverLoginRef.current) {
       alert("네이버 SDK가 아직 준비되지 않았습니다.");
-      console.log("[NAVER] not ready", {
-        naverReady,
-        inst: naverLoginRef.current,
-      });
       return;
     }
-
-    console.log("[NAVER] authorize()");
     naverLoginRef.current.authorize();
   }
 
@@ -227,7 +230,6 @@ export default function MapView() {
       `${window.location.origin}/auth/google/callback`;
 
     const scope = encodeURIComponent("openid profile email");
-
     const state = crypto.randomUUID();
     const nonce = crypto.randomUUID();
 
@@ -261,96 +263,6 @@ export default function MapView() {
         backgroundSize: "80% auto",
       }}
     >
-      {/* ✅ ADMIN 권한일 때만 보이는 관리자 버튼 (우측 상단) */}
-      {isAdmin && (
-        <button
-          type="button"
-          onClick={() => router.push("/admin")}
-          aria-label="ADMIN"
-          style={{
-            position: "absolute",
-            top: "3vh",
-            right: "calc(10vw + 140px)", // 닉네임/로그인 버튼과 겹치지 않게 약간 왼쪽
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            padding: 0,
-            zIndex: 80,
-          }}
-        >
-          <Image
-            src="/assets/ui/admin.png"
-            alt="ADMIN"
-            width={74}
-            height={40}
-            priority
-          />
-        </button>
-      )}
-
-      {/* 🔸 오른쪽 상단: 로그인 전 / 로그인 후 UI */}
-      {!isLoggedIn ? (
-        <button
-          type="button"
-          style={{
-            position: "absolute",
-            top: "3vh",
-            right: "calc(10vw + 6px)",
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            padding: 0,
-            zIndex: 70,
-          }}
-          onClick={() => setShowLogin(true)}
-        >
-          <Image
-            src="/assets/ui/login.png"
-            alt="Login"
-            width={120}
-            height={80}
-          />
-        </button>
-      ) : (
-        <button
-          type="button"
-          style={{
-            position: "absolute",
-            top: "3vh",
-            right: "calc(10vw + 6px)",
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            padding: 0,
-            zIndex: 70,
-          }}
-          onClick={() => router.push("/mypage")}
-        >
-          <div
-            style={{
-              padding: "6px 18px",
-              minWidth: 140,
-              height: 42,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 12,
-              backgroundColor: "#ffffff",
-              border: "5px solid #7b3b0a",
-              boxShadow: "0 0 0 3px #f4b452",
-              fontWeight: 700,
-              fontSize: "1rem",
-              color: "#000000",
-              lineHeight: 1.1,
-              boxSizing: "border-box",
-            }}
-          >
-            {user?.nickname}
-            {`[level ${user?.level}]`}
-          </div>
-        </button>
-      )}
-
       {/* 중앙 배 */}
       <Image
         src="/assets/ships/ship-1.png"
@@ -363,6 +275,7 @@ export default function MapView() {
           top: "63%",
           transform: "translate(-50%, -50%)",
         }}
+        priority
       />
 
       {/* 섬 마커들 */}
@@ -370,8 +283,8 @@ export default function MapView() {
         <IslandMarker key={island.id} island={island} />
       ))}
 
-      {/* 로그인 모달 */}
-      {showLogin && !isLoggedIn && (
+      {/* ✅ 로그인 모달: TopNav의 LOGIN 클릭 → AuthContext.openLoginModal() → 여기서 열림 */}
+      {loginModalOpen && !isLoggedIn && (
         <div
           style={{
             position: "fixed",
@@ -380,9 +293,9 @@ export default function MapView() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 50,
+            zIndex: 2000,
           }}
-          onClick={() => setShowLogin(false)}
+          onClick={() => closeLoginModal()}
         >
           {/* 보드 배경 */}
           <div
@@ -410,7 +323,6 @@ export default function MapView() {
                 width: "100%",
               }}
             >
-              {/* 소셜로 시작하기 */}
               <p
                 className="retro-title text-center"
                 style={{ marginTop: 20, marginBottom: 40 }}
@@ -483,7 +395,7 @@ export default function MapView() {
                   position: "absolute",
                   top: 16,
                   right: 16,
-                  zIndex: 60,
+                  zIndex: 2100,
                 }}
               >
                 <DevAdminLoginButton />

@@ -1,0 +1,18 @@
+.page {
+  position: relative; /* ✅ TopNav absolute 기준 */
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1f6396;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  background-image: url("/assets/backgrounds/main-map.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: auto 100%;
+  image-rendering: pixelated;
+  z-index: 0;
+}

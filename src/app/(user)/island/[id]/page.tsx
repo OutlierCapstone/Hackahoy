@@ -4,13 +4,12 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import styles from "./island.module.css";
 import { useAuth } from "@/components/common/AuthContext";
-import TopNav from "@/components/common/TopNav";
 
 type IslandItem = {
   id: string;
   img: string;
-  x: number; // left %
-  y: number; // top %
+  x: number;
+  y: number;
   w: number;
   h: number;
 };
@@ -89,8 +88,6 @@ export default function IslandSelectPage() {
 
   return (
     <main className={styles.pageRoot}>
-      <TopNav onBack={() => router.back()} onHome={() => router.push("/")} />
-
       {/* 🔥 전체 화면 배경 */}
       <section className={styles.mapArea} />
 

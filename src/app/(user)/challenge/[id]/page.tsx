@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import styles from "./challenge.module.css";
-import TopNav from "@/components/common/TopNav";
 
 type HintData = {
   img: string;
@@ -12,20 +11,17 @@ type HintData = {
 };
 
 export default function ChallengePage() {
-  const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
   const [flag, setFlag] = useState("");
   const [hintOpen, setHintOpen] = useState(false);
 
-  /* 배경 */
   const BG_BY_CHALLENGE: Record<string, string> = {
     "101": "/assets/backgrounds/island-1.png",
     "102": "/assets/backgrounds/island-2.png",
     "103": "/assets/backgrounds/island-3.png",
   };
 
-  /* ✅ 챌린지별 힌트 “하나만” */
   const HINT_BY_CHALLENGE: Record<string, HintData> = {
     "101": {
       img: "/assets/icons/hint-1.png",
@@ -42,7 +38,7 @@ export default function ChallengePage() {
   };
 
   const bg = BG_BY_CHALLENGE[id] ?? BG_BY_CHALLENGE["101"];
-  const hint = HINT_BY_CHALLENGE[id]; // ✅ 여기서 하나만 선택
+  const hint = HINT_BY_CHALLENGE[id];
   const okImg = "/assets/ui/ok.png";
 
   const onSubmit = (e: React.FormEvent) => {
@@ -52,16 +48,12 @@ export default function ChallengePage() {
 
   return (
     <main className={styles.pageRoot}>
-      {/* 공용 Top Navigation (BACK / HOME) */}
-      <TopNav onBack={() => router.back()} onHome={() => router.push("/")} />
-
       {/* 배경 */}
       <div className={styles.bg} style={{ backgroundImage: `url(${bg})` }} />
 
       {/* 메인 스테이지 */}
       <section className={styles.stage}>
         <div className={styles.boardWrap}>
-          {/* 시나리오 보드 */}
           <div className={styles.board}>
             <h1 className={styles.title}>[challenge {id}]</h1>
 
@@ -96,7 +88,6 @@ export default function ChallengePage() {
             </form>
           </div>
 
-          {/* 힌트 버튼 (항상 1개) */}
           {hint && (
             <button
               type="button"
@@ -110,7 +101,6 @@ export default function ChallengePage() {
         </div>
       </section>
 
-      {/* 힌트 모달 */}
       {hintOpen && hint && (
         <div className={styles.modalDim} onClick={() => setHintOpen(false)}>
           <div
