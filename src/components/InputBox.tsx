@@ -7,15 +7,19 @@ import styles from "@/components/InputBox.module.css";
 
 type Props = {
   onSend: (text: string) => void;
+  loading?: boolean;
 };
 
-export default function InputBox({ onSend }: Props) {
+export default function InputBox({ onSend, loading }: Props) {
   const [text, setText] = useState("");
 
-  const send = () => {
+  const send = async () => {
     if (!text.trim()) return;
-    onSend(text);
+    if (loading) return;
+
+    const currentText = text;
     setText("");
+    onSend(currentText);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -29,14 +33,19 @@ export default function InputBox({ onSend }: Props) {
   };
 
   return (
-    <div className = {styles.container}>
+    <div className={styles.container}>
       <input className={styles.input}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="메시지를 입력하세요"
+        disabled={loading}
       />
-      <button className={styles.button} onClick={send}>SEND</button>
+      <button className={styles.button}
+        onClick={send}
+        disabled={loading}>
+        {loading? "WAIT": "SEND"}
+      </button>
     </div>
   );
 }
