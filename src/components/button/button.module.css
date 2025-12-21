@@ -1,0 +1,35 @@
+.button {
+    width: 100%;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: none;
+    
+    background-color: var(--color-brown); 
+    color: #ffffff;
+    
+    border-radius: 0.5rem; 
+    
+    box-shadow: 0 4px 6px rgba(0,0,0,0.0.1);
+
+    padding: 1rem 0;
+    
+    font-size: 1.1rem;
+    font-weight: bold;
+    font-family: inherit;
+    
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.button:hover {
+    background-color: rgba(74, 62, 54, 0.9);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+
+.button:active {
+    transform: translateY(0);
+    background-color: var(--color-brown);
+}

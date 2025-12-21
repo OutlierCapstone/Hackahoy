@@ -1,0 +1,51 @@
+/* src/app/page.module.css */
+/* 미션 목록 프레임 */
+.missionFrame {
+    width: fit-content;
+    min-width: 37.5rem;
+    margin: 4rem auto;
+
+    padding: 0.5rem 1.5rem 1em 1.5rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    background-color: rgba(219, 193, 146, 0.85); 
+    backdrop-filter: blur(4px);
+    border: 0.25rem solid rgba(255, 255, 255, 0.6);
+    border-radius: 1.5rem;
+    box-shadow: 15px 15px 25px rgba(0,0,0,0.6);
+}
+
+/* 제목 섹션 */
+.missionHeader {
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+
+    margin-bottom: 1.5rem;
+    border-bottom: 2px dashed rgba(62, 39, 35, 0.5);
+}
+
+.logoutLink {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.5rem;
+
+    font-size: 0.9rem;
+    color: #6d6d6d; 
+
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.logoutLink:hover {
+    color: #3e2723;
+    text-decoration: underline;
+}

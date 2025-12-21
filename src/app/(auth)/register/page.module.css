@@ -1,0 +1,46 @@
+/* 틀 */
+.wrapper {
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* 미션 목록 프레임 */
+.container {
+    width: fit-content;
+    min-width: 37.5rem;
+
+    padding: 1rem 0 2rem 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    background-color: rgba(219, 194, 146, 0.7); 
+    backdrop-filter: blur(4px);
+    border: 0.25rem solid rgba(255, 255, 255, 0.6);
+    border-radius: 1.5rem;
+    box-shadow: 15px 15px 25px rgba(0,0,0,0.6);
+}
+
+/* 제목 섹션 */
+.loginHeader {
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+
+    margin-bottom: 1.5rem;
+}
+
+/* 폼 영역 */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.buttonGroup {
+    margin-top: 1.5rem;
+}
