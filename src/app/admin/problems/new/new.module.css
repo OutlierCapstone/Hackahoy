@@ -1,0 +1,190 @@
+.pageRoot {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: #1f6396; /* 여백 색 */
+}
+
+/* ✅ main-map 배경: 가운데 + 좌우 여백 */
+.bg {
+  position: absolute;
+  inset: 0;
+  background-image: url("/assets/backgrounds/main-map.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: auto 100%;
+  image-rendering: pixelated;
+  z-index: 0;
+}
+
+/* 상단 버튼(이미지) */
+.topBtn {
+  position: absolute;
+  top: 3vh;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 50;
+  line-height: 0;
+  image-rendering: pixelated;
+}
+.homeBtn {
+  left: calc(10vw + 6px);
+}
+.logoutBtn {
+  right: calc(10vw + 6px);
+}
+
+/* 가운데 정렬 */
+.stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ✅ 보드 (challenge 보드 감성 그대로) */
+.board {
+  width: min(840px, 92vw);
+  padding: 24px 28px;
+  position: relative;
+
+  background: rgba(255, 255, 255, 0.45);
+  border: 3px solid rgba(80, 50, 30, 0.8);
+  border-radius: 12px;
+
+  box-shadow: 0 0 0 3px rgba(40, 25, 15, 0.2), 0 16px 40px rgba(0, 0, 0, 0.45);
+
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+}
+
+/* X 버튼 (우상단 이미지) */
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  background: none;
+  border: none;
+  padding: 0;
+
+  font-size: 24px;
+  font-weight: 600;
+  color: #5a2e0f;
+
+  cursor: pointer;
+  line-height: 1;
+}
+
+.closeBtn:active {
+  transform: translateY(0px);
+  filter: brightness(0.98);
+}
+
+/* 제목 (challenge title 톤) */
+.title {
+  margin: 0 0 14px 0;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  color: #f4b452;
+  text-shadow: -3px -3px #3a210f, 3px -3px #3a210f, -3px 3px #3a210f,
+    3px 3px #3a210f, 0 4px rgba(0, 0, 0, 0.4);
+}
+
+/* 폼 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 라벨: admin용이지만 challenge와 동일한 텍스처 */
+.label {
+  font-size: 16px;
+  font-weight: 900;
+  color: #3a210f;
+}
+
+/* 인풋 */
+.input {
+  height: 40px;
+  padding: 0 14px;
+
+  border-radius: 8px;
+  border: 3px solid rgba(60, 40, 22, 0.85);
+  background: rgba(255, 255, 255, 0.75);
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  color: #1a0f0a;
+
+  outline: none;
+}
+
+.textarea {
+  height: 220px;
+  resize: none;
+  padding: 12px 14px;
+
+  border-radius: 8px;
+  border: 3px solid rgba(60, 40, 22, 0.85);
+  background: rgba(255, 255, 255, 0.75);
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  color: #1a0f0a;
+  line-height: 1.4;
+
+  outline: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: rgba(26, 15, 10, 0.35);
+  font-weight: 900;
+}
+
+/* 하단 버튼 줄: BACK / CREATE */
+.footer {
+  display: flex;
+  justify-content: flex-end; /* ✅ 오른쪽 정렬 */
+  align-items: center;
+  margin-top: 6px;
+}
+
+.imgBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+  image-rendering: pixelated;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+/* 반응형 */
+@media (max-width: 980px) {
+  .row2 {
+    grid-template-columns: 1fr;
+  }
+}

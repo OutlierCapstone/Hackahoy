@@ -1,0 +1,172 @@
+/* 전체 배경 (MapView와 동일한 지도 기준) */
+.pageRoot {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #005c9a;
+  background-image: url("/assets/backgrounds/main-map.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 80% auto;
+}
+
+/* ✅ topBar는 “기준 레이어”만 제공 (flex 사용 안 함) */
+.topBar {
+  position: absolute;
+  top: 3vh; /* MapView와 동일 */
+  left: 0;
+  right: 0;
+  height: 80px;
+
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* 공통 버튼 스타일 */
+.topBarButton {
+  position: absolute; /* ✅ 버튼 자체를 anchor로 고정 */
+  top: 0;
+
+  pointer-events: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+/* ✅ MapView 기준: 좌/우 anchor 동일 */
+.homeButton {
+  right: calc(10vw + 6px);
+}
+
+.logoutButton {
+  left: calc(10vw + 6px);
+}
+
+/* 중앙 카드 */
+.card {
+  position: relative;
+  z-index: 10;
+
+  width: min(780px, 92vw);
+  height: min(460px, 72vh);
+
+  background-color: #0c2237;
+  border: 8px solid #b06320;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+
+  display: flex;
+}
+
+.innerRow {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+/* 왼쪽 */
+.leftPanel {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.divider {
+  width: 0;
+  border-left: 4px dotted #b06320;
+}
+
+.avatarWrapper {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background-color: #f8f4e8;
+  border: 5px solid #b06320;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shipName {
+  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ff9f34;
+  text-align: center;
+}
+
+.levelText {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ff9f34;
+  text-align: center;
+}
+
+/* 오른쪽 */
+.rightPanel {
+  width: 65%;
+  padding: 32px 44px 28px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.fieldLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ff9f34;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.input {
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid #888;
+  background-color: #f5f5f5;
+
+  font-size: 14px;
+  outline: none;
+}
+
+.inputReadOnly {
+  background-color: #e6e6e6;
+  text-align: center;
+}
+
+.buttonsRow {
+  margin-top: auto;
+  padding-top: 18px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}

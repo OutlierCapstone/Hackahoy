@@ -1,0 +1,123 @@
+.page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+.bg {
+  position: absolute;
+  inset: 0;
+  background: #1f6396;
+  background-image: url("/assets/backgrounds/admin-bg.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.homeBtn,
+.logoutBtn {
+  position: absolute;
+  top: 22px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 30;
+}
+.homeBtn {
+  left: 26px;
+}
+.logoutBtn {
+  right: 26px;
+}
+
+.board {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: min(980px, 86vw);
+  height: min(560px, 72vh);
+  background: #fff;
+  border-radius: 22px;
+  border: 12px solid #7b3b0a;
+  box-shadow: 0 0 0 5px #f4b452;
+  padding: 18px 22px 14px;
+  box-sizing: border-box;
+  z-index: 20;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #6b2f0a;
+}
+.title {
+  font-weight: 900;
+  font-size: 20px;
+  color: #6b2f0a;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.searchInput {
+  width: 320px;
+  height: 34px;
+  border: 2px solid #6b2f0a;
+  border-radius: 8px;
+  padding: 0 12px;
+  outline: none;
+  font-weight: 600;
+}
+.enterBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.table {
+  margin-top: 12px;
+  border-top: 3px solid #6b2f0a;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1fr 1fr;
+  min-height: 52px;
+  align-items: center;
+  border-bottom: 2px solid #6b2f0a;
+}
+.head {
+  font-weight: 900;
+}
+.cell {
+  padding: 0 14px;
+  box-sizing: border-box;
+}
+.row .cell:nth-child(2),
+.row .cell:nth-child(3),
+.row .cell:nth-child(4) {
+  border-left: 2px dashed #6b2f0a;
+}
+
+.footer {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+.backAdminBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}

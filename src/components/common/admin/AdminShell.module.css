@@ -1,0 +1,81 @@
+.root {
+  min-height: 100vh;
+  background: #0b0f18;
+  color: #e8eefc;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 15, 24, 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badge {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.path {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.headerRight {
+  display: flex;
+  gap: 10px;
+}
+
+.headerBtn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+.sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px;
+}
+
+.navItem {
+  display: block;
+  padding: 10px 10px;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.navActive {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.content {
+  padding: 18px;
+}

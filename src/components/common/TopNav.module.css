@@ -1,0 +1,38 @@
+.topNav {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  right: 24px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  z-index: 50; /* 배경/섬 위로 */
+  pointer-events: none; /* 컨테이너는 클릭 막고 */
+}
+
+.navBtn {
+  pointer-events: auto; /* 버튼만 클릭 가능 */
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  /* 이미지가 커져도 클릭 영역이 같이 잡히게 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 필요시 공통 스케일 */
+  transform: translateZ(0);
+}
+
+.navBtn:active {
+  transform: translateY(1px);
+}
+
+.navBtn img {
+  image-rendering: pixelated;
+}
