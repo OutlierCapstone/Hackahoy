@@ -130,10 +130,11 @@ export default function AdminPage() {
       </div>
 
       <div className={styles.footer}>
+        // (AdminPage 내) CREATE 버튼 onClick만 수정
         <button
           type="button"
           className={styles.createBtn}
-          onClick={() => router.push("/admin/problems/new")}
+          onClick={() => router.push("/admin/problems/select")}
         >
           <Image
             src="/assets/ui/createproblem.png"
@@ -143,7 +144,6 @@ export default function AdminPage() {
             priority
           />
         </button>
-
         <div className={styles.pager}>
           <button
             type="button"
@@ -163,7 +163,6 @@ export default function AdminPage() {
             aria-label="next"
           />
         </div>
-
         <button type="button" className={styles.saveBtn} onClick={onSave}>
           <Image
             src="/assets/ui/save.png"

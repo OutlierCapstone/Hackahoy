@@ -10,33 +10,28 @@
 .mapArea {
   position: absolute;
   inset: 0;
-
-  background-image: url("/assets/backgrounds/island-map.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover; /* ⭐ 빈 공간 절대 없음 */
-  pointer-events: none; /* ✅ 추가 */
-
   z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
 }
 
 /* 섬/배 기준 레이어 */
 .mapStage {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   z-index: 1;
 }
 
 /* 섬 버튼 */
 .islandButton {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%); /* 중심 좌표로 맞추기 */
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
-  line-height: 0;
 }
 
 /* 배 */
@@ -45,5 +40,4 @@
   left: 50%;
   top: 82%;
   transform: translate(-50%, -50%);
-  pointer-events: none;
 }

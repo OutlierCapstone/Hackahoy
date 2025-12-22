@@ -18,13 +18,19 @@
 
 /* 가운데 정렬 */
 .stage {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
+  position: fixed; /* absolute -> fixed */
+  inset: 0;
+  z-index: 2000; /* TopNav/배경보다 위로 */
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  padding-top: 60px;
+  box-sizing: border-box;
+
+  /* 선택: 뒤 배경을 살짝 어둡게 해서 모달 느낌 */
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* 보드 + 힌트를 “한 덩어리”로 붙여서 관리 */

@@ -1,15 +1,19 @@
 // src/components/map/MapView.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
-import IslandMarker from "./IslandMaker";
-import { islands } from "../../domain/islands";
+import CreateSlotsLayer from "./CreateSlotsLayer";
 import { useAuth } from "@/components/common/AuthContext";
 import DevAdminLoginButton from "@/components/dev/DevAdminLoginButton";
+import {
+  loadStore,
+  getOccupiedPinsWithFixed,
+  STORE_KEY,
+  type IslandsStore,
+} from "@/lib/islandStore";
 
 export default function MapView() {
-  // ✅ openLoginModal 추가: 다른 페이지에서 "/"로 넘어온 경우 자동으로 모달 열기 위해 필요
   const { login, user, loginModalOpen, closeLoginModal, openLoginModal } =
     useAuth();
 
@@ -22,16 +26,38 @@ export default function MapView() {
   // 네이버 로그인 인스턴스 저장용
   const naverLoginRef = useRef<any>(null);
 
+  // ✅ store는 먼저 선언되어야 함
+  const [store, setStore] = useState<IslandsStore>({});
+
+  // ✅ 최초 로드 + (선택) storage 이벤트로 갱신
+  useEffect(() => {
+    setStore(loadStore());
+
+    // 다른 탭에서 변경됐을 때 반영 (같은 탭은 아래 custom event로 처리 권장)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORE_KEY) setStore(loadStore());
+    };
+    window.addEventListener("storage", onStorage);
+
+    // 같은 탭에서 변경됐을 때 반영 (new에서 dispatch 해주면 즉시 갱신됨)
+    const onLocalUpdate = () => setStore(loadStore());
+    window.addEventListener("hackahoy:islands-updated", onLocalUpdate as any);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(
+        "hackahoy:islands-updated",
+        onLocalUpdate as any
+      );
+    };
+  }, []);
+
+  // ✅ store 선언 아래에서 memo
+  const occupiedPins = useMemo(() => getOccupiedPinsWithFixed(store), [store]);
+
   /**
-   * ✅ (추가) 다른 페이지에서 LOGIN 클릭 → "/"로 이동한 뒤
-   * sessionStorage 플래그를 보고 자동으로 로그인 모달을 열어줌
-   *
-   * AppTopNav/TopNav 쪽에서 아래처럼 처리한다고 가정:
-   * - 홈이 아닌 페이지에서 LOGIN 클릭 시:
-   *   sessionStorage.setItem("open_login_modal_once", "1");
-   *   router.push("/");
-   *
-   * 그러면 MapView가 마운트되고 여기서 플래그를 감지해 openLoginModal() 호출
+   * 다른 페이지에서 LOGIN 클릭 → "/"로 이동한 뒤
+   * sessionStorage 플래그 보고 자동으로 로그인 모달 열기
    */
   useEffect(() => {
     if (isLoggedIn) return;
@@ -43,7 +69,6 @@ export default function MapView() {
         openLoginModal?.();
       }
     } catch (e) {
-      // sessionStorage 접근 불가 환경 대비(거의 없음)
       console.error(e);
     }
   }, [isLoggedIn, openLoginModal]);
@@ -133,7 +158,6 @@ export default function MapView() {
 
       const fakeToken = "dev-jwt-token-naver";
       login(fakeToken, fakeUser);
-      // login() 내부에서 모달 자동 닫힘
     }
 
     window.addEventListener("message", handleMessage);
@@ -190,7 +214,6 @@ export default function MapView() {
 
               const fakeToken = "dev-jwt-token-kakao";
               login(fakeToken, fakeUser);
-              // login() 내부에서 모달 자동 닫힘
             },
             fail: (error: any) => {
               console.error("Kakao user info error:", error);
@@ -210,7 +233,7 @@ export default function MapView() {
   }
 
   /* ------------------------------------
-   *  Naver 로그인 (팝업 + 콜백 페이지 방식)
+   *  Naver 로그인
    * ----------------------------------*/
   async function handleNaverLogin() {
     if (!naverReady || !naverLoginRef.current) {
@@ -221,7 +244,7 @@ export default function MapView() {
   }
 
   /* ------------------------------------
-   *  Google 로그인 (OAuth implicit + id_token)
+   *  Google 로그인
    * ----------------------------------*/
   function handleGoogleLogin() {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
@@ -274,16 +297,15 @@ export default function MapView() {
           left: "55%",
           top: "63%",
           transform: "translate(-50%, -50%)",
+          zIndex: 5,
         }}
         priority
       />
 
-      {/* 섬 마커들 */}
-      {islands.map((island) => (
-        <IslandMarker key={island.id} island={island} />
-      ))}
+      {/* ✅ 생성된 핀만 클릭 가능 */}
+      <CreateSlotsLayer mode="play" occupiedPins={occupiedPins} />
 
-      {/* ✅ 로그인 모달: TopNav의 LOGIN 클릭 → AuthContext.openLoginModal() → 여기서 열림 */}
+      {/* 로그인 모달 */}
       {loginModalOpen && !isLoggedIn && (
         <div
           style={{
@@ -297,7 +319,6 @@ export default function MapView() {
           }}
           onClick={() => closeLoginModal()}
         >
-          {/* 보드 배경 */}
           <div
             style={{
               width: 680,
@@ -314,7 +335,6 @@ export default function MapView() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 안쪽 콘텐츠 래퍼 */}
             <div
               style={{
                 display: "flex",

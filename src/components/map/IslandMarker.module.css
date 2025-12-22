@@ -1,0 +1,19 @@
+.pinButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.pinActive {
+  opacity: 1;
+}
+
+.pinLocked {
+  opacity: 0.55; /* 잠김 느낌만 */
+}
+
+.pinImage {
+  image-rendering: pixelated;
+  display: block;
+}
