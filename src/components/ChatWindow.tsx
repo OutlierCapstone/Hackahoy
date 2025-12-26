@@ -9,14 +9,15 @@ import pirateImage from "@/assets/images/pirate.png";
 
 type Props = {
   messages: Message[];
+  loading?: boolean;
 };
 
 
-export default function ChatWindow({ messages }: Props) {
+export default function ChatWindow({ messages, loading }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-}, [messages]);
+}, [messages, loading]);
 
   return (
     <div className={styles.container}>
@@ -35,6 +36,18 @@ export default function ChatWindow({ messages }: Props) {
           <div className={styles.bubble}>{msg.text}</div>
         </div>
       ))}
+
+      {loading && (
+        <div className={`${styles.row} ${styles.bot}`}>
+          <img src={pirateImage.src} className={styles.pirateImage} />
+          <div className={`${styles.bubble} ${styles.typingBubble}`}>
+            <span className={styles.dot}>•</span>
+            <span className={styles.dot}>•</span>
+            <span className={styles.dot}>•</span>
+          </div>
+        </div>
+      )}
+
       <div ref={bottomRef} />
     </div>
   );

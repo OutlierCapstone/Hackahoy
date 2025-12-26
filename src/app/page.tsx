@@ -11,7 +11,7 @@ export default function Page() {
 
   return (
     <div className = "page">
-      <ChatWindow messages={messages} /> 
+      <ChatWindow messages={messages} loading={isLoading} />
       <InputBox onSend={sendMessage} loading={isLoading} /> 
     </div>
   );
