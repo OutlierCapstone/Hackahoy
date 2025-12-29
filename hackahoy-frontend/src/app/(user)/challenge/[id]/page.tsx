@@ -217,13 +217,17 @@ export default function ChallengePage() {
           {hintData && (
             <div
               className={styles.hintBtn}
-              // ID 1, 2, 3인 경우에만 클릭 이벤트 활성화
-              onClick={problem.id <= 3 ? () => setHintOpen(true) : undefined}
-              style={{
-                // ID 1, 2, 3은 클릭 가능(pointer), 나머지는 기본 화살표(default)
-                cursor: problem.id <= 3 ? "pointer" : "default",
+              // 1. 클릭 이벤트 추가: 문제 ID가 1, 2, 3일 때만 모달을 엶
+              onClick={() => {
+                if (problem.id <= 3) {
+                  setHintOpen(true);
+                }
+                // 그 외(새로 만든 문제)는 클릭해도 아무 반응 없음
               }}
+              // 2. 스타일 수정: 1, 2, 3번 문제는 손가락 모양(pointer), 나머지는 기본 화살표(default)
+              style={{ cursor: problem.id <= 3 ? "pointer" : "default" }}
             >
+              {/* 이미지는 로직에 따라 ID 1,2,3은 전용 아이콘, 나머지는 디폴트 이미지가 나옴 */}
               <Image src={hintData.img} alt="hint" width={280} height={320} />
             </div>
           )}
