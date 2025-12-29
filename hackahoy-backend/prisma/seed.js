@@ -81,6 +81,7 @@ async function main() {
   }
   //Problem 테이블의 시퀀스를 4로 설정
   await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"Problem"', 'id'), 4, false);`;
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"Island"', 'id'), 4, false);`;
 
   console.log('🌱 모든 데이터(레벨, 섬, 문제)가 저장되었습니다!');
 }
