@@ -1,0 +1,124 @@
+.board {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: min(920px, 82vw);
+  height: min(560px, 72vh);
+  background: #fff;
+  border-radius: 22px;
+  border: 12px solid #7b3b0a;
+  box-shadow: 0 0 0 5px #f4b452;
+  padding: 18px 22px 14px;
+  box-sizing: border-box;
+  z-index: 20;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #6b2f0a;
+}
+.title {
+  font-weight: 900;
+  font-size: 20px;
+  color: #6b2f0a;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.searchInput {
+  width: 280px;
+  height: 34px;
+  border: 2px solid #6b2f0a;
+  border-radius: 8px;
+  padding: 0 12px;
+  outline: none;
+  font-weight: 600;
+}
+.enterBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.table {
+  margin-top: 12px;
+  border-top: 3px solid #6b2f0a;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 0.7fr;
+  min-height: 54px;
+  align-items: center;
+  border-bottom: 2px solid #6b2f0a;
+}
+.head {
+  font-weight: 900;
+  font-size: 18px;
+}
+.cell {
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+.row .cell:nth-child(2),
+.row .cell:nth-child(3) {
+  border-left: 2px dashed #6b2f0a;
+}
+
+.roleBtn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.roleArrow {
+  font-weight: 900;
+}
+
+.banBox {
+  width: 54px;
+  height: 34px;
+  border: 3px solid #6b2f0a;
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.banCheck {
+  font-size: 24px;
+  font-weight: 900;
+  color: #d11f1f;
+  line-height: 1;
+}
+
+.footer {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.backAdminBtn,
+.saveBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}

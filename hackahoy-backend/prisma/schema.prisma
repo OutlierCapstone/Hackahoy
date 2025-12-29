@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AuthProvider {
+  KAKAO
+  GOOGLE
+  NAVER
+}
+
+model User {
+  id         String   @id @default(cuid())
+  provider   AuthProvider
+  providerId String
+
+  nickname   String
+  levelNum   Int      @default(1)
+
+  isAdmin    Boolean  @default(false)
+  isBanned   Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  level      Level    @relation(fields: [levelNum], references: [levelNum])
+
+  solved     SolvedHistory[]
+  submits    SubmitFlag[]
+
+  @@unique([provider, providerId])
+}
+
+model Level {
+  levelNum       Int    @id
+  shipImage String
+
+  users     User[]
+}
+
+model Island {
+  id     Int     @id @default(autoincrement())
+  image  String
+
+  problems Problem[]
+}
+
+model Problem {
+  id           Int      @id @default(autoincrement())
+  islandId     Int
+  title        String
+  description  String
+  hint         String
+  correctFlag  String
+  serverLink  String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  island       Island   @relation(fields: [islandId], references: [id])
+
+  solved       SolvedHistory[]
+  submits      SubmitFlag[]
+}
+
+model SubmitFlag {
+  id         BigInt   @id @default(autoincrement())
+  userId     String
+  problemId  Int
+  flag       String
+  createdAt  DateTime @default(now())
+
+  user       User    @relation(fields: [userId], references: [id])
+  problem    Problem @relation(fields: [problemId], references: [id])
+}
+
+model SolvedHistory {
+  userId    String
+  problemId Int
+  solvedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  problem   Problem  @relation(fields: [problemId], references: [id])
+
+  @@id([userId, problemId])
+}

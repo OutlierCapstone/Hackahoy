@@ -1,0 +1,184 @@
+/* board */
+.board {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: min(1100px, 86vw);
+  height: min(650px, 78vh);
+
+  background: #ffffff;
+  border-radius: 22px;
+
+  border: 10px solid #5b2a12;
+  box-shadow: 0 0 0 6px #f4b452;
+
+  padding: 22px 24px 18px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+/* head row */
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #5b2a12;
+}
+
+.title {
+  font-weight: 900;
+  font-size: 24px;
+  color: #5b2a12;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchInput {
+  width: 320px;
+  height: 36px;
+  border: 2px solid #5b2a12;
+  border-radius: 8px;
+  padding: 0 12px;
+  outline: none;
+  font-weight: 700;
+}
+
+/* table */
+.table {
+  margin-top: 12px;
+  border-top: 3px solid #5b2a12;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 0.7fr;
+  min-height: 64px;
+  align-items: center;
+  border-bottom: 2px solid #5b2a12;
+}
+
+.rowHead {
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.cell {
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.row .cell:nth-child(2),
+.row .cell:nth-child(3) {
+  border-left: 2px dashed #5b2a12;
+}
+
+.roleBtn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 20px;
+  display: inline-flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.banBox {
+  width: 70px;
+  height: 44px;
+  border: 3px solid #5b2a12;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+}
+
+.check {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 900;
+  color: #d11f1f;
+  line-height: 1;
+}
+
+/* footer */
+.footer {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.createBtn,
+.saveBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pagerIconBtn {
+  width: 70px;
+  height: 70px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.pagerIconBtn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 0;
+  height: 0;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+}
+
+/* 왼쪽 세모 */
+.pagerLeft::before {
+  border-right: 22px solid #5b2a12;
+}
+
+/* 오른쪽 세모 */
+.pagerRight::before {
+  border-left: 22px solid #5b2a12;
+}
+
+/* disabled면 흐리게 */
+.pagerIconBtn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* 페이지 텍스트 */
+.pageText {
+  font-weight: 900;
+  font-size: 20px;
+  color: #5b2a12;
+}

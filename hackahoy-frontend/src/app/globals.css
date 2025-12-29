@@ -1,0 +1,20 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.retro-title {
+  font-weight: 400;
+  font-size: 4.2rem;
+  letter-spacing: 0.03em;
+  color: #f4b452;
+
+  -webkit-text-stroke: 0;
+  line-height: 1;
+
+  text-shadow: -4px 0 #7b3b0a, 4px 0 #7b3b0a, 0 -4px #7b3b0a, 0 4px #7b3b0a,
+    -4px -4px #7b3b0a, -4px 4px #7b3b0a, 4px -4px #7b3b0a, 4px 4px #7b3b0a;
+}
