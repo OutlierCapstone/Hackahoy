@@ -9,7 +9,7 @@ const levels = [
   { levelNum: 3, shipImage: '/assets/ships/ship-3.png' },
 ];
 
-// 2. 기본 섬 데이터
+// 2. 기본 섬 데이터 (경로 수정됨)
 const islands = [
   { id: 1, image: '/assets/backgrounds/island-1.png' },
   { id: 2, image: '/assets/backgrounds/island-2.png' },
@@ -51,27 +51,25 @@ const problems = [
 ];
 
 async function main() {
+  // 1. 레벨 데이터
   for (const level of levels) {
     await prisma.level.upsert({
       where: { levelNum: level.levelNum },
-      update: {
-        shipImage: level.shipImage,
-      },
-      create: {
-        levelNum: level.levelNum,
-        shipImage: level.shipImage,
-      },
+      update: { shipImage: level.shipImage },
+      create: level,
     });
   }
 
+  // 2. 섬 데이터 (경로를 /assets/islands/ 로 수정해서 넣으세요)
   for (const island of islands) {
     await prisma.island.upsert({
       where: { id: island.id },
-      update: island,
+      update: { image: island.image },
       create: island,
     });
   }
 
+  // 3. 문제 데이터
   for (const problem of problems) {
     await prisma.problem.upsert({
       where: { id: problem.id },
@@ -79,11 +77,15 @@ async function main() {
       create: problem,
     });
   }
-  //Problem 테이블의 시퀀스를 4로 설정
+
+  // [핵심] 시퀀스 리셋: 다음 자동 생성될 ID를 4번으로 설정
   await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"Problem"', 'id'), 4, false);`;
   await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"Island"', 'id'), 4, false);`;
 
-  console.log('🌱 모든 데이터(레벨, 섬, 문제)가 저장되었습니다!');
+  // [추가] 기본값 설정: 4번부터 생성되는 섬은 자동으로 default 이미지 사용
+  await prisma.$executeRaw`ALTER TABLE "Island" ALTER COLUMN "image" SET DEFAULT '/assets/islands/island-default.png';`;
+
+  console.log('🌱 모든 데이터 유지 및 4번 이후 자동화 설정 완료!');
 }
 
 main()
