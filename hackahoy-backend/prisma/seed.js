@@ -1,15 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
-// 1. 기본 레벨 데이터 (유저 가입 시 Level 1 참조 필수)
 const levels = [
   { levelNum: 1, shipImage: '/assets/ships/ship-1.png' },
   { levelNum: 2, shipImage: '/assets/ships/ship-2.png' },
   { levelNum: 3, shipImage: '/assets/ships/ship-3.png' },
 ];
 
-// 2. 기본 섬 데이터 (경로 수정됨)
 const islands = [
   { id: 1, image: '/assets/backgrounds/island-1.png' },
   { id: 2, image: '/assets/backgrounds/island-2.png' },
@@ -51,7 +48,7 @@ const problems = [
 ];
 
 async function main() {
-  // 1. 레벨 데이터
+  // 1) Level
   for (const level of levels) {
     await prisma.level.upsert({
       where: { levelNum: level.levelNum },
@@ -60,32 +57,42 @@ async function main() {
     });
   }
 
-  // 2. 섬 데이터 (경로를 /assets/islands/ 로 수정해서 넣으세요)
+  // 2) Island (update에서 id 제외)
   for (const island of islands) {
+    const { id, ...data } = island;
     await prisma.island.upsert({
-      where: { id: island.id },
-      update: { image: island.image },
-      create: island,
+      where: { id },
+      update: data,
+      create: island, // 고정 id를 쓰려면 create에는 id 포함 가능
     });
   }
 
-  // 3. 문제 데이터
+  // 3) Problem (update에서 id 제외)  <-- 핵심
   for (const problem of problems) {
+    const { id, ...data } = problem;
     await prisma.problem.upsert({
-      where: { id: problem.id },
-      update: problem,
-      create: problem,
+      where: { id },
+      update: data,
+      create: problem, // 고정 id를 쓰려면 create에는 id 포함 가능
     });
   }
 
-  // [핵심] 시퀀스 리셋: 다음 자동 생성될 ID를 4번으로 설정
-  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"Problem"', 'id'), 4, false);`;
-  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"Island"', 'id'), 4, false);`;
+  // 4) 시퀀스 리셋
+  await prisma.$executeRaw`
+    SELECT setval(pg_get_serial_sequence('"Problem"', 'id'), 4, false);
+  `;
+  await prisma.$executeRaw`
+    SELECT setval(pg_get_serial_sequence('"Island"', 'id'), 4, false);
+  `;
 
-  // [추가] 기본값 설정: 4번부터 생성되는 섬은 자동으로 default 이미지 사용
-  await prisma.$executeRaw`ALTER TABLE "Island" ALTER COLUMN "image" SET DEFAULT '/assets/islands/island-default.png';`;
+  // 5) Island 기본 이미지 DEFAULT
+  await prisma.$executeRaw`
+    ALTER TABLE "Island"
+    ALTER COLUMN "image"
+    SET DEFAULT '/assets/islands/island-default.png';
+  `;
 
-  console.log('🌱 모든 데이터 유지 및 4번 이후 자동화 설정 완료!');
+  console.log('🌱 Seed 완료');
 }
 
 main()
