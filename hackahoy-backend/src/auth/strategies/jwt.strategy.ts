@@ -2,19 +2,15 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
-
-type JwtPayload = {
-  userId: string;
-  provider: 'kakao' | 'google' | 'naver';
-  iat?: number;
-  exp?: number;
-};
+import { JwtPayload } from '../types/jwt-payload';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error('JWT_SECRET is not set');
+    if (!secret) {
+      throw new Error('JWT_SECRET is not set');
+    }
 
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -30,23 +26,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.userId },
-      select: {
-        id: true,
-        provider: true,
-        providerId: true,
-        nickname: true,
-        levelNum: true,
-        isAdmin: true,
-        isBanned: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      // ✅ 스키마에 없는 role/select 금지. 필요한 값은 user 자체에 이미 있음.
     });
 
     if (!user) throw new UnauthorizedException('User not found');
-    if (user.isBanned) throw new UnauthorizedException('User is banned');
+    if (user.isBanned) throw new UnauthorizedException('Banned user');
 
-    // req.user 로 들어감
+    // ✅ req.user 로 그대로 들어감
     return user;
   }
 }
