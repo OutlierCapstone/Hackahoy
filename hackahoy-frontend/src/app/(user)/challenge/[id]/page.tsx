@@ -152,13 +152,11 @@ export default function ChallengePage() {
 
   // 2. 힌트 및 기타 설정
   const getHintImage = (problemId: number, islandId: number) => {
-    // Pin 1 (islandId === 1)인 경우만 문제별 고유 힌트 이미지 사용
     if (islandId === 1) {
       if (problemId === 1 || problemId === 2 || problemId === 3) {
         return `/assets/icons/hint-${problemId}.png`;
       }
     }
-    // 그 외에는 기본 힌트 이미지
     return "/assets/icons/default-hint.png";
   };
 
@@ -215,12 +213,17 @@ export default function ChallengePage() {
             )}
           </div>
 
+          {/* 힌트 버튼 영역 수정 */}
           {hintData && (
             <div
               className={styles.hintBtn}
-              style={{ cursor: "default" }} // 커서 모양을 화살표로 고정 (클릭 불가 느낌)
+              // ID 1, 2, 3인 경우에만 클릭 이벤트 활성화
+              onClick={problem.id <= 3 ? () => setHintOpen(true) : undefined}
+              style={{
+                // ID 1, 2, 3은 클릭 가능(pointer), 나머지는 기본 화살표(default)
+                cursor: problem.id <= 3 ? "pointer" : "default",
+              }}
             >
-              {/* 이미지 그대로 유지, onClick과 button 태그만 제거 */}
               <Image src={hintData.img} alt="hint" width={280} height={320} />
             </div>
           )}
