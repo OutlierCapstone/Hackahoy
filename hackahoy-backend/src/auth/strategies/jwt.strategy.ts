@@ -1,48 +1,52 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PrismaService } from 'src/prisma/prisma.service'; // 경로는 프로젝트에 맞게
-import { JwtPayload } from '../types/jwt-payload';
+import { PrismaService } from '../../prisma/prisma.service';
+
+type JwtPayload = {
+  userId: string;
+  provider: 'kakao' | 'google' | 'naver';
+  iat?: number;
+  exp?: number;
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET is not set');
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET,
+      ignoreExpiration: false,
+      secretOrKey: secret, // ✅ string 확정
     });
   }
 
-  async validate(payload: any) {
-    // 과거 토큰(userid) 호환까지 같이 처리
-    const userId = payload.userId ?? payload.userid;
-    if (!userId) throw new UnauthorizedException('Invalid token payload');
+  async validate(payload: JwtPayload) {
+    if (!payload?.userId) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
 
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: payload.userId },
       select: {
         id: true,
-        nickname: true,
-        levelNum: true,
-        role: true,
-        isAdmin: true,
         provider: true,
         providerId: true,
+        nickname: true,
+        levelNum: true,
+        isAdmin: true,
         isBanned: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
     if (!user) throw new UnauthorizedException('User not found');
-    if (user.isBanned) throw new UnauthorizedException('Banned user');
+    if (user.isBanned) throw new UnauthorizedException('User is banned');
 
-    return {
-      userId: user.id,
-      nickname: user.nickname,
-      levelNum: user.levelNum,
-      role: user.role,
-      isAdmin: user.isAdmin,
-      oauthProvider: (user.provider ?? 'KAKAO').toLowerCase(),
-      providerId: user.providerId, // ✅ MyPage에서 ID로 찍을 값
-    };
+    // req.user 로 들어감
+    return user;
   }
 }

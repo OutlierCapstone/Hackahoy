@@ -20,66 +20,28 @@ export class AuthController {
     process.env.FRONTEND_URL || 'http://localhost:3000';
 
   @Get('me/profile')
+  @UseGuards(JwtAuthGuard)
   async myProfile(@Req() req: any) {
     return this.auth.getMyProfile(req.user.id);
-  }
-
-  @Post('login')
-  async login(
-    @Body()
-    body: {
-      oauthProvider: 'kakao' | 'google' | 'naver';
-      oauthToken: string;
-    },
-  ) {
-    const { oauthProvider, oauthToken } = body;
-    const providerId = oauthToken;
-
-    const user = await this.auth.upsertSocialUser({
-      provider: oauthProvider.toUpperCase() as 'KAKAO' | 'GOOGLE' | 'NAVER',
-      providerId,
-      nickname: `${oauthProvider}-user`,
-    });
-
-    const token = this.auth.signToken({
-      userId: user.id,
-      provider: oauthProvider,
-    });
-
-    return {
-      success: true,
-      data: {
-        token,
-        user: {
-          userId: user.id,
-          nickname: user.nickname,
-          level: user.levelNum,
-          oauthProvider,
-          isAdmin: user.isAdmin,
-          isBanned: user.isBanned,
-        },
-      },
-    };
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: any) {
-    return req.user;
+    // JwtStrategy.validate()가 return한 user
+    return { user: req.user };
   }
 
   @Post('update-nickname')
   @UseGuards(JwtAuthGuard)
   async updateNickname(@Req() req: any, @Body() body: { nickname: string }) {
-    const userId = req.user.userId || req.user.id;
-    return this.auth.updateNickname(userId, body.nickname);
+    return this.auth.updateNickname(req.user.id, body.nickname);
   }
 
   @Post('unsubscribe')
   @UseGuards(JwtAuthGuard)
   async unsubscribe(@Req() req: any) {
-    const userId = req.user.userId || req.user.id;
-    await this.auth.deleteUserAccount(userId);
+    await this.auth.deleteUserAccount(req.user.id);
     return { success: true, message: '탈퇴가 완료되었습니다.' };
   }
 
@@ -94,11 +56,12 @@ export class AuthController {
     try {
       const user = await this.auth.upsertSocialUser({
         provider: 'KAKAO',
-        providerId: String(req.user.id), // kakaoId -> id
+        providerId: String(req.user.id),
         nickname: req.user.username || 'kakao-user',
       });
 
       const token = this.auth.signToken({ userId: user.id, provider: 'kakao' });
+
       return res.redirect(
         `${this.FRONTEND_URL}/auth/kakao/callback?token=${token}`,
       );
@@ -122,7 +85,7 @@ export class AuthController {
     try {
       const user = await this.auth.upsertSocialUser({
         provider: 'GOOGLE',
-        providerId: String(req.user.id), // googleId -> id
+        providerId: String(req.user.id),
         nickname: req.user.displayName || 'google-user',
       });
 
@@ -130,6 +93,7 @@ export class AuthController {
         userId: user.id,
         provider: 'google',
       });
+
       return res.redirect(
         `${this.FRONTEND_URL}/auth/google/callback?token=${token}`,
       );
@@ -151,14 +115,14 @@ export class AuthController {
   @Get('naver/callback')
   async naverCallback(@Req() req: any, @Res() res: any) {
     try {
-      // Passport-Naver는 보통 id를 req.user.id에
       const user = await this.auth.upsertSocialUser({
         provider: 'NAVER',
-        providerId: String(req.user.id), // naverId -> id
+        providerId: String(req.user.id),
         nickname: req.user.nickname || 'naver-user',
       });
 
       const token = this.auth.signToken({ userId: user.id, provider: 'naver' });
+
       return res.redirect(
         `${this.FRONTEND_URL}/auth/naver/callback?token=${token}`,
       );
