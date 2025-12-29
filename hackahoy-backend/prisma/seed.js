@@ -2,6 +2,27 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const levels = [
+  {
+    levelNum: 1,
+    expRequired: 0,
+    shipName: 'Starter Ship',
+    shipImage: '/assets/ships/ship-1.png',
+  },
+  {
+    levelNum: 2,
+    expRequired: 100,
+    shipName: 'Advanced Ship',
+    shipImage: '/assets/ships/ship-2.png',
+  },
+  {
+    levelNum: 3,
+    expRequired: 300,
+    shipName: 'Pro Ship',
+    shipImage: '/assets/ships/ship-3.png',
+  },
+];
+
 const islands = [
   { id: 1, image: '/assets/backgrounds/island-1.png' },
   { id: 2, image: '/assets/backgrounds/island-2.png' },
@@ -9,7 +30,20 @@ const islands = [
 ];
 
 async function main() {
-  // 1) islands upsert
+  // 1) Level upsert (로그인 에러 해결의 핵심!)
+  for (const level of levels) {
+    await prisma.level.upsert({
+      where: { levelNum: level.levelNum },
+      update: {
+        expRequired: level.expRequired,
+        shipName: level.shipName,
+        shipImage: level.shipImage,
+      },
+      create: level,
+    });
+  }
+
+  // 2) islands upsert
   for (const island of islands) {
     await prisma.island.upsert({
       where: { id: island.id },
@@ -18,7 +52,7 @@ async function main() {
     });
   }
 
-  // 2) problem upsert(중복 방지)
+  // 3) problem upsert
   await prisma.problem.upsert({
     where: { id: 1 },
     update: {
@@ -37,6 +71,10 @@ async function main() {
       correctFlag: 'test',
     },
   });
+
+  console.log(
+    '🌱 Seed data (Levels, Islands, Problems) inserted successfully!',
+  );
 }
 
 main()
