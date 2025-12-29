@@ -1,4 +1,4 @@
 export type JwtPayload = {
-    userId : String;
-    provider : 'kakao' | 'google' | 'naver';
+  userId: string;
+  provider: 'kakao' | 'google' | 'naver';
 };

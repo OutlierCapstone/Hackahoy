@@ -33,7 +33,7 @@ export default function AdminUsersPage() {
         });
 
         // 백엔드 응답 데이터(res.data)를 rows 상태에 세팅
-        setRows(res.data);
+        setRows(res.data.user);
       } catch (err) {
         console.error("유저 목록 로드 실패:", err);
         alert("유저 목록을 불러오는데 실패했습니다.");

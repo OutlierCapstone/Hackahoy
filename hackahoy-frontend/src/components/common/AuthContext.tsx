@@ -12,6 +12,7 @@ export type AuthUser = {
   role: "USER" | "ADMIN";
   isAdmin: boolean;
   oauthProvider: "kakao" | "naver" | "google";
+  providerId?: string;
   email?: string;
 };
 
@@ -49,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await axios.get("http://52.78.240.6:4000/auth/me", {
         headers: { Authorization: `Bearer ${savedToken}` },
       });
-      setUser(res.data.user || res.data);
+      setUser(res.data.user || res.data.user);
     } catch (err) {
       console.error("❌ 유저 정보 갱신 실패:", err);
     }
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setToken(savedToken);
 
           // useEffect 내부와 refreshUser 함수 내부를 수정
-          setUser(res.data.user || res.data);
+          setUser(res.data.user || res.data.user);
         })
         .catch((err) => {
           console.error("❌ 토큰 만료 또는 유효하지 않음:", err);

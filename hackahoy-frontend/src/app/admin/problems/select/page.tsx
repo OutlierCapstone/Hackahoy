@@ -38,7 +38,7 @@ export default function AdminSelectPinPage() {
 
         // [{ islandId: 2, ... }, { islandId: 2, ... }] 형태를 숫자로 변환
         const counts = { 1: 0, 2: 0, 3: 0 };
-        res.data.forEach((p: any) => {
+        res.data.user.forEach((p: any) => {
           if (counts[p.islandId] !== undefined) counts[p.islandId]++;
         });
         setPinCounts(counts);

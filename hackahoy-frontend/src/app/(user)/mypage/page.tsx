@@ -8,21 +8,28 @@ import styles from "./Mypage.module.css";
 import axios from "axios";
 
 type UserShape = {
-  id?: string; // DB 내부 키
+  // AuthContext.user 쪽 구조 + 안전 fallback 포함
+  userId?: string;         // JWT payload에서 확인된 값
+  id?: string;             // 혹시 서버가 id로 주는 경우 대비
   nickname?: string;
   levelNum?: number;
-  provider?: string; // 서버 select와 일치시킴
-  providerId?: string; // 사용자가 볼 ID 값
+
+  provider?: string;       // JWT payload에서 확인된 값 (naver/google/kakao)
+  oauthProvider?: string;  // 기존 타입에 있던 값 대비
+  email?: string;
+
+  providerId?: string;     // (지금은 없음) 나중에 백엔드에서 내려주면 표시됨
 };
 
 export default function MyPage() {
   const router = useRouter();
-  const { user, logout } = useAuth(); // AuthContext에서 가져오는 user 객체
+  const { user, logout, refreshUser } = useAuth(); // ✅ refreshUser까지 가져오기
 
-  // user 객체의 타입을 UserShape로 안전하게 캐스팅
-  const safeUser = useMemo(() => (user as any) ?? {}, [user]);
+  // user 객체 안전 캐스팅
+  const safeUser = useMemo<UserShape>(() => (user as any) ?? {}, [user]);
 
   const [nickname, setNickname] = useState("");
+
   const level = safeUser.levelNum ?? 1;
 
   const shipImgSrc = useMemo(() => {
@@ -35,7 +42,7 @@ export default function MyPage() {
     setNickname(safeUser.nickname ?? "PLAYER");
   }, [user, safeUser.nickname]);
 
-  // 비로그인 → 홈(MapView)로 보내서 거기서 로그인 모달 사용
+  // 비로그인 → 홈(MapView)
   useEffect(() => {
     if (user) return;
     router.replace("/");
@@ -45,13 +52,23 @@ export default function MyPage() {
     return <main className={styles.pageRoot} />;
   }
 
-  const provider = (safeUser.oauthProvider ?? "kakao").toUpperCase();
-  const email = safeUser.email ?? "";
+  // ✅ 실제 payload 기준으로 provider / id 표시
+  const displayProvider = (
+    safeUser.provider ??
+    safeUser.oauthProvider ??
+    "KAKAO"
+  ).toUpperCase();
 
-  const displayProvider = (safeUser.provider ?? "KAKAO").toUpperCase();
-  const displayId = safeUser.providerId ?? "Unknown ID";
-  const handleLogout = () => {
-    logout(); // logout은 async가 아니므로 await 제거
+  const displayId =
+    safeUser.providerId ?? // (있으면 우선)
+    safeUser.email ??      // 이메일이 있으면 이메일
+    safeUser.userId ??
+    safeUser.userid ??     // ✅ 지금 JWT에 있는 값
+    safeUser.id ??         // 혹시 id로 내려오는 경우
+    "Unknown ID";
+
+  const.toggleLogout = () => {
+    logout();
     router.push("/");
   };
 
@@ -62,13 +79,14 @@ export default function MyPage() {
 
       await axios.post(
         "http://52.78.240.6:4000/auth/update-nickname",
-        { nickname: nickname }, // 현재 input에 입력된 nickname 상태값
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { nickname },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("닉네임이 성공적으로 변경되었습니다! 새로고침 시 반영됩니다.");
+      // ✅ 저장 후 사용자 정보 재조회
+      await refreshUser();
+
+      alert("닉네임이 성공적으로 변경되었습니다!");
     } catch (error) {
       console.error("닉네임 수정 실패:", error);
       alert("닉네임 수정 중 오류가 발생했습니다.");
@@ -83,21 +101,16 @@ export default function MyPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
+      if (!token) return alert("로그인이 필요합니다.");
 
-      // 1. 백엔드 탈퇴 API 호출
       await axios.post(
         "http://52.78.240.6:4000/auth/unsubscribe",
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert("탈퇴 처리가 완료되었습니다. 이용해 주셔서 감사합니다.");
-
-      // 2. 클라이언트 로그아웃 처리 및 홈으로 이동
-      handleLogout();
+      toggleLogout();
     } catch (error) {
       console.error("탈퇴 처리 실패:", error);
       alert("탈퇴 처리 중 오류가 발생했습니다.");
