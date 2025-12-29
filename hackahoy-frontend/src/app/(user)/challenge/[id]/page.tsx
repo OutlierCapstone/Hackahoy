@@ -133,19 +133,12 @@ export default function ChallengePage() {
   }
 
   const getBackgroundImage = (islandId: number) => {
-    // Pin 1 (Island 1)에 속한 경우 고유 배경 사용
-    if (islandId === 1) {
-      // 문제 id나 다른 규칙이 있다면 추가 분기 가능
-      // 여기서는 예시로 문제 ID가 1, 2, 3인 경우 각각 island-1, 2, 3 매칭
-      if (problem.id <= 3) {
-        return `/assets/backgrounds/island-${problem.id}.png`;
-      }
-      // Island 1의 다른 문제라면 기본 island-1 사용
-      return `/assets/backgrounds/island-1.png`;
+    // 1, 2, 3번 섬 모두 각각의 이미지를 보여주도록 수정
+    if (islandId >= 1 && islandId <= 3) {
+      return `/assets/backgrounds/island-${islandId}.png`;
     }
-
-    // Pin 2, 3 등 새로 생성된 섬은 무조건 디폴트 배경
-    return "/assets/backgrounds/default-island.png";
+    // 그 외에는 시드 파일의 기본 이미지 경로 사용
+    return "/assets/islands/island-default.png";
   };
 
   const bg = getBackgroundImage(problem.islandId);

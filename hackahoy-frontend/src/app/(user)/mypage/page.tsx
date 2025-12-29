@@ -47,9 +47,9 @@ export default function MyPage() {
 
   const provider = (safeUser.oauthProvider ?? "kakao").toUpperCase();
   const email = safeUser.email ?? "";
+
   const displayProvider = (safeUser.provider ?? "KAKAO").toUpperCase();
   const displayId = safeUser.providerId ?? "Unknown ID";
-
   const handleLogout = () => {
     logout(); // logout은 async가 아니므로 await 제거
     router.push("/");
