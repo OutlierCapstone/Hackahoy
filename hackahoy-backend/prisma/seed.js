@@ -4,24 +4,9 @@ const prisma = new PrismaClient();
 
 // 1. 기본 레벨 데이터 (유저 가입 시 Level 1 참조 필수)
 const levels = [
-  {
-    levelNum: 1,
-    expRequired: 0,
-    shipName: 'Starter Ship',
-    shipImage: '/assets/ships/ship-1.png',
-  },
-  {
-    levelNum: 2,
-    expRequired: 100,
-    shipName: 'Advanced Ship',
-    shipImage: '/assets/ships/ship-2.png',
-  },
-  {
-    levelNum: 3,
-    expRequired: 300,
-    shipName: 'Pro Ship',
-    shipImage: '/assets/ships/ship-3.png',
-  },
+  { levelNum: 1, shipImage: '/assets/ships/ship-1.png' },
+  { levelNum: 2, shipImage: '/assets/ships/ship-2.png' },
+  { levelNum: 3, shipImage: '/assets/ships/ship-3.png' },
 ];
 
 // 2. 기본 섬 데이터
@@ -69,8 +54,13 @@ async function main() {
   for (const level of levels) {
     await prisma.level.upsert({
       where: { levelNum: level.levelNum },
-      update: level,
-      create: level,
+      update: {
+        shipImage: level.shipImage,
+      },
+      create: {
+        levelNum: level.levelNum,
+        shipImage: level.shipImage,
+      },
     });
   }
 
