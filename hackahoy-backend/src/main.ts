@@ -49,13 +49,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger });
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    // 로컬과 서버 IP 모두에서 접속 가능하도록 수정
+    origin: ['http://localhost:3000', 'http://52.78.240.6:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   await app.listen(Number(process.env.PORT) || 4000);
-  console.log('🚀 Backend running on http://localhost:4000');
+  console.log('🚀 Backend running on http://52.78.240.6:4000');
 }
 bootstrap();

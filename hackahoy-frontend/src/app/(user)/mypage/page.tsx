@@ -61,7 +61,7 @@ export default function MyPage() {
       if (!token) return alert("로그인이 필요합니다.");
 
       await axios.post(
-        "http://localhost:4000/auth/update-nickname",
+        "http://52.78.240.6:4000/auth/update-nickname",
         { nickname: nickname }, // 현재 input에 입력된 nickname 상태값
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -87,7 +87,7 @@ export default function MyPage() {
 
       // 1. 백엔드 탈퇴 API 호출
       await axios.post(
-        "http://localhost:4000/auth/unsubscribe",
+        "http://52.78.240.6:4000/auth/unsubscribe",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

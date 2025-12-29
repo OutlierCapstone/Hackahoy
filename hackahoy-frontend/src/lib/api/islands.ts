@@ -1,7 +1,7 @@
 // src/lib/api/islands.ts
 import axios from "axios";
 
-const API_URL = "http://localhost:4000";
+const API_URL = "http://52.78.240.6:4000";
 
 // 로컬 스토리지에서 토큰 가져오기
 const getAuthHeader = () => {

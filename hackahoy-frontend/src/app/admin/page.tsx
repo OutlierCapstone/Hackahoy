@@ -72,7 +72,7 @@ export default function AdminPage() {
 
       // 모든 유저의 변경 사항(권한, 차단 여부)을 한꺼번에 전송
       await axios.post(
-        "http://localhost:4000/admin/users/batch-update",
+        "http://52.78.240.6:4000/admin/users/batch-update",
         { users: rows }, // rows 배열 전체를 보냄
         {
           headers: { Authorization: `Bearer ${token}` },

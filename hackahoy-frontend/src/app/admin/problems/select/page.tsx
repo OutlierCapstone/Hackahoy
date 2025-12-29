@@ -32,7 +32,7 @@ export default function AdminSelectPinPage() {
     const fetchCounts = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const res = await axios.get("http://localhost:4000/admin/problems", {
+        const res = await axios.get("http://52.78.240.6:4000/admin/problems", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

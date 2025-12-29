@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import styles from "./Island.module.css";
+import styles from "./island.module.css";
 import { useAuth } from "@/components/common/AuthContext";
 import { getIslandProblems } from "@/lib/api/islands";
 

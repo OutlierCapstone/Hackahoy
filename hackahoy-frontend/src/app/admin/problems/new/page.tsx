@@ -79,7 +79,7 @@ export default function AdminCreateProblemPage() {
 
       // 2. 백엔드 API 호출 (axios 사용)
       await axios.post(
-        "http://localhost:4000/admin/problems",
+        "http://52.78.240.6:4000/admin/problems",
         {
           islandId: Number(pinId), // 섬 번호
           title: title.trim(), // 제목

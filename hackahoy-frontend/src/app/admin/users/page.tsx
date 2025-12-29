@@ -28,7 +28,7 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const res = await axios.get("http://localhost:4000/admin/users", {
+        const res = await axios.get("http://52.78.240.6:4000/admin/users", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -75,7 +75,7 @@ export default function AdminUsersPage() {
       const token = localStorage.getItem("accessToken");
 
       await axios.post(
-        "http://localhost:4000/admin/users/batch-update",
+        "http://52.78.240.6:4000/admin/users/batch-update",
         { users: rows },
         { headers: { Authorization: `Bearer ${token}` } }
       );

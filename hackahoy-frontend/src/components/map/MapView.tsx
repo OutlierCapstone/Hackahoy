@@ -167,21 +167,21 @@ export default function MapView() {
    *  Kakao 로그인
    * ----------------------------------*/
   function handleKakaoLogin() {
-    window.location.href = "http://localhost:4000/auth/kakao";
+    window.location.href = "http://52.78.240.6:4000/auth/kakao";
   }
 
   /* ------------------------------------
    *  Naver 로그인
    * ----------------------------------*/
   async function handleNaverLogin() {
-    window.location.href = "http://localhost:4000/auth/naver";
+    window.location.href = "http://52.78.240.6:4000/auth/naver";
   }
 
   /* ------------------------------------
    *  Google 로그인
    * ----------------------------------*/
   function handleGoogleLogin() {
-    window.location.href = "http://localhost:4000/auth/google";
+    window.location.href = "http://52.78.240.6:4000/auth/google";
   }
 
   return (

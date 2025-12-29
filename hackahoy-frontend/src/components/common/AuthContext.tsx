@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!savedToken) return;
 
     try {
-      const res = await axios.get("http://localhost:4000/auth/me", {
+      const res = await axios.get("http://52.78.240.6:4000/auth/me", {
         headers: { Authorization: `Bearer ${savedToken}` },
       });
       setUser(res.data);
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (savedToken) {
       // 백엔드 /auth/me API 호출해서 유저 정보 가져오기
       axios
-        .get("http://localhost:4000/auth/me", {
+        .get("http://52.78.240.6:4000/auth/me", {
           headers: { Authorization: `Bearer ${savedToken}` },
         })
         .then((res) => {

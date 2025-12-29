@@ -1,6 +1,6 @@
 // src/lib/api/client.ts
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://52.78.240.6:4000";
 
 type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
