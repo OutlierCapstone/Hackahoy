@@ -6,12 +6,12 @@
   align-items: center;
   justify-content: center;
 
-  padding-top: 60px; 
+  padding-top: 40px;
   box-sizing: border-box;
 }
 
 .board {
-  width: min(840px, 92vw);
+  width: min(800px, 92vw);
   padding: 24px 28px;
   position: relative;
 
@@ -19,9 +19,11 @@
   border: 3px solid rgba(80, 50, 30, 0.8);
   border-radius: 12px;
 
-  box-shadow: 0 0 0 3px rgba(40, 25, 15, 0.2), 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 0 0 3px rgba(40, 25, 15, 0.2),
+    0 16px 40px rgba(0, 0, 0, 0.45);
 
-  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
 }
 
 .closeBtn {
@@ -52,26 +54,30 @@
   font-size: 30px;
   font-weight: 900;
   color: #f4b452;
-  text-shadow: -3px -3px #3a210f, 3px -3px #3a210f, -3px 3px #3a210f,
-    3px 3px #3a210f, 0 4px rgba(0, 0, 0, 0.4);
+  text-shadow:
+    -3px -3px #3a210f,
+    3px -3px #3a210f,
+    -3px 3px #3a210f,
+    3px 3px #3a210f,
+    0 4px rgba(0, 0, 0, 0.4);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .label {
@@ -97,7 +103,7 @@
 }
 
 .textarea {
-  height: 220px;
+  height: 120px;
   resize: none;
   padding: 12px 14px;
 
@@ -124,7 +130,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .imgBtn {
@@ -134,7 +140,9 @@
   cursor: pointer;
   line-height: 0;
   image-rendering: pixelated;
-  transition: transform 0.12s ease, filter 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease;
 }
 
 .imgBtn:active {
@@ -146,4 +154,46 @@
   .row2 {
     grid-template-columns: 1fr;
   }
+}
+/* 카테고리 버튼 레이아웃 */
+.categoryRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.catBtn {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid #5a382a;
+  background-color: #fdf6e3;
+  color: #5a382a;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+/* 선택된 버튼 스타일 */
+.catBtnActive {
+  background-color: #5a382a;
+  color: #ffffff;
+}
+
+.catBtn:hover {
+  filter: brightness(0.95);
+}
+
+/* 에러 메시지 배너 */
+.errorBanner {
+  background-color: #ffeaea;
+  border: 1px solid #ff4d4d;
+  color: #ff4d4d;
+  padding: 6px;
+  font-size: 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: bold;
 }

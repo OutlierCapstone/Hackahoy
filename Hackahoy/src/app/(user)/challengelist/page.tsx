@@ -28,7 +28,7 @@ export default function ChallengeListPage() {
         const token = localStorage.getItem('accessToken');
         const response = await axios.get<Problem[]>(
           'http://localhost:4000/problem/user-list',
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         setProblems(response.data);
       } catch (error) {
@@ -57,19 +57,33 @@ export default function ChallengeListPage() {
 
   const totalPages = Math.ceil(filteredList.length / itemsPerPage) || 1;
 
-  if (loading) return <main className={styles.pageRoot}><div className={styles.statusText}>Loading...</div></main>;
+  if (loading)
+    return (
+      <main className={styles.pageRoot}>
+        <div className={styles.statusText}>Loading...</div>
+      </main>
+    );
 
   return (
     <main className={styles.pageRoot}>
       <div className={styles.card}>
         <div className={styles.filterBarContainer}>
-          <Image src="/assets/ui/challengelistbar.png" alt="Filter Bar" width={580} height={60} priority />
+          <Image
+            src="/assets/ui/challengelistbar.png"
+            alt="Filter Bar"
+            width={580}
+            height={60}
+            priority
+          />
           <div className={styles.filterOverlay}>
             {['ALL', 'AI', 'WEB', 'SOLVED', 'UNSOLVED'].map((type) => (
               <div
                 key={type}
                 className={styles.filterZone}
-                onClick={() => { setFilter(type); setCurrentPage(0); }}
+                onClick={() => {
+                  setFilter(type);
+                  setCurrentPage(0);
+                }}
               />
             ))}
           </div>
@@ -77,13 +91,22 @@ export default function ChallengeListPage() {
 
         <div className={styles.listScroll}>
           {pagedList.map((p) => (
-            <div key={p.id} className={styles.challengeItem} onClick={() => router.push(`/challenge/${p.id}`)}>
+            <div
+              key={p.id}
+              className={styles.challengeItem}
+              onClick={() => router.push(`/challenge/${p.id}`)}
+            >
               <span className={styles.challengeTitle}>{p.title}</span>
               <div className={styles.statusIcon}>
                 <Image
-                  src={p.solved ? '/assets/ui/solved.png' : '/assets/ui/unsolved.png'}
+                  src={
+                    p.solved
+                      ? '/assets/ui/solved.png'
+                      : '/assets/ui/unsolved.png'
+                  }
                   alt={p.solved ? 'SOLVED' : 'UNSOLVED'}
-                  width={130} height={p.solved ? 40 : 35}
+                  width={130}
+                  height={p.solved ? 40 : 35}
                 />
               </div>
             </div>
@@ -91,13 +114,37 @@ export default function ChallengeListPage() {
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.mypageBtn} onClick={() => router.push('/mypage')}>
-            <Image src="/assets/ui/mypage.png" alt="MYPAGE" width={100} height={40} />
+          <button
+            className={styles.mypageBtn}
+            onClick={() => router.push('/mypage')}
+          >
+            <Image
+              src="/assets/ui/mypage.png"
+              alt="MYPAGE"
+              width={100}
+              height={40}
+            />
           </button>
           <div className={styles.pagination}>
-            <button className={styles.arrowBtn} onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>◀</button>
-            <span className={styles.pageText}>{currentPage + 1} / {totalPages}</span>
-            <button className={styles.arrowBtn} onClick={() => setCurrentPage(p => p + 1 < totalPages ? p + 1 : p)} disabled={currentPage + 1 >= totalPages}>▶</button>
+            <button
+              className={styles.arrowBtn}
+              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+            >
+              ◀
+            </button>
+            <span className={styles.pageText}>
+              {currentPage + 1} / {totalPages}
+            </span>
+            <button
+              className={styles.arrowBtn}
+              onClick={() =>
+                setCurrentPage((p) => (p + 1 < totalPages ? p + 1 : p))
+              }
+              disabled={currentPage + 1 >= totalPages}
+            >
+              ▶
+            </button>
           </div>
         </div>
       </div>

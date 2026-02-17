@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import styles from "./admin.module.css";
-import { listUsers, setUserBanned, AdminUser } from "@/lib/api/admin";
-import axios from "axios";
+import Image from 'next/image';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import styles from './admin.module.css';
+import { listUsers, setUserBanned, AdminUser } from '@/lib/api/admin';
+import axios from 'axios';
 
-type Role = "ADMIN" | "USER";
+type Role = 'ADMIN' | 'USER';
 
 const PAGE_SIZE = 3;
 
 export default function AdminPage() {
   const router = useRouter();
 
-  const [q, setQ] = useState("");
-  const [rows, setRows] = useState<AdminUser[]>([]); 
+  const [q, setQ] = useState('');
+  const [rows, setRows] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
@@ -25,7 +25,7 @@ export default function AdminPage() {
       const data = await listUsers({ keyword: q });
       setRows(data);
     } catch (err) {
-      console.error("유저 목록 로드 실패:", err);
+      console.error('유저 목록 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -49,34 +49,35 @@ export default function AdminPage() {
   const toggleRole = (id: string) => {
     setRows((prev) =>
       prev.map((r) =>
-        r.id === id ? { ...r, role: r.role === "ADMIN" ? "USER" : "ADMIN" } : r
-      )
+        r.id === id ? { ...r, role: r.role === 'ADMIN' ? 'USER' : 'ADMIN' } : r,
+      ),
     );
   };
 
   const handleToggleBanned = (userId: string, currentBanned: boolean) => {
-  
-  setRows((prev) =>
-    prev.map((u) => (u.id === userId ? { ...u, banned: !currentBanned } : u))
-  );
-};
+    setRows((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, banned: !currentBanned } : u)),
+    );
+  };
 
   const onSave = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      
+      const token = localStorage.getItem('accessToken');
+
       await axios.post(
-        "http://localhost:4000/admin/users/batch-update",
-        { users: rows }, 
+        'http://localhost:4000/admin/users/batch-update',
+        { users: rows },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
-      alert("변경 사항이 성공적으로 저장되었습니다! 💾");
+      alert('변경 사항이 성공적으로 저장되었습니다! 💾');
     } catch (err) {
-      console.error("저장 실패:", err);
-      alert("서버에 저장하는 중 오류가 발생했습니다. 백엔드 엔드포인트를 확인하세요.");
+      console.error('저장 실패:', err);
+      alert(
+        '서버에 저장하는 중 오류가 발생했습니다. 백엔드 엔드포인트를 확인하세요.',
+      );
     }
   };
 
@@ -84,17 +85,36 @@ export default function AdminPage() {
     <section className={styles.board}>
       <div className={styles.headRow}>
         <div className={styles.title}>Admin</div>
+        <div
+          className={styles.topRightActions}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+        >
+          {/* 종 모양 아이콘 추가 */}
+          <button
+            type="button"
+            className={styles.bellBtn}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            onClick={() => router.push('/admin/notifications')} // 이 부분 추가
+          >
+            <Image
+              src="/assets/ui/bell.png"
+              alt="Notifications"
+              width={40}
+              height={40}
+            />
+          </button>
 
-        <div className={styles.searchWrap}>
-          <input
-            className={styles.searchInput}
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="search user..."
-          />
+          <div className={styles.searchWrap}>
+            <input
+              className={styles.searchInput}
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setPage(1);
+              }}
+              placeholder="search user..."
+            />
+          </div>
         </div>
       </div>
 
@@ -107,7 +127,10 @@ export default function AdminPage() {
 
         {loading ? (
           <div className={styles.row}>
-            <div className={styles.cell} style={{ width: "100%", textAlign: "center" }}>
+            <div
+              className={styles.cell}
+              style={{ width: '100%', textAlign: 'center' }}
+            >
               Loading...
             </div>
           </div>
@@ -115,43 +138,44 @@ export default function AdminPage() {
           pageRows.map((r) => (
             <div key={r.id} className={styles.row}>
               <div className={styles.cell}>{r.nickname}</div>
-                <div className={styles.cell}>
-                  <button
-                    type="button"
-                    className={styles.roleBtn}
-                    onClick={() => toggleRole(r.id)}
-                  >
-                    {r.role === "ADMIN" ? "Admin" : "User"} <span>↕</span>
-                  </button>
-                </div>
-                <div className={styles.cell}>
-                    <button
-                      type="button"
-                      className={styles.banBox}
-                      onClick={() => handleToggleBanned(r.id, r.banned)}
-                      aria-label={`toggle ban ${r.nickname}`}
-                    >
-                      {r.banned ? <span className={styles.check}>✓</span> : null}
-                    </button>
-                  </div>
+              <div className={styles.cell}>
+                <button
+                  type="button"
+                  className={styles.roleBtn}
+                  onClick={() => toggleRole(r.id)}
+                >
+                  {r.role === 'ADMIN' ? 'Admin' : 'User'} <span>↕</span>
+                </button>
+              </div>
+              <div className={styles.cell}>
+                <button
+                  type="button"
+                  className={styles.banBox}
+                  onClick={() => handleToggleBanned(r.id, r.banned)}
+                  aria-label={`toggle ban ${r.nickname}`}
+                >
+                  {r.banned ? <span className={styles.check}>✓</span> : null}
+                </button>
+              </div>
             </div>
           ))
         )}
 
-        {!loading && Array.from({ length: PAGE_SIZE - pageRows.length }).map((_, i) => (
-          <div key={`empty-${i}`} className={styles.row}>
-            <div className={styles.cell}>&nbsp;</div>
-            <div className={styles.cell}>&nbsp;</div>
-            <div className={styles.cell}>&nbsp;</div>
-          </div>
-        ))}
+        {!loading &&
+          Array.from({ length: PAGE_SIZE - pageRows.length }).map((_, i) => (
+            <div key={`empty-${i}`} className={styles.row}>
+              <div className={styles.cell}>&nbsp;</div>
+              <div className={styles.cell}>&nbsp;</div>
+              <div className={styles.cell}>&nbsp;</div>
+            </div>
+          ))}
       </div>
 
       <div className={styles.footer}>
         <button
           type="button"
           className={styles.createBtn}
-          onClick={() => router.push("/admin/problems/select")}
+          onClick={() => router.push('/admin/problems/select')}
         >
           <Image
             src="/assets/ui/createproblem.png"
@@ -161,7 +185,7 @@ export default function AdminPage() {
             priority
           />
         </button>
-        
+
         <div className={styles.pager}>
           <button
             type="button"

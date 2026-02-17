@@ -1,10 +1,10 @@
 // src/lib/api/islands.ts
-import axios from "axios";
+import axios from 'axios';
 
 const API_URL = 'http://localhost:4000';
 
 const getAuthHeader = () => {
-  const token = localStorage.getItem('accessToken'); 
+  const token = localStorage.getItem('accessToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -23,8 +23,8 @@ export async function getIslands() {
   return response.json();
 }
 
-export async function getIslandProblems(islandId: number) {
-  const response = await fetch(`${API_URL}/islands/${islandId}/problems`, {
+export async function getIslandProblem(islandId: number) {
+  const response = await fetch(`${API_URL}/islands/${islandId}/problem`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ export async function getIslandProblems(islandId: number) {
 }
 
 export const getProblem = async (problemId: number) => {
-  const response = await axios.get(`${API_URL}/problems/${problemId}`, {
+  const response = await axios.get(`${API_URL}/problem/${problemId}`, {
     headers: getAuthHeader(),
   });
   return response.data;
@@ -47,11 +47,11 @@ export const getProblem = async (problemId: number) => {
 
 export const submitFlag = async (problemId: number, flag: string) => {
   const response = await axios.post(
-    `${API_URL}/problems/${problemId}/submit`, 
-    { flag }, 
+    `${API_URL}/problem/${problemId}/submit`,
+    { flag },
     {
       headers: getAuthHeader(),
-    }
+    },
   );
   return response.data;
 };
