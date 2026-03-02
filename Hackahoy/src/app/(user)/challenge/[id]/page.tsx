@@ -93,20 +93,28 @@ export default function ChallengePage() {
     }
   };
 
-  const getBackgroundImage = (islandId: number) => {
-    if (islandId === 1 && problem && problem.id <= 3) {
-      return `/assets/backgrounds/island-${problem.id}.png`;
-    }
-    if (islandId === 1) return `/assets/backgrounds/island-1.png`;
-    return "/assets/backgrounds/default-island.png";
-  };
+const getBackgroundImage = (islandId: number) => {
+  // islandId === 1 조건을 제거하여 모든 구역의 1~6번 문제가 전용 배경을 갖도록 합니다.
+  if (problem && problem.id >= 1 && problem.id <= 6) {
+    return `/assets/backgrounds/island-${problem.id}.png`;
+  }
+  
+  // 특정 구역(1, 2번 핑)에 따른 기본 배경 설정
+  if (islandId === 1 || islandId === 2) {
+    return `/assets/backgrounds/island-map.png`; 
+  }
 
-  const getHintImage = (problemId: number, islandId: number) => {
-    if (islandId === 1 && [1, 2, 3].includes(problemId)) {
-      return `/assets/icons/hint-${problemId}.png`;
-    }
-    return "/assets/icons/default-hint.png";
-  };
+  return "/assets/backgrounds/default-island.png";
+};
+
+  // 2. 힌트 아이콘 로직 (6번까지 확장)
+const getHintImage = (problemId: number, islandId: number) => {
+  // islandId 조건 없이 problemId가 1~6 사이이면 해당 이미지를 가져오도록 수정
+  if ([1, 2, 3, 4, 5, 6].includes(problemId)) {
+    return `/assets/icons/hint-${problemId}.png`;
+  }
+  return "/assets/icons/default-hint.png";
+};
 
   if (loading) {
     return <main className={styles.pageRoot}><div className={styles.statusText}>문제를 불러오는 중...</div></main>;
@@ -134,24 +142,20 @@ export default function ChallengePage() {
             <h1 className={styles.title}>{problem.title}</h1>
             <p className={styles.desc}>{problem.description}</p>
 
+            {/* 3. 서버 링크 출력 로직 (6번까지 확장 및 정리) */}
             {problem.serverLink && (
               <p className={styles.link}>
-                {(() => {
-                  return "Server link: ";
-                })()}
-                &nbsp;
+                Server link: &nbsp;
                 <a href={problem.serverLink} target="_blank" rel="noopener noreferrer">
                   {(() => {
-                    if (problem.id === 1) return "http://52.78.240.6:8001";
-                    if (problem.id === 2) return "http://52.78.240.6:8002";
-                    if (problem.id === 3) return "http://52.78.240.6:8003";
+                    if (problem.id >= 1 && problem.id <= 6) {
+                      return `http://52.78.240.6:800${problem.id}`;
+                    }
                     return problem.serverLink; 
                   })()}
                 </a>
               </p>
             )}
-
-            
 
             <form className={styles.formRow} onSubmit={onSubmit}>
               <input
@@ -174,10 +178,7 @@ export default function ChallengePage() {
               className={styles.hintBtn}
               onClick={async () => {
                 try {
-                  // 1. 서버에 로그 쏘기 (토큰을 헤더에 포함)
-                  // 로컬 스토리지가 아닌 쿠키나 다른 곳에 저장하신다면 그에 맞춰 토큰을 가져와야 합니다.
                   const token = localStorage.getItem('accessToken'); 
-
                   await fetch(`http://localhost:4000/problem/${problem.id}/hint`, {
                     method: 'GET',
                     headers: {
@@ -188,8 +189,6 @@ export default function ChallengePage() {
                 } catch (error) {
                   console.error('❌ 힌트 로그 저장 실패:', error);
                 }
-
-                // 2. 모달 열기 (로그 성공 여부와 상관없이 유저에겐 보여줌)
                 setHintOpen(true);
               }}           
               aria-label="open hint"

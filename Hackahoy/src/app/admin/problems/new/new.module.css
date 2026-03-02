@@ -1,3 +1,5 @@
+/* src/app/admin/problems/new/new.module.css */
+
 .stage {
   position: absolute;
   inset: 0;
@@ -12,6 +14,8 @@
 
 .board {
   width: min(800px, 92vw);
+  /* 보드 자체의 최대 높이를 화면의 85%로 제한하여 화면 이탈 방지 */
+  max-height: 85vh; 
   padding: 24px 28px;
   position: relative;
 
@@ -24,6 +28,10 @@
     0 16px 40px rgba(0, 0, 0, 0.45);
 
   font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+  
+  /* 내부 요소(Title, Form, Footer)를 세로로 정렬 */
+  display: flex;
+  flex-direction: column;
 }
 
 .closeBtn {
@@ -41,6 +49,7 @@
 
   cursor: pointer;
   line-height: 1;
+  z-index: 10;
 }
 
 .closeBtn:active {
@@ -60,18 +69,38 @@
     -3px 3px #3a210f,
     3px 3px #3a210f,
     0 4px rgba(0, 0, 0, 0.4);
+  /* 타이틀은 고정 */
+  flex-shrink: 0;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
+  
+  /* 입력창이 많아질 경우 내부에서만 스크롤 발생 */
+  overflow-y: auto;
+  padding-right: 10px;
+  flex: 1;
+}
+
+/* 도트 스타일 프로젝트에 어울리는 커스텀 스크롤바 */
+.form::-webkit-scrollbar {
+  width: 8px;
+}
+.form::-webkit-scrollbar-thumb {
+  background: #5a382a;
+  border-radius: 4px;
+}
+.form::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .field {
@@ -100,9 +129,12 @@
   color: #1a0f0a;
 
   outline: none;
+  /* 스크롤 시 입력창 높이가 줄어들지 않도록 설정 */
+  flex-shrink: 0;
 }
 
 .textarea {
+  min-height: 100px;
   height: 120px;
   resize: none;
   padding: 12px 14px;
@@ -118,6 +150,7 @@
   line-height: 1.4;
 
   outline: none;
+  flex-shrink: 0;
 }
 
 .input::placeholder,
@@ -130,7 +163,10 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 15px;
+  padding-bottom: 5px;
+  /* 하단 버튼 영역 고정 */
+  flex-shrink: 0;
 }
 
 .imgBtn {
@@ -155,7 +191,7 @@
     grid-template-columns: 1fr;
   }
 }
-/* 카테고리 버튼 레이아웃 */
+
 .categoryRow {
   display: flex;
   gap: 10px;
@@ -175,7 +211,6 @@
   transition: all 0.2s ease;
 }
 
-/* 선택된 버튼 스타일 */
 .catBtnActive {
   background-color: #5a382a;
   color: #ffffff;
@@ -185,7 +220,6 @@
   filter: brightness(0.95);
 }
 
-/* 에러 메시지 배너 */
 .errorBanner {
   background-color: #ffeaea;
   border: 1px solid #ff4d4d;
