@@ -158,6 +158,10 @@ export class AuthService {
     });
   }
 
+<<<<<<< HEAD
+=======
+  /*
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
   async batchUpdateUsers(users: any[]) {
     // 유저 상태 업데이트
     return this.prisma.$transaction(
@@ -172,6 +176,44 @@ export class AuthService {
       ),
     );
   }
+<<<<<<< HEAD
+=======
+  */
+
+  async batchUpdateUsers(users: any[]) {
+    return this.prisma.$transaction(
+      users.map((u) => {
+        // 1. 유저 정보 업데이트
+        const userUpdate = this.prisma.user.update({
+          where: { id: u.id },
+          data: {
+            isAdmin: u.role === 'ADMIN',
+            isBanned: u.banned,
+          },
+        });
+
+        // 2. 만약 차단을 해제(banned: false)하는 경우라면 BanHistory도 정리
+        if (u.banned === false) {
+          return [
+            userUpdate,
+            this.prisma.banHistory.updateMany({
+              where: {
+                userId: u.id,
+                releasedAt: { gt: new Date() }, // 아직 차단 기간이 남은 기록들
+              },
+              data: {
+                releasedAt: new Date(), // 해제 시간을 지금으로 변경
+              },
+            }),
+          ];
+        }
+
+        return userUpdate;
+      }).flat() // 중첩된 배열을 평탄화하여 트랜잭션 실행
+    );
+  }
+
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
     async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

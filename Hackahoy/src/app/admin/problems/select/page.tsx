@@ -65,9 +65,19 @@ export default function AdminSelectPinPage() {
 
       {PIN_SLOTS.map((pin) => {
         const count = pinCounts[pin.id] || 0;
+<<<<<<< HEAD
         
         // 1번과 2번 핑은 이미 문제가 배정되어 있으므로 선택 불가능하게 수정
         const selectable = pin.id !== 1 && pin.id !== 2 && count < 3;
+=======
+<<<<<<< HEAD
+        const selectable = pin.id !== 1 && count < 3;
+=======
+        
+        // 1번과 2번 핑은 이미 문제가 배정되어 있으므로 선택 불가능하게 수정
+        const selectable = pin.id !== 1 && pin.id !== 2 && count < 3;
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
+>>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
 
         return (
           <button
@@ -84,15 +94,35 @@ export default function AdminSelectPinPage() {
               transform: "translate(-50%, -50%)", background: "none",
               border: "none", padding: 0,
               cursor: selectable ? "pointer" : "not-allowed",
+<<<<<<< HEAD
               opacity: selectable ? 1 : 0.35, // 비활성 시 회색으로 보임
             }}
             title={selectable ? `현재 문제 수: ${count}개` : "이 핑은 선택할 수 없습니다."}
+=======
+<<<<<<< HEAD
+              opacity: selectable ? 1 : 0.35,
+            }}
+            title={`현재 문제 수: ${count}개`}
+=======
+              opacity: selectable ? 1 : 0.35, // 비활성 시 회색으로 보임
+            }}
+            title={selectable ? `현재 문제 수: ${count}개` : "이 핑은 선택할 수 없습니다."}
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
+>>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
           >
             <Image
               src="/assets/icons/main-marker.png"
               alt="pin" width={48} height={48} priority
               style={{ imageRendering: "pixelated", display: "block" }}
             />
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '12px' }}>
+               {pin.id}번 ({count}/3)
+            </span>
+=======
+>>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
             <div style={{ textAlign: 'center', marginTop: '4px' }}>
               <span style={{ 
                 color: 'white', 
@@ -103,6 +133,10 @@ export default function AdminSelectPinPage() {
                  {pin.id}번 ({count}/3)
               </span>
             </div>
+<<<<<<< HEAD
+=======
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
+>>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
           </button>
         );
       })}
