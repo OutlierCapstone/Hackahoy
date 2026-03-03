@@ -112,6 +112,10 @@ export class ProblemService {
   }
 
   // 5. 신규 문제 생성 (카테고리 및 섬 연결)
+<<<<<<< HEAD
+=======
+  /*
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
   async createProblem(data: any) {
     return this.prisma.problem.create({
       data: {
@@ -127,4 +131,38 @@ export class ProblemService {
       },
     });
   }
+<<<<<<< HEAD
+=======
+    */
+  async createProblem(data: any) {
+    let finalMetadata: any = undefined; // null 대신 undefined로 초기화
+
+    if (data.writeup && data.writeup.trim() !== "") {
+      try {
+        finalMetadata = typeof data.writeup === 'string' 
+          ? JSON.parse(data.writeup) 
+          : data.writeup;
+      } catch (e) {
+        // JSON 파싱 실패 시 일반 객체로 감싸서 저장
+        finalMetadata = { rawText: data.writeup };
+      }
+    }
+
+    return this.prisma.problem.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        correctFlag: data.correctFlag,
+        serverLink: data.serverLink,
+        hint: data.hint || '힌트가 없습니다.',
+        // 값이 있을 때만 넣고, 없으면 undefined를 주어 필드 생성을 건너뜁니다.
+        metadata: finalMetadata ?? undefined, 
+        island: { 
+          connect: { id: data.islandId ? Number(data.islandId) : 1 } 
+        },
+      },
+    });
+  }
+>>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
 }

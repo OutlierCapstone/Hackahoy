@@ -10,40 +10,36 @@ export class ReportService {
     private readonly emailService: EmailService,
   ) {}
 
-  // 매일 정오(12:00)에 자동으로 실행됩니다.
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) // 테스트를 위해 주기를 바꾸려면 아래 설명 참고!
+  // @Cron('0 0 0 * * *') // 매일 자정에 실행
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) // 매일 자정에 실행 (대체 표현)
   async sendDailyBanReport() {
-    // 1. 최근 24시간 동안 발생한 차단 내역 조회
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
     const banList = await this.prisma.banHistory.findMany({
-      where: {
-        bannedAt: { gte: oneDayAgo },
-      },
-      include: {
-        user: true, // 유저 정보를 함께 가져옵니다.
-      },
+      where: { bannedAt: { gte: oneDayAgo } },
+      include: { user: true },
     });
 
-    // 차단된 내역이 없으면 리포트를 보내지 않습니다.
     if (banList.length === 0) {
       console.log('✅ [REPORT] 최근 24시간 동안 차단된 사용자가 없습니다.');
       return;
     }
 
-    // 2. 리포트 본문 생성
-    const reportSummary = banList
-      .map(
-        (b) =>
-          `[유저ID: ${b.userId}] ${b.user?.nickname || 'Unknown'} 
-           - 사유: ${b.reason} 
-           - 차단일시: ${b.bannedAt.toLocaleString()}`
-      )
-      .join('\n\n');
+    // 1. 요약 통계 계산
+    const totalCount = banList.length;
 
+    // 2. 상세 내역 생성
+    const details = banList
+      .map((b) => `• ${b.user?.nickname || 'GUEST'} - ${b.reason} - 24시간 정지`)
+      .join('\n');
 
-    // 4. 이메일 발송 (관리자 이메일 주소를 입력하세요)
-    await this.emailService.sendSecurityAlert('System Admin', reportSummary);
+    // 3. 메일 발송 (관리자 닉네임: 김민서)
+    await this.emailService.sendDailyReportMail(
+      '김민서', 
+      { totalCount}, 
+      details
+    );
     
-    console.log('✅ [REPORT] 정오 보안 리포트 발송 및 DB 저장을 완료했습니다.');
+    console.log('✅ [REPORT] 커스텀 보안 리포트 발송 완료');
   }
 }

@@ -29,4 +29,39 @@ export class EmailService {
       console.error('❌ [이메일 전송 실패]', error);
     }
   }
+  async sendDailyReportMail(nickname: string, stats: any, details: string) {
+  const today = new Date().toISOString().split('T')[0];
+  
+  try {
+    await this.transporter.sendMail({
+      from: '"Hackahoy 보안팀" <rexyloop@gmail.com>',
+      to: 'mseo2004@naver.com',
+      subject: `[Hackahoy] 일일 보안 차단 리포트 (${today})`,
+      html: `
+        <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+          <h2>안녕하세요, 관리자님.</h2>
+          <p>지난 24시간 동안의 자동 차단 현황을 보고합니다.</p>
+          
+          <h3>1. 요약 통계</h3>
+          <ul>
+            <li><strong>총 차단 건수:</strong> ${stats.totalCount}건</li>
+          </ul>
+          
+          <h3>2. 상세 내역</h3>
+          <pre style="background: #f4f4f4; padding: 10px; border-radius: 5px;">${details}</pre>
+          
+          <h3>3. 관리자 조치</h3>
+          <p>아래 버튼을 눌러 상세 로그를 확인하세요.</p>
+          <a href="http://localhost:3000/admin/notifications" 
+             style="display: inline-block; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">
+             관리자 페이지 바로가기
+          </a>
+        </div>
+      `,
+    });
+    console.log('✅ [이메일] 일일 리포트 전송 성공');
+  } catch (error) {
+    console.error('❌ [이메일] 리포트 전송 실패', error);
+  }
+}
 }
