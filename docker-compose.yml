@@ -1,0 +1,15 @@
+services:
+  openresty:
+    build: ./nginx
+    ports:
+      - '5001:5001'
+      - '5002:5002'
+      - '5003:5003'
+      - '5004:5004'
+      - '5005:5005'
+      - '5006:5006'
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped

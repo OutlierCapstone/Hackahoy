@@ -74,7 +74,7 @@ export class ProblemService {
     const totalSolvedCount = await this.prisma.solvedHistory.count({
       where: { userId },
     });
-    
+
     let newLevel = 1;
     while (totalSolvedCount >= Math.pow(2, newLevel) - 1) newLevel++;
 
@@ -111,39 +111,19 @@ export class ProblemService {
     });
   }
 
-  // 5. 신규 문제 생성 (카테고리 및 섬 연결)
-<<<<<<< HEAD
-=======
-  /*
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
+  // 5. 신규 문제 생성 (메타데이터 및 섬 연결 처리)
   async createProblem(data: any) {
-    return this.prisma.problem.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        category: data.category as ProblemCategory,
-        correctFlag: data.correctFlag,
-        serverLink: data.serverLink,
-        hint: data.hint || '힌트가 없습니다.',
-        island: { 
-          connect: { id: data.islandId ? Number(data.islandId) : 1 } 
-        },
-      },
-    });
-  }
-<<<<<<< HEAD
-=======
-    */
-  async createProblem(data: any) {
-    let finalMetadata: any = undefined; // null 대신 undefined로 초기화
+    let finalMetadata: any = undefined;
 
-    if (data.writeup && data.writeup.trim() !== "") {
+    // writeup 데이터가 있을 경우 JSON 파싱 시도
+    if (data.writeup && data.writeup.trim() !== '') {
       try {
-        finalMetadata = typeof data.writeup === 'string' 
-          ? JSON.parse(data.writeup) 
-          : data.writeup;
+        finalMetadata =
+          typeof data.writeup === 'string'
+            ? JSON.parse(data.writeup)
+            : data.writeup;
       } catch (e) {
-        // JSON 파싱 실패 시 일반 객체로 감싸서 저장
+        // JSON 형식이 아닐 경우 일반 텍스트로 저장
         finalMetadata = { rawText: data.writeup };
       }
     }
@@ -152,17 +132,15 @@ export class ProblemService {
       data: {
         title: data.title,
         description: data.description,
-        category: data.category,
+        category: data.category as ProblemCategory,
         correctFlag: data.correctFlag,
         serverLink: data.serverLink,
         hint: data.hint || '힌트가 없습니다.',
-        // 값이 있을 때만 넣고, 없으면 undefined를 주어 필드 생성을 건너뜁니다.
-        metadata: finalMetadata ?? undefined, 
-        island: { 
-          connect: { id: data.islandId ? Number(data.islandId) : 1 } 
+        metadata: finalMetadata ?? undefined,
+        island: {
+          connect: { id: data.islandId ? Number(data.islandId) : 1 },
         },
       },
     });
   }
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
 }

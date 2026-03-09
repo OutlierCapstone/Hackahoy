@@ -1,22 +1,22 @@
 // src/components/map/CreateSlotsLayer.tsx
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/common/AuthContext";
-import type { PinId } from "@/lib/islandStore";
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/common/AuthContext';
+import type { PinId } from '@/lib/islandStore';
 
 const PIN_POS: { id: PinId; left: string; top: string }[] = [
-  { id: 1, left: "20%", top: "56%" },
-  { id: 2, left: "50%", top: "42%" },
-  { id: 3, left: "82%", top: "56%" },
+  { id: 1, left: '20%', top: '56%' },
+  { id: 2, left: '50%', top: '42%' },
+  { id: 3, left: '82%', top: '56%' },
 ];
 
-type Mode = "play" | "select";
+type Mode = 'play' | 'select';
 
 export default function CreateSlotsLayer({
-  mode = "play",
-  occupiedPins: storeOccupiedPins, 
+  mode = 'play',
+  occupiedPins: storeOccupiedPins,
   islands = [],
   onSelectEmptyPin,
 }: {
@@ -28,17 +28,25 @@ export default function CreateSlotsLayer({
   const router = useRouter();
   const { user, openLoginModal } = useAuth() as any;
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   const isOccupied = (id: PinId) => {
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 <<<<<<< HEAD
     const dbOccupied = islands.some(isl => isl.id === id);
+=======
+    // 1번과 2번 핀은 무조건 활성화 상태(true)로 리턴합니다.
+    if (id === 1 || id === 2) return true;
+
+    const dbOccupied = islands.some((isl) => isl.id === id);
+>>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
     const localOccupied = storeOccupiedPins?.has(id) ?? false;
-    
+
     return dbOccupied || localOccupied;
   };
+<<<<<<< HEAD
 =======
 >>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
   // 1번과 2번 핀은 무조건 활성화 상태(true)로 리턴합니다.
@@ -53,6 +61,8 @@ export default function CreateSlotsLayer({
 =======
 >>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
 >>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
+=======
+>>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
 
   const goIsland = (pinId: PinId) => {
     if (!user) {
@@ -63,24 +73,37 @@ export default function CreateSlotsLayer({
   };
 
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 20 }}>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 20 }}>
       {PIN_POS.map((pin) => {
         const occupied = isOccupied(pin.id);
 
         const clickable =
-          mode === "play" ? occupied : isAdmin && !occupied && pin.id !== 1;
+          mode === 'play' ? occupied : isAdmin && !occupied && pin.id !== 1;
 
         return (
-          <div key={pin.id} style={{ position: "absolute", left: pin.left, top: pin.top, transform: "translate(-50%, -50%)" }}>
+          <div
+            key={pin.id}
+            style={{
+              position: 'absolute',
+              left: pin.left,
+              top: pin.top,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
             <button
               type="button"
               onClick={() => {
                 if (!clickable) return;
-                if (mode === "play") return goIsland(pin.id);
+                if (mode === 'play') return goIsland(pin.id);
                 onSelectEmptyPin?.(pin.id);
               }}
               disabled={!clickable}
-              style={{ background: "none", border: "none", padding: 0, cursor: clickable ? "pointer" : "not-allowed" }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: clickable ? 'pointer' : 'not-allowed',
+              }}
             >
               <Image
                 src="/assets/icons/main-marker.png"
@@ -88,8 +111,15 @@ export default function CreateSlotsLayer({
                 width={48}
                 height={48}
                 style={{
-                  imageRendering: "pixelated",
-                  opacity: mode === "select" ? (occupied ? 0.35 : 1) : (occupied ? 1 : 0.35),
+                  imageRendering: 'pixelated',
+                  opacity:
+                    mode === 'select'
+                      ? occupied
+                        ? 0.35
+                        : 1
+                      : occupied
+                        ? 1
+                        : 0.35,
                 }}
               />
             </button>
