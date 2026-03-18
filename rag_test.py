@@ -3,6 +3,7 @@
 import os
 from dotenv import load_dotenv
 import chromadb
+from chromadb.utils import embedding_functions
 from google import genai
 import json
 
@@ -17,7 +18,7 @@ genai_client = genai.Client(api_key=GEMINI_API_KEY,
 chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 # Define a custom embedding function using the Gemini embedding API
-class GeminiEmbeddingFunction:
+class GeminiEmbeddingFunction(embedding_functions.EmbeddingFunction):
     def __init__(self, client):
         self.client = client
         self.model_name = "models/gemini-embedding-001"
@@ -32,14 +33,6 @@ class GeminiEmbeddingFunction:
         )
         
         return [e.values for e in response.embeddings]
-
-    # Generate embeddings for query inputs during ChromaDB search
-    def embed_query(self, input):
-        return self.__call__(input)
-
-    # Return a name to prevent embedding function errors
-    def name(self):
-        return "gemini-embedding-function"
 
 embedding_function = GeminiEmbeddingFunction(genai_client)
 
