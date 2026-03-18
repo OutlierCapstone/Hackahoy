@@ -15,7 +15,7 @@ class LogEntry(BaseModel):
     
 class HintRequest(BaseModel):
     problem_id: str = Field(min_length=1, examples=["1"])
-    hint_count: int = Field(min_length=1,examples=[0])
+    hint_count: int = Field(examples=[0])
     history: ProblemSolvingHistory
     logs: List[LogEntry]
 
