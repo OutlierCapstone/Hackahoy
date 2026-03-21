@@ -1,4 +1,4 @@
-# app/models.py
+# /app/models/hint.py
 
 from pydantic import BaseModel, Field
 from typing import Dict, Optional, List, Any
