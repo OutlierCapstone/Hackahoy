@@ -1,8 +1,8 @@
-# app/main.py
+# /app/main.py
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import hints
+from app.routers import hints, wargames
 from app.clients import CORS_ORIGINS
    
 # Initialize FastAPI app
@@ -17,3 +17,4 @@ app.add_middleware(
 )
 
 app.include_router(hints.router)
+app.include_router(wargames.router)
