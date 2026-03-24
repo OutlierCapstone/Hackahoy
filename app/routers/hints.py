@@ -7,6 +7,8 @@ from app.models import ProblemSolvingHistory, LogEntry, HintRequest
 
 router = APIRouter(prefix="/hint", tags=["hint"])
 
+N_RESULTS = 5
+
 # Calculate hint level
 def calculate_level(hint_count: int, history: ProblemSolvingHistory) -> int:
     score = hint_count
@@ -56,29 +58,44 @@ def user_logs_to_str(logs: list[LogEntry]) -> list[str]:
 @router.post("/")
 def generate_hint(request: HintRequest) -> str:
     '''Generate a contextual hint based on user logs and problem history'''
+    level = calculate_level(request.hint_count, request.history)
+    SECTION_MAP = {
+    1: ["observation", "wrong"],
+    2: ["observation", "thinking", "wrong"],
+    3: ["thinking", "write-up", "wrong"],
+    4: ["write-up", "point", "type_def", "wrong"]
+    }
+
+    section = SECTION_MAP.get(level, SECTION_MAP[4])
+    logger.debug(f"section: {section}")
+    
     query_text = "".join(user_logs_to_str(request.logs))
     logger.debug(f"Query texts: {query_text}")
         
     try:
         search_results = collection.query(
             query_texts=query_text,
-            n_results=1,
-            where={"problem_id": request.problem_id}
+            n_results=N_RESULTS,
+            where={"$and":[
+                    {"section": {"$in": section}},
+                    {"problem_id": request.problem_id}
+                ]
+            }
         )
 
         if not search_results["documents"] or not search_results["documents"][0]:
             logger.error("No relevant data found")
             raise HTTPException(status_code=404, detail="Data not found")
 
-        context = search_results["documents"][0][0]
+        title = search_results["metadatas"][0][0]["title"]
+        context = "\n".join(search_results["documents"][0])
+        logger.debug(f"context: {context}")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error while querying ChromaDB: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-    level = calculate_level(request.hint_count, request.history)
 
     prompt = f"""
 당신은 보안 워게임 튜터입니다.
@@ -89,30 +106,13 @@ def generate_hint(request: HintRequest) -> str:
 최대 500자 이내로 간결하게 작성하세요.
 줄바꿈 문자는 사용하지 마세요.
 
-<참고 자료 용어 설명>
-type : 문제 유형
-category : 문제 세부 유형
-title : 문제 제목
-point : 문제의 본질 요약
-write-up : 모범 풀이 절차
-observation : 관찰 포인트
-thinking : 사고 유도 질문
-wrong : 잘못된 접근
-
-<Level 가이드>
-Level 1 : 관찰 유도, observation 기반 질문, 취약점 이름 언급 금지
-Level 2 : 사고 유도, thinking 기반 질문, 취약점 이름 언급 금지
-Level 3 : 행동 제안, write-up 기반 질문, 취약점의 개념적 특징 언급
-Level 4 : 핵심 직전 힌트, point 간접 설명, 취약점 이름 언급 가능
-
-현재 힌트 단계는 Level {level} 입니다.
-
+문제 제목: {title}
 참고 자료: {context}
 사용자 상황: {query_text}
 """
 
     if request.history.previous_hint:
-            prompt += f"\n직전에 제공된 힌트: {request.history.previous_hint} 이것보다 조금만 더 알려주세요."
+            prompt += f"\n직전에 제공된 힌트: {request.history.previous_hint}, 이것보다 조금만 더 알려주세요."
 
     try:
         response = genai_client.models.generate_content(

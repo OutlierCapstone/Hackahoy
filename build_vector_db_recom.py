@@ -284,19 +284,30 @@ def generate_type_definition(game) -> str:
     )
     return response.text.strip()
 
+def split_lines(text: str):
+    return [
+        line.strip()
+        for line in text.split("\n")
+        if line.strip()
+    ]
+
 # Prepare data for ChromaDB collection
 for game in wargames:
     type_definition = generate_type_definition(game)
     
-    sections = [
+    single_sections = [
         ("type_def", type_definition),
         ("point", game["point"]),
-        ("write-up", game["write-up"]),
+        ("write-up", game["write-up"])
+    ]
+    
+    multi_sections = [
         ("observation", game["observation"]),
         ("thinking", game["thinking"]),
         ("wrong", game["wrong"])
     ]
-    for sec_name, sec_content in sections:
+    
+    for sec_name, sec_content in single_sections:
         metadata = {
             "problem_id": game["problem_id"],
             "title": game["title"],
@@ -311,6 +322,26 @@ for game in wargames:
             documents=[sec_content],
             metadatas=[metadata],
         )
+    
+    for sec_name, sec_content in multi_sections:
+        lines = split_lines(sec_content)
+        
+        for lidx, line in enumerate(lines):
+            metadata = {
+                "problem_id": game["problem_id"],
+                "title": game["title"],
+                "category": game["category"].lower(),
+                "type": game["type"],
+                "difficulty": game["difficulty"],
+                "section": sec_name,
+                "line_index": lidx
+            }    
+        
+            collection.upsert(
+                ids=[f"{game['problem_id']}_{sec_name}_{lidx}"], # e.g. 6_thinking_1
+                documents=[line],
+                metadatas=[metadata],
+            )
 
 # Retrieve the documents to confirm they were added
 print("벡터 DB 생성 완료")

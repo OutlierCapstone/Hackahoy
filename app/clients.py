@@ -58,7 +58,6 @@ embedding_function = GeminiEmbeddingFunction(genai_client)
 
 # Load the existing ChromaDB collection
 collection = chroma_client.get_collection(
-    # name="wargame_collection",
     name="problems",
     embedding_function=embedding_function
 )

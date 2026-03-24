@@ -49,4 +49,4 @@ collection = chroma_client.get_collection(
 
 print(collection.name)
 print(collection.count())
-print(collection.get())
+print(collection.get()) # ids="2_wrong_1"
