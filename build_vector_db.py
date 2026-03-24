@@ -209,8 +209,8 @@ wargames = [
         1. 일반 계정 로그인
         2. 로컬 스토리지의 JWT 확인
         3. JWT 디코더를 사용하여 Payload 의 'role'을 'user'에서 'admin'으로 변조
-        3. 변조된 토큰을 Authorization 헤더에 담아 /admin 엔드포인트 호출
-        4. 관리자 페이지에 있는 플래그 획득
+        4. 변조된 토큰을 Authorization 헤더에 담아 /admin 엔드포인트 호출
+        5. 관리자 페이지에 있는 플래그 획득
         """,
         "observation": """
         - 클라이언트에 저장된 인증 데이터가 평문 형태이다.
