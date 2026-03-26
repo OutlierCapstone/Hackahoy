@@ -23,6 +23,8 @@ import { AllExceptionsFilter } from './common/middleware/filters/all-exceptions.
 import { JwtModule } from '@nestjs/jwt';
 import { BanCheckGuard } from './common/guard/ban-check.guard';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { CollectModule } from './collect/collect.module';
+import { AiTutorModule } from './ai-tutor/ai-tutor.module';
 
 @Module({
   imports: [
@@ -41,7 +43,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     }
   ]),
   JwtModule.register({ secret: process.env.JWT_SECRET }),
-    AuthModule, PrismaModule, IslandsModule, ProblemModule, ChallengeModule, BanModule, EventsModule
+    AuthModule, PrismaModule, IslandsModule, ProblemModule, ChallengeModule, BanModule, EventsModule, CollectModule, AiTutorModule
   ],
   controllers: [AppController, AdminController],
   providers: [

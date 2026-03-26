@@ -31,13 +31,6 @@ export default function CreateSlotsLayer({
   const isAdmin = user?.role === "ADMIN";
 
   const isOccupied = (id: PinId) => {
-<<<<<<< HEAD
-    const dbOccupied = islands.some(isl => isl.id === id);
-    const localOccupied = storeOccupiedPins?.has(id) ?? false;
-    
-    return dbOccupied || localOccupied;
-  };
-=======
   // 1번과 2번 핀은 무조건 활성화 상태(true)로 리턴합니다.
   if (id === 1 || id === 2) return true;
 
@@ -46,7 +39,6 @@ export default function CreateSlotsLayer({
   
   return dbOccupied || localOccupied;
 };
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
 
   const goIsland = (pinId: PinId) => {
     if (!user) {

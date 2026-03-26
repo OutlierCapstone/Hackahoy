@@ -14,7 +14,6 @@ export class AuthService {
     return this.jwt.sign(payload);
   }
 
-
   async upsertSocialUser(params: {
     provider: 'KAKAO' | 'GOOGLE' | 'NAVER';
     providerId: string;
@@ -27,45 +26,38 @@ export class AuthService {
           providerId: params.providerId,
         },
       },
-      update: {}, 
+      update: {},
       create: {
         provider: params.provider,
         providerId: params.providerId,
         nickname: params.nickname,
       },
     });
-    if (user.isBanned) {
-      // 여기서 에러를 던져야 프론트에서 모달을 띄울 수 있음!
-      throw new ForbiddenException({
-        message: '차단된 계정입니다.',
-        reason: '규정 위반 (반복된 에러 발생)',
-        type: 'BANNED'
-      });
-    }
 
-    // 🔥 [추가] BanHistory 테이블에서 현재 유효한 차단 기록이 있는지 확인
+    // BanHistory 테이블에서 현재 유효한 차단 기록이 있는지 확인
     const activeBan = await this.prisma.banHistory.findFirst({
       where: {
         userId: user.id,
         releasedAt: { gt: new Date() }, // 현재 시간보다 해제 시간이 미래인 경우
       },
-      orderBy: { bannedAt: 'desc' }, // 가장 최근 기록 하나만
+      orderBy: { bannedAt: 'desc' },
     });
 
-    // 1. 자동 차단 기록이 있거나, 2. 수동 차단(isBanned) 상태인 경우
+    // 1. 자동 차단 기록이 있거나, 2. 수동 차단(isBanned) 상태인 경우 처리
     if (activeBan || user.isBanned) {
       throw new ForbiddenException({
         error: 'BANNED_USER',
         message: '이용이 제한된 계정입니다.',
         reason: activeBan?.reason || '관리자에 의한 수동 차단',
         releasedAt: activeBan?.releasedAt || '영구 차단',
+        type: 'BANNED',
       });
     }
 
     return user;
   }
 
-  // Mypage
+  // Mypage 정보 조회
   async getMyProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -73,7 +65,7 @@ export class AuthService {
         id: true,
         nickname: true,
         levelNum: true,
-        provider: true,  
+        provider: true,
         providerId: true,
         isAdmin: true,
         isBanned: true,
@@ -107,24 +99,12 @@ export class AuthService {
   async deleteUserAccount(userId: string) {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        
-        // SubmitFlag 삭제
-        await tx.submitFlag.deleteMany({
-          where: { userId: userId },
-        });
-
-        // SolvedHistory 삭제
-        await tx.solvedHistory.deleteMany({
-          where: { userId: userId },
-        });
-
-        // 유저 본인 삭제
-        return await tx.user.delete({
-          where: { id: userId },
-        });
+        await tx.submitFlag.deleteMany({ where: { userId } });
+        await tx.solvedHistory.deleteMany({ where: { userId } });
+        return await tx.user.delete({ where: { id: userId } });
       });
     } catch (error) {
-      console.error("DB 유저 삭제 중 에러 발생:", error);
+      console.error('DB 유저 삭제 중 에러 발생:', error);
       throw error;
     }
   }
@@ -158,63 +138,43 @@ export class AuthService {
     });
   }
 
-<<<<<<< HEAD
-=======
-  /*
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
-  async batchUpdateUsers(users: any[]) {
-    // 유저 상태 업데이트
-    return this.prisma.$transaction(
-      users.map((u) =>
-        this.prisma.user.update({
-          where: { id: u.id },
-          data: {
-            isAdmin: u.role === 'ADMIN',
-            isBanned: u.banned,
-          },
-        }),
-      ),
-    );
-  }
-<<<<<<< HEAD
-=======
-  */
-
+  // 관리자 - 여러 유저 상태 일괄 업데이트 및 차단 해제 로직
   async batchUpdateUsers(users: any[]) {
     return this.prisma.$transaction(
-      users.map((u) => {
-        // 1. 유저 정보 업데이트
-        const userUpdate = this.prisma.user.update({
-          where: { id: u.id },
-          data: {
-            isAdmin: u.role === 'ADMIN',
-            isBanned: u.banned,
-          },
-        });
+      users
+        .map((u) => {
+          // 1. 유저 기본 정보 업데이트
+          const userUpdate = this.prisma.user.update({
+            where: { id: u.id },
+            data: {
+              isAdmin: u.role === 'ADMIN',
+              isBanned: u.banned,
+            },
+          });
 
-        // 2. 만약 차단을 해제(banned: false)하는 경우라면 BanHistory도 정리
-        if (u.banned === false) {
-          return [
-            userUpdate,
-            this.prisma.banHistory.updateMany({
-              where: {
-                userId: u.id,
-                releasedAt: { gt: new Date() }, // 아직 차단 기간이 남은 기록들
-              },
-              data: {
-                releasedAt: new Date(), // 해제 시간을 지금으로 변경
-              },
-            }),
-          ];
-        }
+          // 2. 차단 해제(banned: false) 시 BanHistory의 남은 기간 초기화
+          if (u.banned === false) {
+            return [
+              userUpdate,
+              this.prisma.banHistory.updateMany({
+                where: {
+                  userId: u.id,
+                  releasedAt: { gt: new Date() },
+                },
+                data: {
+                  releasedAt: new Date(),
+                },
+              }),
+            ];
+          }
 
-        return userUpdate;
-      }).flat() // 중첩된 배열을 평탄화하여 트랜잭션 실행
+          return userUpdate;
+        })
+        .flat(),
     );
   }
 
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
-    async getMe(userId: string) {
+  async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -224,7 +184,7 @@ export class AuthService {
         isAdmin: true,
         provider: true,
         providerId: true,
-      }
+      },
     });
 
     if (!user) return null;

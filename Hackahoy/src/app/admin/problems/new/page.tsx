@@ -10,10 +10,7 @@ import axios from 'axios';
 function toPinId(v: string | null): number | null {
   if (!v) return null;
   const n = Number(v);
-<<<<<<< HEAD
-=======
   // 현재 기획된 1, 2, 3번 핀 외에도 확장을 고려한다면 범위를 조절하세요.
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
   return n === 1 || n === 2 || n === 3 ? n : null;
 }
 
@@ -34,12 +31,8 @@ function AdminCreateProblemContent() {
   const [description, setDescription] = useState('');
   const [flag, setFlag] = useState('');
   const [serverUrl, setServerUrl] = useState('');
-<<<<<<< HEAD
-  const [category, setCategory] = useState<'WEB' | 'AI' | ''>(''); // 카테고리 상태 추가
-=======
   const [category, setCategory] = useState<'WEB' | 'AI' | ''>('');
   const [writeUp, setWriteUp] = useState(''); // Write-up 상태 추가
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -61,14 +54,9 @@ function AdminCreateProblemContent() {
     const rawDescription = description.trim();
     const rawFlag = flag.trim();
     const rawUrl = serverUrl.trim();
-<<<<<<< HEAD
-
-    // 필수 입력값 검증
-=======
     const rawWriteUp = writeUp.trim();
 
     // 필수 입력값 검증 (Write-up은 선택 사항으로 둘 수도 있지만, 여기서는 포함)
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
     if (!rawTitle || !rawDescription || !rawFlag || !rawUrl || !category) {
       setError('모든 필드를 입력하고 카테고리(WEB/AI)를 선택해주세요.');
       setLoading(false);
@@ -78,20 +66,6 @@ function AdminCreateProblemContent() {
     try {
       const token = localStorage.getItem('accessToken');
 
-<<<<<<< HEAD
-      await axios.post(
-        'http://localhost:4000/admin/problems',
-        {
-          islandId: pinId,
-          title: rawTitle,
-          description: rawDescription,
-          category: category, // 선택된 카테고리 전송
-          hint: '힌트는 기본값입니다.',
-          correctFlag: rawFlag,
-          serverLink: rawUrl,
-        },
-=======
-      // 서버로 보낼 데이터 객체
       const payload = {
         islandId: pinId,
         title: rawTitle,
@@ -100,24 +74,20 @@ function AdminCreateProblemContent() {
         hint: '힌트는 기본값입니다.',
         correctFlag: rawFlag,
         serverLink: rawUrl,
-        // Write-up 데이터를 JSON 형식 문자열로 저장
-        writeup: JSON.stringify({ content: rawWriteUp }),
+        
+        // 🔥 [중요] JSON.stringify({ content: ... })를 제거하고 
+        // 사용자가 입력한 JSON 문자열을 그대로(rawWriteUp) 보냅니다.
+        writeup: rawWriteUp, 
       };
 
       await axios.post(
         'http://localhost:4000/admin/problems',
         payload,
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       alert('✅ 문제가 성공적으로 등록되었습니다!');
-<<<<<<< HEAD
-=======
       // 등록 후 해당 섬 페이지로 이동
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
       router.push(`/island/${pinId}`);
     } catch (err: any) {
       setError(
@@ -163,12 +133,6 @@ function AdminCreateProblemContent() {
               className={styles.textarea}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-<<<<<<< HEAD
-              placeholder="설명을 입력하세요"
-            />
-          </div>
-
-=======
               placeholder="문제를 설명하세요."
             />
           </div>
@@ -195,7 +159,6 @@ function AdminCreateProblemContent() {
 />
           </div>
 
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
           {/* Category 선택 버튼 (WEB / AI) */}
           <div className={styles.field}>
             <div className={styles.label}>Category</div>

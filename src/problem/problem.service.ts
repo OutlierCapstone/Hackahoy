@@ -112,10 +112,7 @@ export class ProblemService {
   }
 
   // 5. 신규 문제 생성 (카테고리 및 섬 연결)
-<<<<<<< HEAD
-=======
   /*
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
   async createProblem(data: any) {
     return this.prisma.problem.create({
       data: {
@@ -131,20 +128,38 @@ export class ProblemService {
       },
     });
   }
-<<<<<<< HEAD
-=======
     */
   async createProblem(data: any) {
-    let finalMetadata: any = undefined; // null 대신 undefined로 초기화
+    let finalMetadata: any = undefined;
 
     if (data.writeup && data.writeup.trim() !== "") {
       try {
-        finalMetadata = typeof data.writeup === 'string' 
-          ? JSON.parse(data.writeup) 
-          : data.writeup;
+        const obj = JSON.parse(data.writeup);
+
+        // 원하는 키 순서대로 재조립
+        const KEY_ORDER = ['title', 'category', 'type', 'difficulty', 'point', 'write_up', 'observation', 'thinking', 'wrong'];
+        
+        const ordered: any = {};
+        for (const key of KEY_ORDER) {
+          if (key in obj) {
+            ordered[key] = typeof obj[key] === 'string'
+              ? obj[key].replace(/\r?\n/g, ', ').replace(/\s+/g, ' ').trim()
+              : obj[key];
+          }
+        }
+        // KEY_ORDER에 없는 키가 있으면 뒤에 추가
+        for (const key of Object.keys(obj)) {
+          if (!(key in ordered)) {
+            ordered[key] = typeof obj[key] === 'string'
+              ? obj[key].replace(/\r?\n/g, ', ').replace(/\s+/g, ' ').trim()
+              : obj[key];
+          }
+        }
+
+        finalMetadata = ordered;
+
       } catch (e) {
-        // JSON 파싱 실패 시 일반 객체로 감싸서 저장
-        finalMetadata = { rawText: data.writeup };
+        finalMetadata = { rawContent: data.writeup.replace(/\r?\n/g, ', ').trim() };
       }
     }
 
@@ -155,14 +170,10 @@ export class ProblemService {
         category: data.category,
         correctFlag: data.correctFlag,
         serverLink: data.serverLink,
-        hint: data.hint || '힌트가 없습니다.',
-        // 값이 있을 때만 넣고, 없으면 undefined를 주어 필드 생성을 건너뜁니다.
-        metadata: finalMetadata ?? undefined, 
-        island: { 
-          connect: { id: data.islandId ? Number(data.islandId) : 1 } 
-        },
+        hint: '힌트가 없습니다.',
+        metadata: finalMetadata ?? undefined,
+        island: { connect: { id: data.islandId ? Number(data.islandId) : 1 } },
       },
     });
   }
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
 }
