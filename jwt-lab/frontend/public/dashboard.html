@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - SomeTask</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body id="dash-body">
+    <!-- Header -->
+    <header class="dash-header">
+      <div class="dash-header-left">
+        <img src="../img/logo.png" alt="Logo" class="dash-logo" />
+      </div>
+      <nav class="dash-nav-menu">
+        <a href="#">Designer</a>
+        <a href="#">Marketer</a>
+        <a href="#">Translator</a>
+        <a href="#">Tech</a>
+        <a href="#">Music</a>
+      </nav>
+      <div class="dash-header-right">
+        <div id="user-profile">
+          <span id="user-name">Hello, User</span>
+          <div class="profile-menu" id="profileMenu">
+            <a href="index.html" class="profile-menu-link">Main</a>
+            <a href="#" id="logout" class="profile-menu-link">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dash-main">
+      <div class="dash-welcome-box">
+        <h2>Welcome, <span id="dash-user-name">User</span></h2>
+        <p id="dash-welcome-box-sub">
+          Start building your own tasks with ease!
+        </p>
+        <!-- Create Task 버튼 -->
+        <button class="dash-btn dash-btn-primary" id="create-task-btn">
+          Create a Task
+        </button>
+
+        <!-- Task 등록 모달 -->
+        <div id="taskModal" class="modal">
+          <div class="modal-content">
+            <span class="close-btn" id="close-task-modal">&times;</span>
+            <form id="taskForm" class="dash-task-form">
+              <h3>Register Your Task</h3>
+              <label
+                >Title:<br /><input type="text" id="title" required /></label
+              ><br />
+              <label
+                >Description:<br />
+                <textarea id="description" rows="3" required></textarea></label
+              ><br />
+              <button type="submit" class="dash-btn dash-btn-submit">
+                Submit Task
+              </button>
+              <p id="taskMessage"></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task List Section -->
+      <section id="taskList" class="dash-task-list">
+        <h3>Your Tasks</h3>
+        <ul id="taskItems"></ul>
+      </section>
+
+      <!-- Admin Panel -->
+      <section id="dash-admin-panel" style="display: none">
+        <h3>Admin Panel</h3>
+        <div class="admin-data-box">
+          <div id="admin-result">
+            <!-- 유저 목록과 플래그 정보가 여기에 표시됨 -->
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="../main.js"></script>
+  </body>
+</html>

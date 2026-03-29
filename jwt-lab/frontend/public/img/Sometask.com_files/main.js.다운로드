@@ -1,0 +1,229 @@
+// =====================
+// 초기 관리자 계정 설정
+// =====================
+function initializeDefaultUsers() {
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const adminExists = users.find((u) => u.role === "admin");
+  if (!adminExists) {
+    const defaultAdmin = {
+      email: "admin@test.com",
+      name: "Administrator",
+      password: "admin123",
+      role: "admin",
+    };
+    users.push(defaultAdmin);
+    localStorage.setItem("users", JSON.stringify(users));
+    console.log("✅ 기본 관리자 계정 생성 완료!");
+  }
+}
+
+// =====================
+// 공통 로그아웃
+// =====================
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = "index.html";
+}
+
+// =====================
+// DOM 준비되면 실행
+// =====================
+window.addEventListener("DOMContentLoaded", () => {
+  initializeDefaultUsers();
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // ===== 요소 선언 =====
+  const profile = document.getElementById("user-profile");
+  const loginBtn = document.getElementById("loginBtn");
+  const accessionBtn = document.getElementById("accessionBtn");
+  const usd = document.getElementById("USD");
+  const logoutBtn = document.getElementById("logout"); // 🔥 누락된 부분
+  const userProfile = document.getElementById("user-profile");
+  const profileMenu = document.getElementById("profileMenu");
+
+  // ===== 사용자 이름 표시 =====
+  const userNameEls = document.querySelectorAll("#user-name, #dash-user-name");
+  userNameEls.forEach((el) => {
+    el.textContent = user?.name ? `${user.name}` : "";
+  });
+
+  // ===== 로그인 상태에 따라 UI 표시 =====
+  const toggleDisplay = (el, show) => {
+    if (el) el.style.display = show ? "inline-block" : "none";
+  };
+
+  const isLoggedIn = user && user.name && user.email;
+  toggleDisplay(profile, isLoggedIn);
+  toggleDisplay(loginBtn, !isLoggedIn);
+  toggleDisplay(accessionBtn, !isLoggedIn);
+  toggleDisplay(usd, !isLoggedIn);
+  toggleDisplay(logoutBtn, isLoggedIn);
+
+  // ===== 로그아웃 이벤트 =====
+  logoutBtn?.addEventListener("click", logout);
+  document.getElementById("logout-btn")?.addEventListener("click", logout);
+
+  // ===== 로그인 모달 처리 =====
+  const loginModal = document.getElementById("loginModal");
+  document.getElementById("loginBtn")?.addEventListener("click", () => {
+    if (loginModal) loginModal.style.display = "block";
+  });
+  document.querySelector(".close-btn")?.addEventListener("click", () => {
+    if (loginModal) loginModal.style.display = "none";
+  });
+  window.addEventListener("click", (e) => {
+    if (e.target === loginModal) loginModal.style.display = "none";
+  });
+
+  // ===== 회원가입 모달 =====
+  document.querySelectorAll(".signup-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const signupModal = document.getElementById("signupModal");
+      if (signupModal) signupModal.style.display = "block";
+    })
+  );
+
+  // ===== 회원가입 처리 =====
+  document.getElementById("signup-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("signup-email").value.trim();
+    const name = document.getElementById("signup-name").value.trim();
+    const password = document.getElementById("signup-password").value.trim();
+    const role = "user";
+
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    if (users.find((u) => u.email === email)) {
+      alert("이미 등록된 이메일입니다.");
+      return;
+    }
+
+    users.push({ email, name, password, role });
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("회원가입 성공! 로그인 해주세요.");
+    document.getElementById("signupModal").style.display = "none";
+    document.getElementById("loginModal").style.display = "block";
+  });
+
+  // ===== 로그인 처리 =====
+  document.getElementById("login-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    const loginUser = users.find(
+      (u) => u.email === email && u.password === password
+    );
+
+    if (loginUser) {
+      localStorage.setItem("user", JSON.stringify(loginUser));
+      alert("로그인 성공!");
+      document.getElementById("loginModal").style.display = "none";
+      window.location.href = "dashboard.html";
+    } else {
+      alert("이메일 또는 비밀번호가 잘못되었습니다.");
+    }
+  });
+
+  // ===== 드롭다운 =====
+  userProfile?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (profileMenu)
+      profileMenu.style.display =
+        profileMenu.style.display === "block" ? "none" : "block";
+  });
+  profileMenu?.addEventListener("click", (e) => e.stopPropagation());
+  window.addEventListener("click", () => {
+    if (profileMenu) profileMenu.style.display = "none";
+  });
+
+  // =====================
+  // 대시보드 기능
+  // =====================
+  if (window.location.pathname.includes("dashboard.html")) {
+    if (!user || !user.role) {
+      alert("로그인이 필요합니다.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    // Admin Panel 표시
+    if (user.role === "admin") {
+      const adminPanel = document.getElementById("dash-admin-panel");
+      if (adminPanel) adminPanel.style.display = "block";
+
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+
+      fetch(
+        `http://localhost:5000/api/flag?user=${encodeURIComponent(user.email)}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const resultBox = document.getElementById("admin-result");
+          resultBox.innerHTML = `
+👥 <strong>User List:</strong><br>
+${users.map((u, i) => `${i + 1}. ${u.name} (${u.email})`).join("<br>")}
+<br><br>
+🚩 <strong>Flag:</strong> ${data.flag || "권한 없음"}
+          `;
+        })
+        .catch((err) => {
+          console.error("Flag 불러오기 실패", err);
+        });
+    }
+
+    // 태스크 등록
+    document
+      .getElementById("create-task-btn")
+      ?.addEventListener("click", () => {
+        document.getElementById("taskModal").style.display = "block";
+      });
+
+    document
+      .getElementById("close-task-modal")
+      ?.addEventListener("click", () => {
+        document.getElementById("taskModal").style.display = "none";
+      });
+
+    window.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("taskModal")) {
+        document.getElementById("taskModal").style.display = "none";
+      }
+    });
+
+    document.getElementById("taskForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const taskMessage = document.getElementById("taskMessage");
+
+      if (!title || !description) {
+        taskMessage.textContent = "모든 항목을 입력해주세요.";
+        return;
+      }
+
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${title}</strong>: ${description}`;
+      document.getElementById("taskItems").appendChild(li);
+      document.getElementById("taskForm").reset();
+      document.getElementById("taskModal").style.display = "none";
+
+      const tasks = [...document.querySelectorAll("#taskItems li")].map(
+        (li) => li.textContent
+      );
+      const taskKey = `tasks_${user.email}`;
+      localStorage.setItem(taskKey, JSON.stringify(tasks));
+    });
+
+    // 저장된 태스크 로딩
+    const taskKey = `tasks_${user.email}`;
+    const saved = JSON.parse(localStorage.getItem(taskKey) || "[]");
+    saved.forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      document.getElementById("taskItems").appendChild(li);
+    });
+  }
+});

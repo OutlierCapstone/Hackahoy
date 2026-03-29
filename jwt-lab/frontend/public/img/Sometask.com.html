@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)http://localhost:3000/index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sometask.com</title>
+    <link rel="stylesheet" href="./Sometask.com_files/style.css">
+    <link href="./Sometask.com_files/css2" rel="stylesheet">
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <img src="./Sometask.com_files/logo.png" alt="Sometask Logo" class="logo">
+        <input type="text" class="search-bar" placeholder="Find tasks starting at just $1">
+      </div>
+      <nav class="nav-menu">
+        <a href="http://localhost:3000/index.html#">designer</a>
+        <a href="http://localhost:3000/index.html#">Marketer</a>
+        <a href="http://localhost:3000/index.html#">Author &amp; Translator</a>
+        <a href="http://localhost:3000/index.html#">Photographer &amp; Videographer</a>
+        <a href="http://localhost:3000/index.html#">technology</a>
+        <a href="http://localhost:3000/index.html#">NFT Artist</a>
+        <a href="http://localhost:3000/index.html#">Music &amp; Audio</a>
+        <a href="http://localhost:3000/index.html#">Business &amp; Data</a>
+        <a href="http://localhost:3000/index.html#">Life Styler</a>
+      </nav>
+      <div class="header-right">
+        <button class="btn login" id="loginBtn" style="display: none;">log in</button>
+        <!-- 로그인 모달 -->
+        <div id="loginModal" class="modal">
+          <div class="modal-content">
+            <!-- 닫기 버튼 -->
+            <button class="close-btn">✕</button>
+            <div class="modal-left">
+              <h2>Gain access to<br>thousands of skilled freelancers</h2>
+              <ul>
+                <li>✔ 24/7 Live Chat Support</li>
+                <li>✔ 30,000+ Live Tasks</li>
+                <li>✔ 100% Payment Protection with SomeTaskProtection™</li>
+              </ul>
+              <img src="./Sometask.com_files/loginimage.png" alt="freelancer image">
+            </div>
+
+            <div class="modal-right">
+              <form id="login-form">
+                <h2>Log in to SomeTask</h2>
+                <input id="email" type="email" placeholder="Email address" required="">
+                <input id="password" type="password" placeholder="Password" required="">
+                <button class="login-btn" type="submit">log in</button>
+                <p class="signup">
+                  Don't have a SomeTask account?<br>
+                  <a href="http://localhost:3000/index.html#" id="openSignup" class="signup-btn">Sign up now</a>
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Signup 모달 -->
+        <div id="signupModal" class="modal">
+          <div class="modal-content">
+            <button class="close-btn" onclick="document.getElementById(&#39;signupModal&#39;).style.display=&#39;none&#39;">✕</button>
+            <div class="modal-right" style="width: 100%; padding: 40px;">
+              <form id="signup-form" class="signup-form">
+                <h2>Create your SomeTask account</h2>
+                <input id="signup-email" type="email" placeholder="Email address" required="">
+                <input id="signup-name" type="text" placeholder="Your name" required="">
+                <input id="signup-password" type="password" placeholder="Password" required="">
+                <button type="submit" class="login-btn">Sign Up</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- 로그인한 후 표시될 프로필 메뉴 -->
+    <!-- 전체 프로필 영역을 감싸는 컨테이너 -->
+    <div id="user-profile" style="display: inline-block;">
+      <span id="user-name">aaa</span>
+
+      <!-- 드롭다운 메뉴 -->
+      <div class="profile-menu" id="profileMenu">
+        <a href="http://localhost:3000/dashboard.html" class="profile-menu-link">Dashboard</a>
+        <a href="http://localhost:3000/index.html#" id="logout" class="profile-menu-link" style="display: inline-block;">Logout</a>
+      </div>
+    </div>
+        <button class="btn accession" id="accessionBtn" style="display: none;">accession</button>
+        <div id="USD" style="display: none;">USD🌐</div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Hiring Freelancers<br>Made Easy</h1>
+        <p>
+          Search for a task or list your job and have them reach out to you.<br>
+          Pay for the work using card or crypto
+          <span class="hero-icons">
+            <img src="./Sometask.com_files/bitcoin1.png" alt="icon">
+            <img src="./Sometask.com_files/bnb.png" alt="icon">
+            <img src="./Sometask.com_files/xrp.png" alt="icon">
+          </span>
+        </p>
+        <div class="hero-buttons">
+          <button class="primary-btn">Search for a task</button>
+          <button class="secondary-btn">List a job</button>
+        </div>
+      </div>
+      <div class="hero-images">
+        <img src="./Sometask.com_files/profile1.PNG" class="avatar avatar1">
+        <img src="./Sometask.com_files/profile2.PNG" class="avatar avatar2">
+        <img src="./Sometask.com_files/profile3.PNG" class="avatar avatar3">
+        <img src="./Sometask.com_files/profile4.PNG" class="avatar avatar4">
+        <img src="./Sometask.com_files/profile5.PNG" class="avatar avatar5">
+        <img src="./Sometask.com_files/profile6.PNG" class="avatar avatar6">
+      </div>
+    </section>
+
+    <!-- Featured Tasks Section -->
+    <section class="featured-section">
+      <h2>Featured Tasks</h2>
+      <div class="task-grid">
+        <div class="task-card">
+          <img src="./Sometask.com_files/logojob.jpg" class="task-image" alt="task image">
+          <div class="task-user">
+            <img src="./Sometask.com_files/user1.jpg" class="cardavatar">
+            <span class="username">logomaker430</span>
+          </div>
+          <div class="task-desc">
+            I Will Do Professional Logo Design In 12 Hours
+          </div>
+          <div class="task-meta">
+            <span class="rating">⭐ 5.0 (146)</span>
+            <span class="delivery">🚚 1 day / US$20.00</span>
+          </div>
+        </div>
+        <!-- 카드 3개 추가 복제 -->
+        <div class="task-card">
+          <img src="./Sometask.com_files/cartoonjob.jpeg" class="task-image" alt="task image">
+          <div class="task-user">
+            <img src="./Sometask.com_files/user2.jpeg" class="cardavatar">
+            <span class="username">greenmanbd</span>
+          </div>
+          <div class="task-desc">
+            I will remove or change any background professionally
+          </div>
+          <div class="task-meta">
+            <span class="rating">⭐ 5.0</span>
+            <span class="delivery">🚚 1 day / US$5.00</span>
+          </div>
+        </div>
+        <div class="task-card">
+          <img src="./Sometask.com_files/bannerjob.jpeg" class="task-image" alt="task image">
+          <div class="task-user">
+            <img src="./Sometask.com_files/user3.jpeg" class="cardavatar">
+            <span class="username">creative247</span>
+          </div>
+          <div class="task-desc">
+            Professional web banner design, ads design, social media
+          </div>
+          <div class="task-meta">
+            <span class="rating">⭐ 5.0</span>
+            <span class="delivery">🚚 2 days / US$10.00</span>
+          </div>
+        </div>
+        <div class="task-card">
+          <img src="./Sometask.com_files/backgroundjob.jpeg" class="task-image" alt="task image">
+          <div class="task-user">
+            <img src="./Sometask.com_files/user4.jpeg" class="cardavatar">
+            <span class="username">antorkan</span>
+          </div>
+          <div class="task-desc">
+            I will draw cartoon portrait from your photo
+          </div>
+          <div class="task-meta">
+            <span class="rating">⭐ 4.9</span>
+            <span class="delivery">🚚 1 day / US$5.00</span>
+          </div>
+        </div>
+    </div></section>
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <div class="stat">
+        <p class="label">Our digital tasks are up to</p>
+        <p class="value">It's more than 5 times</p>
+      </div>
+      <div class="stat">
+        <p class="label">Permissions Granted by Us</p>
+        <p class="value">More than 15,000 people</p>
+      </div>
+      <div class="stat">
+        <p class="label">The countries of origin of the experts are</p>
+        <p class="value">More than 140 countries</p>
+      </div>
+    </section>
+    <!-- Section: Trusted by 650,000+ -->
+    <section class="trusted">
+      <h2>Trusted by over 650,000 people worldwide</h2>
+      <div class="trusted-grid">
+        <div class="trusted-item">
+          <img src="./Sometask.com_files/logodesign.jpeg" alt="Logo Design">
+          <span>Logo Design</span>
+        </div>
+        <div class="trusted-item">
+          <img src="./Sometask.com_files/graphicdesign.jpeg" alt="Photo Editing">
+          <span>Photo Editing &amp; Retouching</span>
+        </div>
+        <div class="trusted-item">
+          <img src="./Sometask.com_files/videodesign.jpeg" alt="Video Editing">
+          <span>Video Editing</span>
+        </div>
+        <div class="trusted-item">
+          <img src="./Sometask.com_files/datadesign.jpeg" alt="Data Entry">
+          <span>Data Entry</span>
+        </div>
+        <div class="trusted-item">
+          <img src="./Sometask.com_files/this.jpeg" alt="SEO">
+          <span>THIS</span>
+        </div>
+        <div class="trusted-item">
+          <img src="./Sometask.com_files/mediadesign.jpeg" alt="Social Media">
+          <span>Social Media Advertising</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Business Services -->
+<!-- Section: Business Services -->
+<section class="business-services">
+  <h2>Everything you need for your business</h2>
+  <div class="services-grid">
+    <div class="service-item">
+      <img src="./Sometask.com_files/visualdesign-removebg-preview.png" alt="Visual Design">
+      <p>Visual Design</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/marketing-removebg-preview.png" alt="Marketing">
+      <p>Marketing</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/writing-removebg-preview.png" alt="Writing &amp; Translation">
+      <p>Writing &amp; Translation</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/photography-removebg-preview.png" alt="Photography, Video &amp; Animation">
+      <p>Photography, Video &amp; Animation</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/programming.png" alt="Programming &amp; Tech">
+      <p>Programming &amp; Tech</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/art-removebg-preview.png" alt="NFT &amp; Digital Art">
+      <p>NFT &amp; Digital Art</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/music-removebg-preview.png" alt="Music &amp; Audio">
+      <p>Music &amp; Audio</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/business-removebg-preview.png" alt="Business &amp; Data">
+      <p>Business &amp; Data</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/lifestyle-removebg-preview.png" alt="Lifestyle">
+      <p>Lifestyle</p>
+    </div>
+    <div class="service-item">
+      <img src="./Sometask.com_files/all-removebg-preview.png" alt="All Tasks">
+      <p>All Tasks</p>
+    </div>
+  </div>
+</section>
+
+    <!-- Section: Footer -->
+    <footer class="site-footer">
+      <div class="footer-columns">
+        <div>
+          <h4>Category</h4>
+          <ul>
+            <li>designer</li>
+            <li>Marketer</li>
+            <li>Author &amp; Translator</li>
+            <li>Photographer &amp; Videographer</li>
+            <li>technology</li>
+            <li>NFT Artist</li>
+            <li>Music &amp; Audio</li>
+            <li>Business &amp; Data</li>
+            <li>Life Styler</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Information</h4>
+          <ul>
+            <li>Meet the sellers</li>
+            <li>News</li>
+            <li>Privacy Policy</li>
+            <li>Terms of Service</li>
+            <li>IP Claims</li>
+            <li>Protection Terms</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Backup</h4>
+          <ul>
+            <li>Become a seller</li>
+            <li>What is SomeTask?</li>
+            <li>Support</li>
+            <li>Payment Info</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Social Media</h4>
+          <div class="social-icons">
+            <!-- Social Media Icons -->
+            <span>Facebook</span>
+            <span>LinkedIn</span>
+            <span>YouTube</span>
+          </div>
+          <h4>Pay with</h4>
+          <div class="payment-icons">
+            <span>Visa</span>
+            <span>Mastercard</span>
+            <span>BTC</span>
+            <span>XRP</span>
+            <span>BNB</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script src="./Sometask.com_files/main.js.다운로드"></script>
+  
+</body></html>
