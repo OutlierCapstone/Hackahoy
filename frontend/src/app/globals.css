@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'NeoDGM';
+  src: url('/fonts/NeoDunggeunmo.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; 
+}
+
+:root {
+  /* back&foreground */
+  --background: var(--color-dark-brown);
+  --foreground: var(--color-default);
+
+  /* color */
+  --color-brown: #655945; /* line */
+  --color-default: #222222; /* text */
+  --color-red: #d30000; /* check */
+  --color-gray: #555555;
+  --color-white: #ffffff;
+  --color-dark-brown: rgb(43, 29, 14);
+    
+  /* 폰트 변수 */
+  --font-family-pixel: 'NeoDGM', sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-family-pixel);
+
+  background-image: url('/images/background.png');
+  background-size: cover;
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
