@@ -37,6 +37,9 @@ const FIXED_ISLANDS_DATA: Record<number, FixedIslandItem[]> = {
     { id: '5', img: '/assets/islands/island-5.png', x: 50, y: 50, w: 300, h: 250 },
     { id: '6', img: '/assets/islands/island-6.png', x: 82, y: 72, w: 300, h: 250 },
   ],
+  3: [
+    { id: '7', img: '/assets/islands/island-7.png', x: 18, y: 72, w: 300, h: 250 },
+  ],
 };
 
 const DEFAULT_SLOTS = [

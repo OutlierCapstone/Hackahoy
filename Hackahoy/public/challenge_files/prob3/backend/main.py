@@ -25,7 +25,7 @@ app = FastAPI(title="Pirate Chatbot Server (Gemini)")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5004"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,4 +88,4 @@ async def chat_with_gemini(request: ChatRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=5005, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

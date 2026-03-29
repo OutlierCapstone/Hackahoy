@@ -1,7 +1,7 @@
 .page {
   width: 100vw;
   height: 100vh;
-  background: url("/assets/backgrounds/island-map.png") center / cover no-repeat;
+  background: url('/assets/backgrounds/island-map.png') center / cover no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,79 +10,22 @@
 .panel {
   background: rgba(255, 255, 255, 0.85);
   border: 4px solid #8b5a2b;
-  padding: 24px 32px;
+  /* 하단 버튼 공간(80px) 확보 및 패딩 유지 */
+  padding: 30px 40px 80px 40px;
   border-radius: 12px;
   text-align: center;
-
-  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  position: relative; /* 추천 버튼 배치의 기준점 */
+  min-width: 550px;
+  font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .title {
-  font-size: 34px;
+  font-size: 38px;
   font-weight: 900;
   color: #f4b452;
   margin: 0;
-  letter-spacing: 0.5px;
-
-  text-shadow:
-    -3px -3px #3a210f,
-    3px -3px #3a210f, -3px 3px #3a210f, 3px 3px #3a210f, -3px 0px #3a210f,
-    3px 0px #3a210f, 0px -3px #3a210f, 0px 3px #3a210f,
-    0px 6px rgba(0, 0, 0, 0.35);
-}
-
-.subtitle {
-  font-size: 22px;
-  font-weight: 900;
-  margin: 8px 0 20px 0;
-  color: #5b3a1a;
-}
-
-.ships {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.arrow {
-  font-size: 28px;
-  font-weight: 900;
-  color: #3a210f;
-}
-
-.imgBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  line-height: 0;
-  image-rendering: pixelated;
-  transition: transform 0.12s ease, filter 0.12s ease;
-}
-
-.imgBtn:active {
-  transform: translateY(1px);
-  filter: brightness(0.95);
-}
-
-.page {
-  width: 100vw;
-  height: 100vh;
-  background: url('/assets/backgrounds/island-map.png') center / cover no-repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title {
-  font-size: 34px;
-  font-weight: 900;
-  color: #f4b452;
-  margin: 0;
-  letter-spacing: 0.5px;
-
+  letter-spacing: 1px;
   text-shadow:
     -3px -3px #3a210f,
     3px -3px #3a210f,
@@ -96,9 +39,9 @@
 }
 
 .subtitle {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 900;
-  margin: 8px 0 20px 0;
+  margin: 10px 0 25px 0;
   color: #5b3a1a;
 }
 
@@ -106,42 +49,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 30px;
+  margin-bottom: 30px;
+  min-height: 200px;
+}
+
+.shipWrapper img {
+  image-rendering: pixelated;
+  object-fit: contain;
 }
 
 .arrow {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 900;
   color: #3a210f;
 }
 
-.imgBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  line-height: 0;
-  image-rendering: pixelated;
-  transition:
-    transform 0.12s ease,
-    filter 0.12s ease;
-}
-
-.imgBtn:active {
-  transform: translateY(1px);
-  filter: brightness(0.95);
-}
-.panel {
-  background: rgba(255, 255, 255, 0.85);
-  border: 4px solid #8b5a2b;
-  padding: 24px 32px 60px 32px;
-  border-radius: 12px;
-  text-align: center;
-  position: relative;
-  min-width: 500px;
-
-  font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+/* 버튼 영역 레이아웃 */
+.buttonArea {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .imgBtn {
@@ -151,28 +79,27 @@
   cursor: pointer;
   line-height: 0;
   image-rendering: pixelated;
-  transition:
-    transform 0.12s ease,
-    filter 0.12s ease;
-
-  display: block;
-  margin: 0 auto;
+  transition: transform 0.1s ease;
 }
 
 .imgBtn:active {
-  transform: translateY(1px);
-  filter: brightness(0.95);
+  transform: scale(0.95);
 }
 
+/* 추천 버튼을 우측 하단 구석에 절대 위치로 고정 */
 .recommendBtn {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
+  right: 20px;
+  bottom: 20px;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   line-height: 0;
   image-rendering: pixelated;
-  transition: transform 0.12s ease;
+  transition: opacity 0.2s ease;
+}
+
+.recommendBtn:hover {
+  opacity: 0.8;
 }

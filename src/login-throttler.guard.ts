@@ -22,6 +22,11 @@ export class LoginThrottlerGuard extends ThrottlerGuard {
     const request = context.switchToHttp().getRequest();
     const path = request.url;
 
+    // collect는 Nginx 내부 요청이라 rate limit 제외
+    if (path.includes('/api/collect')) {
+      return true;
+    }
+
     let currentLimit = limit;
     
     // 🚨 테스트를 위해 /auth/가 들어간 모든 경로(auth/me 포함)를 5번으로 확 줄여봅시다.
@@ -40,6 +45,8 @@ export class LoginThrottlerGuard extends ThrottlerGuard {
     // 1. 유저 식별자 가져오기 (로그인 중이면 body에서, 인증된 상태면 user에서)
     const userId = request.user?.id || request.body?.userId || request.body?.email;
     const path = request.url;
+
+     if (path.includes('/api/collect')) return;
 
     if (!userId) {
       throw new ForbiddenException('과도한 요청입니다.');

@@ -8,6 +8,11 @@ services:
       - '5004:5004'
       - '5005:5005'
       - '5006:5006'
+      - '5007:5007'
+      - '5008:5008'
+      - '5009:5009'
+      - '5010:5010'
+      - '5011:5011'
     volumes:
       - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
     extra_hosts:

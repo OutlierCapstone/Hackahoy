@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # 백엔드 (개발 모드)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: radio-backend-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app:ro
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256M
+    restart: always
+
+  # 프론트엔드 (개발 모드)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: radio-frontend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${PWD}/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - backend

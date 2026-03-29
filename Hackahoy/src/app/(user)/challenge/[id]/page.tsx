@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import styles from "./challenge.module.css";
-import { getProblem, submitFlag } from "@/lib/api/islands";
-import { useAuth } from "@/components/common/AuthContext";
+import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import styles from './challenge.module.css';
+import { getProblem, submitFlag } from '@/lib/api/islands';
+import { useAuth } from '@/components/common/AuthContext';
 
 type HintData = { img: string; text: string };
 
@@ -20,33 +20,83 @@ type Problem = {
 
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
-  const [flagInput, setFlagInput] = useState("");
+  const [flagInput, setFlagInput] = useState('');
   const [hintOpen, setHintOpen] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const { user, refreshUser } = useAuth();
+  
+  // Auth 데이터 추출 (userId 필드 사용)
+  const auth: any = useAuth();
+  const user = auth?.user;
+  const refreshUser = auth?.refreshUser;
+
+  const [aiHint, setAiHint] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const router = useRouter();
 
+  // 🔥 [핵심] AI 서버가 원하는 "POST /api/..." 형식으로 로그를 가공하는 함수
+  // ChallengePage.tsx 내부의 saveUserLog 함수 수정
+
+const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: any = {}) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const currentUserId = user?.userId; 
+    // 🔥 여기에 로그 추가
+    console.log('[saveUserLog] 호출됨', { type, token: !!token, id, currentUserId });
+
+    if (!token || !id || !currentUserId) return;
+
+    let fakeMethod = "POST";
+    let fakeUri = "/";
+    let fakePayload = {};
+
+    if (type === 'VISIT') {
+      fakeMethod = "GET";
+      fakeUri = "/"; // 👈 여기
+      fakePayload = { url: data.url };
+    } else if (type === 'SUBMIT') {
+      fakeMethod = "POST";
+      fakeUri = "/api/auth/login"; // 👈 여기
+      fakePayload = { id: "admin", pwd: data.input }; 
+    } else if (type === 'HINT') {
+      fakeMethod = "POST";
+      fakeUri = "/api/ai/hint"; // 👈 여기
+      fakePayload = { current_attempt: data.input };
+    }
+
+    await fetch(`http://localhost:4000/api/collect`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: currentUserId,
+        problem_id: Number(id),
+        method: fakeMethod,
+        // 🔥 수정: fakeMethod를 빼고 fakeUri만 보냅니다. 
+        // 백엔드에서 "GET" + " /" 를 합쳐서 "GET /"를 만들어줄 겁니다.
+        uri: fakeUri, 
+        payload: JSON.stringify(fakePayload),
+        headers: { "user-agent": navigator.userAgent }
+      }),
+    });
+  } catch (err) {
+    console.error("❌ 로그 저장 실패:", err);
+  }
+}, [id, user]);
+
+  // 1. 문제 로드
   useEffect(() => {
     if (!id) return;
-
     async function fetchProblem() {
       try {
-        const problemId = Number(id);
-        const response = await getProblem(problemId);
-        
-        let data = response;
-        if (data && data.data) data = data.data;
+        const response = await getProblem(Number(id));
+        let data = response?.data || response;
         if (Array.isArray(data)) data = data[0];
-
-        if (data && (data.title || data.id)) {
-          setProblem(data);
-        } else {
-          setProblem(null);
-        }
+        setProblem(data?.title || data?.id ? data : null);
       } catch (error) {
-        console.error('❌ 문제 로드 실패:', error);
         setProblem(null);
       } finally {
         setLoading(false);
@@ -55,30 +105,24 @@ export default function ChallengePage() {
     fetchProblem();
   }, [id]);
 
+  // 2. 정답 제출
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!problem || submitting) return;
 
+    // 🔥 로그 남기기 (변장된 포맷)
+    saveUserLog('SUBMIT', { input: flagInput });
+
     setSubmitting(true);
     try {
       const result = await submitFlag(problem.id, flagInput.trim());
-
       if (result.correct) {
-        if (result.alreadySolved) {
-          alert("이미 해결한 문제입니다! ✅");
-          setSubmitting(false);
-          return;
-        }
-
         const prevLevel = user?.levelNum ?? 1;
         const newLevel = result.newLevel;
-        await refreshUser();
+        if (refreshUser) await refreshUser();
 
         if (newLevel > prevLevel) {
-          const prevShip = encodeURIComponent(`/assets/ships/ship-${prevLevel}.png`);
-          const newShip = encodeURIComponent(`/assets/ships/ship-${newLevel}.png`);
-          const redirect = encodeURIComponent(`/`);
-          router.push(`/level-up?prevShip=${prevShip}&newShip=${newShip}&redirect=${redirect}`);
+          router.push(`/level-up?prevShip=${encodeURIComponent(`/assets/ships/ship-${prevLevel}.png`)}&newShip=${encodeURIComponent(`/assets/ships/ship-${newLevel}.png`)}&redirect=/`);
         } else {
           alert("정답입니다! 🎉");
           setFlagInput("");
@@ -87,186 +131,87 @@ export default function ChallengePage() {
         alert("틀렸습니다. 다시 생각해보세요! ❌");
       }
     } catch (err) {
-      alert("서버 통신 중 오류가 발생했습니다.");
+      alert("서버 통신 오류");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getBackgroundImage = (islandId: number) => {
-    if (problem && problem.id >= 1 && problem.id <= 6) {
-      return `/assets/backgrounds/island-${problem.id}.png`;
+  // 3. AI 힌트 클릭 (로그 저장 + 힌트 요청 연동)
+  const handleHintClick = async () => {
+    if (!problem) return;
+    setIsAiLoading(true);
+    setHintOpen(true);
+    
+    // 🔥 힌트 요청 로그 남기기
+    saveUserLog('HINT', { input: flagInput });
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch(`http://localhost:4000/ai-tutor/hint`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemId: problem.id })
+      });
+      const result = await res.json();
+      setAiHint(typeof result === 'string' ? result : result.hint);
+    } catch (err) {
+      console.error("힌트 에러:", err);
+    } finally {
+      setIsAiLoading(false);
     }
-    if (islandId === 1 || islandId === 2) {
-      return `/assets/backgrounds/island-map.png`; 
-    }
-    return "/assets/backgrounds/default-island.png";
   };
 
-  const getHintImage = (problemId: number, islandId: number) => {
-    if ([1, 2, 3, 4, 5, 6].includes(problemId)) {
-      return `/assets/icons/hint-${problemId}.png`;
-    }
-    return "/assets/icons/default-hint.png";
-  };
-
-  if (loading) {
-    return <main className={styles.pageRoot}><div className={styles.statusText}>문제를 불러오는 중...</div></main>;
-  }
-
-  if (!problem || !problem.title) {
-    return <main className={styles.pageRoot}><div className={styles.statusText}>문제가 아직 생성되지 않았습니다.</div></main>;
-  }
-
-  const bg = getBackgroundImage(problem.islandId);
-  const hintIcon = getHintImage(problem.id, problem.islandId);
-  const DEFAULT_HINT_TEXT = "힌트는 기본값입니다.";
-  const isDefaultHint = !problem.hint || problem.hint.trim() === "" || problem.hint === DEFAULT_HINT_TEXT;
-  const hintData: HintData | null = !isDefaultHint ? { img: hintIcon, text: problem.hint! } : null;
+  if (loading) return <main className={styles.pageRoot}><div className={styles.statusText}>Loading...</div></main>;
+  if (!problem) return <main className={styles.pageRoot}><div className={styles.statusText}>No Problem.</div></main>;
 
   return (
     <main className={styles.pageRoot}>
-      <div className={styles.bg} style={{ backgroundImage: `url(${bg})` }} />
-
+      <div className={styles.bg} style={{ backgroundImage: `url(/assets/backgrounds/island-${problem.id}.png)` }} />
       <section className={styles.stage}>
         <div className={styles.boardWrap}>
           <div className={styles.board}>
             <h1 className={styles.title}>{problem.title}</h1>
             <p className={styles.desc}>{problem.description}</p>
-
             {problem.serverLink && (
               <p className={styles.link}>
-                Server link: &nbsp;
-                <a href={problem.serverLink} target="_blank" rel="noopener noreferrer">
-                  {(() => {
-                    if (problem.id >= 1 && problem.id <= 6) {
-                      return `http://52.78.240.6:800${problem.id}`;
-                    }
-                    return problem.serverLink; 
-                  })()}
-                </a>
+                Server: <a 
+                          href={`http://localhost:500${problem.id}/set-uid?uid=${user?.userId}`} // 👈 localhost 대신 실제 IP 사용
+                          target="_blank" 
+                          rel="noopener noreferrer" // 보안을 위해 추가 권장
+                          onClick={() => saveUserLog('VISIT', { url: problem.serverLink })}
+                        >
+                          {`http://52.78.240.6:500${problem.id}`}
+                        </a>
               </p>
             )}
-
             <form className={styles.formRow} onSubmit={onSubmit}>
-              <input
-                className={styles.input}
-                value={flagInput}
-                onChange={(e) => setFlagInput(e.target.value)}
-                placeholder="flag{enter_your_flag}"
-                disabled={submitting}
-              />
+              <input className={styles.input} value={flagInput} onChange={(e) => setFlagInput(e.target.value)} placeholder="flag{...}" disabled={submitting} />
               <button type="submit" className={styles.flagBtn} disabled={submitting}>
                 <Image src="/assets/ui/flag.png" alt="flag" width={94} height={70} />
               </button>
             </form>
-            {submitting && <p style={{ color: "yellow", marginTop: "10px" }}>제출 중...</p>}
           </div>
-
-          {/* 힌트 버튼: 클릭 시 DB에 HintHistory 기록을 남깁니다. */}
-          {hintData ? (
-            <button
-              type="button"
-              className={styles.hintBtn}
-              onClick={async () => {
-                try {
-                  const token = localStorage.getItem('accessToken'); 
-                  
-                  // 1. 기존 힌트 로그 요청 (필요 시 유지)
-                  await fetch(`http://localhost:4000/problem/${problem.id}/hint`, {
-                    method: 'GET',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                  });
-
-                  // 2. ✨ AI Tutor용 HintHistory 테이블 기록 추가
-                  await fetch(`http://localhost:4000/ai-tutor/record`, {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      problemId: problem.id,
-                      content: problem.hint
-                    }),
-                  });
-                  console.log("✅ Hint history recorded");
-
-                } catch (error) {
-                  console.error('❌ 힌트 기록 연동 실패:', error);
-                }
-                setHintOpen(true);
-              }}           
-              aria-label="open hint"
-            >
-              <Image src={hintData.img} alt="hint" width={260} height={320} />
-            </button>
-          ) : (
-            <div 
-              className={styles.hintBtn} 
-              style={{ 
-                cursor: 'default', 
-                opacity: 0.5, 
-                filter: 'grayscale(1)',
-                pointerEvents: 'none' 
-              }}
-            >
-              <Image src={hintIcon} alt="no-hint" width={260} height={320} />
-            </div>
-          )}
-        </div>
-
-        {/* DEBUG용 버튼: 백엔드 터미널에 현재 Context 데이터 출력 */}
-        <div style={{ marginTop: '10px' }}>
-          <button
-            type="button"
-            style={{
-              backgroundColor: '#2d2d2d',
-              color: '#00ff00',
-              padding: '8px 12px',
-              border: '1px solid #00ff00',
-              fontFamily: 'monospace',
-              cursor: 'pointer'
-            }}
-            onClick={async () => {
-              try {
-                const token = localStorage.getItem('accessToken');
-                await fetch(`http://localhost:4000/ai-tutor/debug`, {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ problemId: problem.id })
-                });
-                alert("백엔드 터미널에 로그가 찍혔습니다! ✅");
-              } catch (err) {
-                console.error("테스트 실패:", err);
-              }
-            }}
-          >
-            [DEBUG] AI 데이터 로그 출력
+          <button type="button" className={styles.hintBtn} onClick={handleHintClick}>
+            <Image src={`/assets/icons/hint-${[1,2,3,4,5,6,7].includes(problem.id) ? problem.id : 'default'}.png`} alt="hint" width={260} height={320} />
           </button>
         </div>
       </section>
 
-      {hintOpen && hintData && (
+      {hintOpen && (
         <div className={styles.modalDim} onClick={() => setHintOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()} role="dialog">
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <div className={styles.modalTitle}>HINT</div>
+              <div className={styles.modalTitle}>🤖 AI TUTOR HINT</div>
               <button className={styles.modalClose} onClick={() => setHintOpen(false)}>✕</button>
             </div>
             <div className={styles.modalBody}>
-              <p className={styles.modalText}>{hintData.text}</p>
+              <p className={styles.modalText}>
+                {isAiLoading ? "AI 분석 중..." : (aiHint || problem.hint || "힌트가 없습니다.")}
+              </p>
             </div>
             <div className={styles.modalFooter}>
-              <button className={styles.okBtn} onClick={() => setHintOpen(false)}>
-                <span className={styles.okBtnText}>ok</span>
-              </button>
+              <button className={styles.okBtn} onClick={() => setHintOpen(false)}>ok</button>
             </div>
           </div>
         </div>
