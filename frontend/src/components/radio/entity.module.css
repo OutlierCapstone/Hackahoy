@@ -1,0 +1,44 @@
+.radioBody {
+    width: 380px;
+    min-height: 550px;
+    height: auto;
+    min-height: auto;
+
+    padding: 30px;
+    padding-bottom: 40px;
+
+    background: linear-gradient(145deg, #2b2b2b, #1a1a1a);
+    border-radius: 40px;
+    border: 2px solid #333;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    position: relative;
+    box-shadow:
+        20px 20px 60px #0d0a09,
+        -5px -5px 20px #3d3d3d,
+        inset 0 0 10px #000;
+}
+
+/* 장식용 사이드 버튼 */
+.sideBtnTop,
+.sideBtnBottom {
+    position: absolute;
+    left: -15px;
+    width: 15px;
+    height: 60px;
+    background: #1a1a1a;
+    border-radius: 5px 0 0 5px;
+    box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.sideBtnTop {
+    top: 100px;
+}
+
+.sideBtnBottom {
+    top: 170px;
+}

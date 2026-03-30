@@ -1,0 +1,52 @@
+.input,
+.outputArea {
+    font-family: 'Courier New', Courier, monospace;
+    color: #33ff33;
+    text-shadow: 0 0 3px #33ff33;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Input Style */
+.inputWrapper {
+    border: 2px solid #33ff33;
+    border-radius: 8px;
+    padding: 10px;
+    background: rgba(0, 20, 0, 0.5);
+    box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+    margin-bottom: 1rem;
+}
+
+.input {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+}
+
+.input::placeholder {
+    color: rgba(51, 255, 51, 0.5);
+}
+
+/* Output Style */
+.outputArea {
+    height: 200px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    padding-right: 10px;
+}
+
+.outputArea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.outputArea::-webkit-scrollbar-thumb {
+    background: #33ff33;
+    border-radius: 4px;
+}
+
+.outputArea::-webkit-scrollbar-track {
+    background: #003300;
+}

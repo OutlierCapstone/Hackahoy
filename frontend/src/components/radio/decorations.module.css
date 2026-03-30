@@ -1,0 +1,96 @@
+/* 상단 노브 */
+.knobsContainer {
+    position: absolute;
+    top: -25px;
+    right: 40px;
+    display: flex;
+    gap: 15px;
+    z-index: -1;
+}
+
+.knobSmall,
+.knobBig {
+    background: linear-gradient(to right, #1a1a1a, #444, #1a1a1a);
+    border: 2px solid #111;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.1);
+}
+
+.knobSmall {
+    width: 30px;
+    height: 25px;
+}
+
+.knobBig {
+    width: 40px;
+    height: 35px;
+}
+
+/* 스피커 그릴 */
+.speakerContainer {
+    width: 100%;
+    height: 80px;
+    background-color: #151515;
+    border-radius: 10px;
+    border: 1px solid #333;
+    margin: 15px 0;
+    box-shadow: inset 2px 2px 5px #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+}
+
+/* 구멍 패턴 */
+.grid {
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(#000 20%, transparent 20%),
+        radial-gradient(#000 20%, transparent 20%);
+    background-color: #2a2a2a;
+    background-position: 0 0, 5px 5px;
+    background-size: 10px 10px;
+    border-radius: 6px;
+    opacity: 0.7;
+}
+
+/* 나사 */
+.screw {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(145deg, #555, #222);
+    border-radius: 50%;
+    border: 1px solid #111;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #111;
+    font-family: sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.tl {
+    top: 10px;
+    left: 10px;
+}
+
+.tr {
+    top: 10px;
+    right: 10px;
+}
+
+.bl {
+    bottom: 10px;
+    left: 10px;
+}
+
+.br {
+    bottom: 10px;
+    right: 10px;
+}
