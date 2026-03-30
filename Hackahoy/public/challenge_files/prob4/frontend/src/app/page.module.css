@@ -1,0 +1,130 @@
+/* 무전기 본체 */
+.radio-chassis {
+  width: 360px;
+  height: 520px;
+  background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+  border-radius: 30px;
+  position: relative;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  box-shadow:
+    15px 15px 30px #0b0b0b,
+    -5px -5px 15px #3d3d3d,
+    inset 0 0 2px rgba(255, 255, 255, 0.1);
+  border: 1px solid #333;
+}
+
+/* 장식용 나사 */
+.screw {
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, #555 30%, #222 90%);
+  border-radius: 50%;
+  position: absolute;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+/* 나사 위치 */
+.screw.tl {
+  top: 15px;
+  left: 15px;
+}
+
+.screw.tr {
+  top: 15px;
+  right: 15px;
+}
+
+.screw.bl {
+  bottom: 15px;
+  left: 15px;
+}
+
+.screw.br {
+  bottom: 15px;
+  right: 15px;
+}
+
+/* 십자 나사 홈 구현 */
+.screw::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60%;
+  height: 2px;
+  background: #111;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.screw::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60%;
+  height: 2px;
+  background: #111;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* 상단 스피커 그릴 */
+.speaker-grill {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.grill-line {
+  width: 6px;
+  height: 25px;
+  background-color: #111;
+  border-radius: 4px;
+  box-shadow: inset 1px 1px 2px #000;
+  border-bottom: 1px solid #444;
+}
+
+/* 화면이 들어갈 프레임 */
+.screen-frame {
+  flex-grow: 1;
+  background-color: #0d0d0d;
+  border-radius: 12px;
+
+  box-shadow:
+    inset 3px 3px 10px #000,
+    inset -1px -1px 5px #333;
+  padding: 15px;
+  position: relative;
+  border: 2px solid #222;
+  margin-bottom: 10px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 화면 내부 텍스트 */
+.screen-placeholder-text {
+  color: #335533;
+  font-size: 14px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+/* 하단 버튼 영역 */
+.controls-area {
+  height: 80px;
+  border: 1px dashed #444;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #555;
+  font-size: 12px;
+}

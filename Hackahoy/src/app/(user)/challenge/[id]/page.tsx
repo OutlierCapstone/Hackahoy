@@ -7,8 +7,6 @@ import styles from './challenge.module.css';
 import { getProblem, submitFlag } from '@/lib/api/islands';
 import { useAuth } from '@/components/common/AuthContext';
 
-type HintData = { img: string; text: string };
-
 type Problem = {
   id: number;
   title: string;
@@ -18,6 +16,23 @@ type Problem = {
   islandId: number;
 };
 
+// 1~7번 문제는 고정 에셋 사용, 그 외는 default
+const FIXED_PROBLEM_IDS = new Set([1, 2, 3, 4, 5, 6, 7]);
+
+function getBgImage(problem: Problem): string {
+  if (FIXED_PROBLEM_IDS.has(problem.id)) {
+    return `/assets/backgrounds/island-${problem.id}.png`;
+  }
+  return `/assets/backgrounds/default-island.png`;
+}
+
+function getHintIcon(problem: Problem): string {
+  if (FIXED_PROBLEM_IDS.has(problem.id)) {
+    return `/assets/icons/hint-${problem.id}.png`;
+  }
+  return `/assets/icons/default-hint.png`;
+}
+
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
   const [flagInput, setFlagInput] = useState('');
@@ -25,8 +40,7 @@ export default function ChallengePage() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
-  // Auth 데이터 추출 (userId 필드 사용)
+
   const auth: any = useAuth();
   const user = auth?.user;
   const refreshUser = auth?.refreshUser;
@@ -35,57 +49,51 @@ export default function ChallengePage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const router = useRouter();
 
-  // 🔥 [핵심] AI 서버가 원하는 "POST /api/..." 형식으로 로그를 가공하는 함수
-  // ChallengePage.tsx 내부의 saveUserLog 함수 수정
+  const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: any = {}) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const currentUserId = user?.userId;
+      console.log('[saveUserLog] 호출됨', { type, token: !!token, id, currentUserId });
 
-const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: any = {}) => {
-  try {
-    const token = localStorage.getItem('accessToken');
-    const currentUserId = user?.userId; 
-    // 🔥 여기에 로그 추가
-    console.log('[saveUserLog] 호출됨', { type, token: !!token, id, currentUserId });
+      if (!token || !id || !currentUserId) return;
 
-    if (!token || !id || !currentUserId) return;
+      let fakeMethod = "POST";
+      let fakeUri = "/";
+      let fakePayload = {};
 
-    let fakeMethod = "POST";
-    let fakeUri = "/";
-    let fakePayload = {};
+      if (type === 'VISIT') {
+        fakeMethod = "GET";
+        fakeUri = "/";
+        fakePayload = { url: data.url };
+      } else if (type === 'SUBMIT') {
+        fakeMethod = "POST";
+        fakeUri = "/api/auth/login";
+        fakePayload = { id: "admin", pwd: data.input };
+      } else if (type === 'HINT') {
+        fakeMethod = "POST";
+        fakeUri = "/api/ai/hint";
+        fakePayload = { current_attempt: data.input };
+      }
 
-    if (type === 'VISIT') {
-      fakeMethod = "GET";
-      fakeUri = "/"; // 👈 여기
-      fakePayload = { url: data.url };
-    } else if (type === 'SUBMIT') {
-      fakeMethod = "POST";
-      fakeUri = "/api/auth/login"; // 👈 여기
-      fakePayload = { id: "admin", pwd: data.input }; 
-    } else if (type === 'HINT') {
-      fakeMethod = "POST";
-      fakeUri = "/api/ai/hint"; // 👈 여기
-      fakePayload = { current_attempt: data.input };
+      await fetch(`http://localhost:4000/api/collect`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: currentUserId,
+          problem_id: Number(id),
+          method: fakeMethod,
+          uri: fakeUri,
+          payload: JSON.stringify(fakePayload),
+          headers: { "user-agent": navigator.userAgent }
+        }),
+      });
+    } catch (err) {
+      console.error("❌ 로그 저장 실패:", err);
     }
-
-    await fetch(`http://localhost:4000/api/collect`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_id: currentUserId,
-        problem_id: Number(id),
-        method: fakeMethod,
-        // 🔥 수정: fakeMethod를 빼고 fakeUri만 보냅니다. 
-        // 백엔드에서 "GET" + " /" 를 합쳐서 "GET /"를 만들어줄 겁니다.
-        uri: fakeUri, 
-        payload: JSON.stringify(fakePayload),
-        headers: { "user-agent": navigator.userAgent }
-      }),
-    });
-  } catch (err) {
-    console.error("❌ 로그 저장 실패:", err);
-  }
-}, [id, user]);
+  }, [id, user]);
 
   // 1. 문제 로드
   useEffect(() => {
@@ -110,7 +118,6 @@ const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: 
     e.preventDefault();
     if (!problem || submitting) return;
 
-    // 🔥 로그 남기기 (변장된 포맷)
     saveUserLog('SUBMIT', { input: flagInput });
 
     setSubmitting(true);
@@ -137,13 +144,12 @@ const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: 
     }
   };
 
-  // 3. AI 힌트 클릭 (로그 저장 + 힌트 요청 연동)
+  // 3. AI 힌트
   const handleHintClick = async () => {
     if (!problem) return;
     setIsAiLoading(true);
     setHintOpen(true);
-    
-    // 🔥 힌트 요청 로그 남기기
+
     saveUserLog('HINT', { input: flagInput });
 
     try {
@@ -167,7 +173,9 @@ const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: 
 
   return (
     <main className={styles.pageRoot}>
-      <div className={styles.bg} style={{ backgroundImage: `url(/assets/backgrounds/island-${problem.id}.png)` }} />
+      {/* 배경: 1~7번은 고정 에셋, 그 외는 default */}
+      <div className={styles.bg} style={{ backgroundImage: `url(${getBgImage(problem)})` }} />
+
       <section className={styles.stage}>
         <div className={styles.boardWrap}>
           <div className={styles.board}>
@@ -175,25 +183,33 @@ const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: 
             <p className={styles.desc}>{problem.description}</p>
             {problem.serverLink && (
               <p className={styles.link}>
-                Server: <a 
-                          href={`http://localhost:500${problem.id}/set-uid?uid=${user?.userId}`} // 👈 localhost 대신 실제 IP 사용
-                          target="_blank" 
-                          rel="noopener noreferrer" // 보안을 위해 추가 권장
-                          onClick={() => saveUserLog('VISIT', { url: problem.serverLink })}
-                        >
-                          {`http://52.78.240.6:500${problem.id}`}
-                        </a>
+                Server: <a
+                  href={`http://localhost:500${problem.id}/set-uid?uid=${user?.userId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => saveUserLog('VISIT', { url: problem.serverLink })}
+                >
+                  {`http://52.78.240.6:500${problem.id}`}
+                </a>
               </p>
             )}
             <form className={styles.formRow} onSubmit={onSubmit}>
-              <input className={styles.input} value={flagInput} onChange={(e) => setFlagInput(e.target.value)} placeholder="flag{...}" disabled={submitting} />
+              <input
+                className={styles.input}
+                value={flagInput}
+                onChange={(e) => setFlagInput(e.target.value)}
+                placeholder="hackahoy{...}"
+                disabled={submitting}
+              />
               <button type="submit" className={styles.flagBtn} disabled={submitting}>
                 <Image src="/assets/ui/flag.png" alt="flag" width={94} height={70} />
               </button>
             </form>
           </div>
+
+          {/* 힌트 아이콘: 1~7번은 고정 에셋, 그 외는 default */}
           <button type="button" className={styles.hintBtn} onClick={handleHintClick}>
-            <Image src={`/assets/icons/hint-${[1,2,3,4,5,6,7].includes(problem.id) ? problem.id : 'default'}.png`} alt="hint" width={260} height={320} />
+            <Image src={getHintIcon(problem)} alt="hint" width={260} height={320} />
           </button>
         </div>
       </section>

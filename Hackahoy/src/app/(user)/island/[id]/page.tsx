@@ -25,7 +25,7 @@ type Problem = {
   solved: boolean;
 };
 
-// 1번 핑(구역)에는 1~3번 섬, 2번 핑(구역)에는 4~6번 섬 배치
+// 1번 핑(구역)에는 1~3번 섬, 2번 핑(구역)에는 4~6번 섬, 3번 핑에는 7번 섬 고정
 const FIXED_ISLANDS_DATA: Record<number, FixedIslandItem[]> = {
   1: [
     { id: '1', img: '/assets/islands/island-1.png', x: 18, y: 72, w: 300, h: 250 },
@@ -33,12 +33,13 @@ const FIXED_ISLANDS_DATA: Record<number, FixedIslandItem[]> = {
     { id: '3', img: '/assets/islands/island-3.png', x: 82, y: 72, w: 300, h: 250 },
   ],
   2: [
-    { id: '4', img: '/assets/islands/island-4.png', x: 18, y: 72, w: 300, h: 250 },
-    { id: '5', img: '/assets/islands/island-5.png', x: 50, y: 50, w: 300, h: 250 },
-    { id: '6', img: '/assets/islands/island-6.png', x: 82, y: 72, w: 300, h: 250 },
+    { id: '4', img: '/assets/islands/island-4.png', x: 18, y: 72, w: 420, h: 320 },
+    { id: '5', img: '/assets/islands/island-5.png', x: 50, y: 50, w: 250, h: 200 },
+    { id: '6', img: '/assets/islands/island-6.png', x: 82, y: 72, w: 300, h: 300 },
   ],
   3: [
     { id: '7', img: '/assets/islands/island-7.png', x: 18, y: 72, w: 300, h: 250 },
+    // 슬롯 2, 3은 DB에서 자동 채움
   ],
 };
 
@@ -87,8 +88,19 @@ export default function IslandSelectPage() {
 
   if (!id) return null;
 
-  // 1. 해당 핑에 고정 디자인 데이터가 있는지 확인
   const currentFixedIslands = FIXED_ISLANDS_DATA[islandId];
+
+  // 고정 섬 ID 목록 (DB 문제 필터링용)
+  const fixedIds = new Set(currentFixedIslands?.map((f) => f.id) ?? []);
+
+  // 고정 섬 이후 DB에서 채울 문제들 (고정 ID 제외, 남은 슬롯만큼)
+  const remainingSlots = currentFixedIslands
+    ? 3 - currentFixedIslands.length
+    : 3;
+
+  const dbProblems = problems
+    .filter((p) => !fixedIds.has(String(p.id)))
+    .slice(0, remainingSlots);
 
   return (
     <main className={styles.pageRoot}>
@@ -100,14 +112,22 @@ export default function IslandSelectPage() {
           backgroundPosition: 'center',
         }}
       />
-      
+
       <div className={styles.mapStage}>
         {/* 로딩 표시 */}
         {loading && (
-          <div className={styles.loadingOverlay} style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            color: 'white', fontSize: '20px', zIndex: 10
-          }}>
+          <div
+            className={styles.loadingOverlay}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: 'white',
+              fontSize: '20px',
+              zIndex: 10,
+            }}
+          >
             🏝️ 섬을 찾는 중...
           </div>
         )}
@@ -124,49 +144,48 @@ export default function IslandSelectPage() {
           />
         </div>
 
-        {/* 섬 렌더링 로직 */}
-        {currentFixedIslands ? (
-          // 케이스 A: 고정 데이터(1~6번 섬)가 있는 핑 1, 2
-          currentFixedIslands.map((island) => (
+        {/* 고정 섬 렌더링 (1~7번) */}
+        {currentFixedIslands?.map((island) => (
+          <button
+            key={island.id}
+            className={styles.islandButton}
+            style={{ left: `${island.x}%`, top: `${island.y}%` }}
+            onClick={() => router.push(`/challenge/${island.id}`)}
+          >
+            <Image
+              src={island.img}
+              alt={`island-${island.id}`}
+              width={island.w}
+              height={island.h}
+              priority
+              style={{ imageRendering: 'pixelated' }}
+            />
+          </button>
+        ))}
+
+        {/* DB 문제 자동 배치 (고정 섬 이후 남은 슬롯) */}
+        {dbProblems.map((problem, idx) => {
+          const slotIdx = (currentFixedIslands?.length ?? 0) + idx;
+          const pos = DEFAULT_SLOTS[slotIdx];
+          if (!pos) return null;
+          return (
             <button
-              key={island.id}
+              key={problem.id}
               className={styles.islandButton}
-              style={{ left: `${island.x}%`, top: `${island.y}%` }}
-              onClick={() => router.push(`/challenge/${island.id}`)}
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+              onClick={() => router.push(`/challenge/${problem.id}`)}
             >
               <Image
-                src={island.img}
-                alt={`island-${island.id}`}
-                width={island.w}
-                height={island.h}
+                src={DEFAULT_ISLAND_IMG}
+                alt="default island"
+                width={pos.w}
+                height={pos.h}
                 priority
                 style={{ imageRendering: 'pixelated' }}
               />
             </button>
-          ))
-        ) : (
-          // 케이스 B: 고정 데이터가 없는 일반 핑 (DB에서 가져온 문제 자동 배치)
-          problems.slice(0, 3).map((problem, idx) => {
-            const pos = DEFAULT_SLOTS[idx];
-            return (
-              <button
-                key={problem.id}
-                className={styles.islandButton}
-                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-                onClick={() => router.push(`/challenge/${problem.id}`)}
-              >
-                <Image
-                  src={DEFAULT_ISLAND_IMG}
-                  alt="default island"
-                  width={pos.w}
-                  height={pos.h}
-                  priority
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              </button>
-            );
-          })
-        )}
+          );
+        })}
       </div>
     </main>
   );

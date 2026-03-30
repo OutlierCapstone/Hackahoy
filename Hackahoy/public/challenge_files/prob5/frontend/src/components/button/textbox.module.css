@@ -1,0 +1,38 @@
+.inputWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: -1px;
+}
+
+.inputField {
+    width: 100%;
+    box-sizing: border-box;
+    
+    border: 1px solid rgba(140, 95, 63, 0.5); 
+    
+    padding: 0.8rem 1rem;
+
+    background-color: var(--color-white);
+    color: #333;
+    
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none; 
+    
+    border-radius: 0.5rem; 
+    
+    transition: all 0.2s ease;
+    
+    position: relative; 
+    z-index: 1;
+}
+
+.inputField:focus {
+    border: 1px solid var(--color-brown);
+    z-index: 10;
+}
+
+.inputField::placeholder {
+    color: #999;
+}

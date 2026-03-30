@@ -1,0 +1,47 @@
+.table {
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.table th,
+.table td {
+    border: 0.125rem solid var(--color-brown); 
+    text-align: center;
+    padding: 0.625rem;
+}
+
+/* 첫 번째 열 */
+.table th:first-child,
+.table td:first-child {
+    width: 5%; 
+}
+
+/* 두 번째 열 */
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    width: 70%; 
+}
+
+/* 세 번째 열 */
+.table th:last-child,
+.table td:last-child {
+    width: 20%; 
+}
+
+.header th {
+    border-top: none;
+}
+.body tr:last-child td {
+    border-bottom: none;
+}
+
+.caption {
+
+}
+
+.header {
+    background-color: rgba(140, 95, 63, 0.2);
+}
+
+.body tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
