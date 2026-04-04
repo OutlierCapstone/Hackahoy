@@ -52,7 +52,7 @@ export class EmailService {
           
           <h3>3. 관리자 조치</h3>
           <p>아래 버튼을 눌러 상세 로그를 확인하세요.</p>
-          <a href="http://localhost:3000/admin/notifications" 
+          <a href="http://44.199.70.243:3000/admin/notifications" 
              style="display: inline-block; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">
              관리자 페이지 바로가기
           </a>

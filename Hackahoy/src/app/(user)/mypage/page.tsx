@@ -59,7 +59,7 @@ export default function MyPage() {
       if (!token) return alert('로그인이 필요합니다.');
 
       await axios.post(
-        'http://localhost:4000/auth/update-nickname',
+        'http://44.199.70.243:4000/auth/update-nickname',
         { nickname: nickname },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -84,7 +84,7 @@ export default function MyPage() {
       if (!token) return;
 
       await axios.post(
-        'http://localhost:4000/auth/unsubscribe',
+        'http://44.199.70.243:4000/auth/unsubscribe',
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

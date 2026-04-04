@@ -2,6 +2,8 @@ services:
   backend:
     build:
       context: ./backend
+    environment:
+      - FLAG=hackahoy{jwt_0wn3d_bypass_lv199}
     ports:
       - "4006:5000"
 

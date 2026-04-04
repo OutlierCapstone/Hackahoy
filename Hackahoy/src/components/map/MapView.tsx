@@ -63,9 +63,9 @@ export default function MapView() {
 
   const occupiedPins = useMemo(() => getOccupiedPinsWithFixed(store), [store]);
 
-  const handleKakaoLogin = () => window.location.href = "http://localhost:4000/auth/kakao";
-  const handleNaverLogin = () => window.location.href = "http://localhost:4000/auth/naver";
-  const handleGoogleLogin = () => window.location.href = "http://localhost:4000/auth/google";
+  const handleKakaoLogin = () => window.location.href = "http://44.199.70.243:4000/auth/kakao";
+  const handleNaverLogin = () => window.location.href = "http://44.199.70.243:4000/auth/naver";
+  const handleGoogleLogin = () => window.location.href = "http://44.199.70.243:4000/auth/google";
 
   return (
     <div

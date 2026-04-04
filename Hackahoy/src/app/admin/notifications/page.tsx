@@ -39,7 +39,7 @@ export default function AdminNotificationPage() {
           return;
         }
 
-        const response = await axios.get('http://localhost:4000/admin/notifications', {
+        const response = await axios.get('http://44.199.70.243:4000/admin/notifications', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);
@@ -93,7 +93,7 @@ export default function AdminNotificationPage() {
 
         {/* 빈 줄 채우기 (최소 5줄 유지) */}
         {!loading && notifications.length < 5 &&
-          Array.from({ length: 5 - notifications.length }).map((_, i) => (
+          Array.from({ length: 4 - notifications.length }).map((_, i) => (
             <div key={`empty-${i}`} className={styles.row}>
               &nbsp;
             </div>

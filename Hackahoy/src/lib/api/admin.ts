@@ -1,7 +1,7 @@
 // src/lib/api/admin.ts
 import axios from "axios";
 
-const API_URL = 'http://localhost:4000';
+const API_URL = 'http://44.199.70.243:4000';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('accessToken');

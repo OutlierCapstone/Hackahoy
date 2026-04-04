@@ -22,7 +22,7 @@ function LevelUpContent() {
     const fetchRecommendation = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const res = await fetch(`http://localhost:4000/ai-tutor/recommend`, {
+        const res = await fetch(`http://44.199.70.243:4000/ai-tutor/recommend`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

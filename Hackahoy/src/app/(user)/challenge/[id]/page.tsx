@@ -75,7 +75,7 @@ export default function ChallengePage() {
         fakePayload = { current_attempt: data.input };
       }
 
-      await fetch(`http://localhost:4000/api/collect`, {
+      await fetch(`http://44.199.70.243:4000/api/collect`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,10 +129,10 @@ export default function ChallengePage() {
         if (refreshUser) await refreshUser();
 
         if (newLevel > prevLevel) {
-          router.push(`/level-up?prevShip=${encodeURIComponent(`/assets/ships/ship-${prevLevel}.png`)}&newShip=${encodeURIComponent(`/assets/ships/ship-${newLevel}.png`)}&redirect=/`);
+          router.push(`/level-up?prevShip=${encodeURIComponent(`/assets/ships/ship-${prevLevel}.png`)}&newShip=${encodeURIComponent(`/assets/ships/ship-${newLevel}.png`)}&isLevelUp=true&redirect=/`);
         } else {
-          alert("정답입니다! 🎉");
-          setFlagInput("");
+          const currentLevel = result.newLevel ?? prevLevel;
+          router.push(`/level-up?newShip=${encodeURIComponent(`/assets/ships/ship-${currentLevel}.png`)}&isLevelUp=false&redirect=/`);
         }
       } else {
         alert("틀렸습니다. 다시 생각해보세요! ❌");
@@ -154,7 +154,7 @@ export default function ChallengePage() {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const res = await fetch(`http://localhost:4000/ai-tutor/hint`, {
+      const res = await fetch(`http://44.199.70.243:4000/ai-tutor/hint`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ problemId: problem.id })
@@ -184,7 +184,7 @@ export default function ChallengePage() {
             {problem.serverLink && (
               <p className={styles.link}>
                 Server: <a
-                  href={`http://localhost:500${problem.id}/set-uid?uid=${user?.userId}`}
+                  href={`http://44.199.70.243:500${problem.id}/set-uid?uid=${user?.userId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => saveUserLog('VISIT', { url: problem.serverLink })}

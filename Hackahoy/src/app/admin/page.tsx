@@ -65,7 +65,7 @@ export default function AdminPage() {
       const token = localStorage.getItem('accessToken');
 
       await axios.post(
-        'http://localhost:4000/admin/users/batch-update',
+        'http://44.199.70.243:4000/admin/users/batch-update',
         { users: rows },
         {
           headers: { Authorization: `Bearer ${token}` },

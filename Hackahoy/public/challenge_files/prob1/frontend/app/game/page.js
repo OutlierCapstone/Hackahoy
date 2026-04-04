@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = '/api';
 const SESSION_KEY = 'ctf_session_initialized';
 
 

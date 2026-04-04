@@ -27,7 +27,7 @@ export default function ChallengeListPage() {
       try {
         const token = localStorage.getItem('accessToken');
         const response = await axios.get<Problem[]>(
-          'http://localhost:4000/problem/user-list',
+          'http://44.199.70.243:4000/problem/user-list',
           { headers: { Authorization: `Bearer ${token}` } },
         );
         setProblems(response.data);

@@ -12,7 +12,7 @@
   border: 10px solid #5b2a12;
   box-shadow: 0 0 0 6px #f4b452;
 
-  padding: 22px 24px 18px;
+  padding: 22px 24px 100px;
   box-sizing: border-box;
   z-index: 10;
 }
@@ -51,6 +51,8 @@
 .table {
   margin-top: 12px;
   border-top: 3px solid #5b2a12;
+  overflow-y: auto;
+  max-height: calc(100% - 130px);
 }
 
 .row {

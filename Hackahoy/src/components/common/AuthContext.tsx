@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!savedToken) return null;
 
     try {
-      const res = await axios.get("http://localhost:4000/auth/me", {
+      const res = await axios.get("http://44.199.70.243:4000/auth/me", {
         headers: { Authorization: `Bearer ${savedToken}` },
       });
       const userData = res.data as AuthUser;

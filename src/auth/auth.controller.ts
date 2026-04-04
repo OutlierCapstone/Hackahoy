@@ -88,13 +88,14 @@ export class AuthController {
       });
 
       const token = this.auth.signToken({ userId: user.id, provider: 'kakao' });
-      return res.redirect(`http://localhost:3000/auth/kakao/callback?token=${token}`);
+      return res.redirect(`http://44.199.70.243:3000/auth/kakao/callback?token=${token}`);
 
     } catch (error) {
+      console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
-        return res.redirect(`http://localhost:3000/auth/kakao/callback?error=banned`);
+        return res.redirect(`http://44.199.70.243:3000/auth/kakao/callback?error=banned`);
       }
-      return res.redirect(`http://localhost:3000/auth/kakao/callback?error=unknown`);
+      return res.redirect(`http://44.199.70.243:3000/auth/kakao/callback?error=unknown`);
     }
   }
 
@@ -120,12 +121,13 @@ export class AuthController {
         provider: 'google',
       });
 
-      return res.redirect(`http://localhost:3000/auth/google/callback?token=${token}`);
+      return res.redirect(`http://44.199.70.243:3000/auth/google/callback?token=${token}`);
     } catch (error) {
+      console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
-        return res.redirect(`http://localhost:3000/auth/google/callback?error=banned`);
+        return res.redirect(`http://44.199.70.243:3000/auth/google/callback?error=banned`);
       }
-      return res.redirect(`http://localhost:3000/auth/google/callback?error=unknown`);
+      return res.redirect(`http://44.199.70.243:3000/auth/google/callback?error=unknown`);
     }
   }
 
@@ -151,12 +153,13 @@ export class AuthController {
         provider: 'naver',
       });
 
-      return res.redirect(`http://localhost:3000/auth/naver/callback?token=${token}`);
+      return res.redirect(`http://44.199.70.243:3000/auth/naver/callback?token=${token}`);
     } catch (error) {
+      console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
-        return res.redirect(`http://localhost:3000/auth/naver/callback?error=banned`);
+        return res.redirect(`http://44.199.70.243:3000/auth/naver/callback?error=banned`);
       }
-      return res.redirect(`http://localhost:3000/auth/naver/callback?error=unknown`);
+      return res.redirect(`http://44.199.70.243:3000/auth/naver/callback?error=unknown`);
     }
   }
 }
