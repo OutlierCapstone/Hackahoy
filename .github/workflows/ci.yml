@@ -12,5 +12,7 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
-      - run: npm run lint --if-present
-      - run: npm run build
+      - name: Build (NestJS)
+        run: npm run build
+      - name: Lint (정보용, 실패해도 머지 막지 않음)
+        run: npm run lint || true

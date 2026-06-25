@@ -9,6 +9,9 @@ git reset --hard "origin/${BRANCH}"
 echo "==> [2/5] backend build"
 npm ci
 npm run build
+
+echo "==> [2.5] 프론트 빌드 (Next.js)"
+( cd Hackahoy && npm ci && npm run build )
 echo "==> [3/5] ai-tutor deps"
 if [ -f ai-tutor/requirements.txt ]; then
   python3 -m venv ai-tutor/venv
