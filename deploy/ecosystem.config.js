@@ -10,6 +10,16 @@ module.exports = {
       max_memory_restart: "400M",
     },
     {
+      name: "hackahoy-frontend",
+      cwd: "/home/ubuntu/Hackahoy/Hackahoy",
+      script: "node_modules/next/dist/bin/next",
+      args: "start -p 3000",
+      env: { NODE_ENV: "production" },
+      autorestart: true,
+      max_restarts: 10,
+      max_memory_restart: "500M",
+    },
+    {
       name: "ai-tutor",
       cwd: "/home/ubuntu/Hackahoy/ai-tutor",
       script: "venv/bin/uvicorn",
