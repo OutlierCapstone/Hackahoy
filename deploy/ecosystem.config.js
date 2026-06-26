@@ -12,8 +12,7 @@ module.exports = {
     {
       name: "hackahoy-frontend",
       cwd: "/home/ubuntu/Hackahoy/Hackahoy",
-      script: "npm",
-      args: "start",
+      script: ".next/standalone/server.js",
       env: { NODE_ENV: "production", PORT: "3000" },
       autorestart: true,
       max_restarts: 10,

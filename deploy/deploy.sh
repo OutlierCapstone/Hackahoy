@@ -12,6 +12,7 @@ npm run build
 
 echo "==> [2.5] 프론트 빌드 (Next.js)"
 ( cd Hackahoy && npm ci && npm run build )
+( cd Hackahoy && cp -r .next/static .next/standalone/.next/static 2>/dev/null; cp -r public .next/standalone/public 2>/dev/null )
 echo "==> [3/5] ai-tutor deps"
 if [ -f ai-tutor/requirements.txt ]; then
   python3 -m venv ai-tutor/venv
