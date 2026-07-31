@@ -56,7 +56,7 @@ except Exception as e:
     # 판단 불가 시 재적재하지 않는다 (배포가 데이터를 건드리지 않게)
     print("0")
 PY
-)
+2>/dev/null | tail -n 1)
     if [ "${FORCE_RESEED:-0}" = "1" ] || [ "$NEEDS_RESEED" = "1" ]; then
       echo "    -> 섹션 재적재 실행"
       cp -r "${CHROMA_PATH:-./chroma}" "${CHROMA_PATH:-./chroma}.bak.$(date +%s)" 2>/dev/null || true
