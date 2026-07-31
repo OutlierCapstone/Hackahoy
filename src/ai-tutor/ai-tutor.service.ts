@@ -10,6 +10,7 @@
 
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 const MAX_LOGS = 20;
@@ -41,9 +42,11 @@ const MAX_LOGS = 20;
 //   실서버에서 UserLog 에 공격 로그가 쌓이는 것을 확인한 뒤 HINT_GATE_ENABLED=true 로 켠다.
 //   (scripts/verify-log-collection.sh 로 확인 가능)
 // ---------------------------------------------------------------------------
-const GATE_ENABLED = process.env.HINT_GATE_ENABLED === 'true';
-const GATE_CAP = Number(process.env.HINT_GATE_CAP ?? 5);
-const GATE_ESCAPE_MIN = Number(process.env.HINT_GATE_ESCAPE_MIN ?? 10);
+// 설정값은 클래스 생성 이후 ConfigService 에서 읽는다.
+// 모듈 최상단에서 process.env 를 읽으면 ConfigModule.forRoot() 가 .env 를 로드하기 전에
+// 평가될 수 있어, .env 에 HINT_GATE_ENABLED=true 가 있어도 항상 false 가 되는 문제가 있다.
+const DEFAULT_GATE_CAP = 5;
+const DEFAULT_GATE_ESCAPE_MIN = 10;
 
 /**
  * hint_count 가 이 값 이상이면 시간 경과로 게이트를 열어 주지 않는다.
@@ -57,7 +60,7 @@ const GATE_ESCAPE_MIN = Number(process.env.HINT_GATE_ESCAPE_MIN ?? 10);
  *
  * hints.py 의 SECTION_MAP / calculate_level 을 바꾸면 이 값도 함께 검토해야 한다.
  */
-const GATE_NO_ESCAPE_FROM = Number(process.env.HINT_GATE_NO_ESCAPE_FROM ?? 3);
+const DEFAULT_GATE_NO_ESCAPE_FROM = 3;
 
 /** 시도로 세지 않는 요청. 힌트 요청 자체가 시도로 잡히면 게이트가 스스로 열린다. */
 const NON_ATTEMPT_PATTERNS = [
@@ -77,9 +80,39 @@ export interface HintResult {
 export class AiTutorService {
   private readonly logger = new Logger('AiTutorService');
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   private readonly AI_TUTOR_URL = 'http://127.0.0.1:8000';
+
+  private get gateEnabled(): boolean {
+    return (
+      this.config.get<string>('HINT_GATE_ENABLED', 'false').toLowerCase() ===
+      'true'
+    );
+  }
+
+  private numberConfig(name: string, fallback: number): number {
+    const parsed = Number(this.config.get<string>(name));
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  }
+
+  private get gateCap(): number {
+    return this.numberConfig('HINT_GATE_CAP', DEFAULT_GATE_CAP);
+  }
+
+  private get gateEscapeMin(): number {
+    return this.numberConfig('HINT_GATE_ESCAPE_MIN', DEFAULT_GATE_ESCAPE_MIN);
+  }
+
+  private get gateNoEscapeFrom(): number {
+    return this.numberConfig(
+      'HINT_GATE_NO_ESCAPE_FROM',
+      DEFAULT_GATE_NO_ESCAPE_FROM,
+    );
+  }
 
   private formatDate(date: Date | null): string {
     if (!date) return '2026-01-01 00:00:00';
@@ -132,9 +165,12 @@ export class AiTutorService {
   }> {
     const hintCount: number = context?.hint_count ?? 0;
     const attempts = this.countMeaningfulAttempts(context?.logs);
-    const required = Math.min(Math.max(hintCount, 0), GATE_CAP);
+    const gateCap = this.gateCap;
+    const gateEscapeMin = this.gateEscapeMin;
+    const gateNoEscapeFrom = this.gateNoEscapeFrom;
+    const required = Math.min(Math.max(hintCount, 0), gateCap);
 
-    if (!GATE_ENABLED) return { blocked: false, attempts, required };
+    if (!this.gateEnabled) return { blocked: false, attempts, required };
 
     // 첫 힌트는 항상 열어 준다. 아무 단서도 없이 시도를 요구하는 것은 학습에 도움이 안 된다.
     if (hintCount <= 0) return { blocked: false, attempts, required };
@@ -145,7 +181,7 @@ export class AiTutorService {
     // 로그 수집 장애로 영구 차단되는 것을 막고, 타이핑 대신 고민한 학습자도 구제한다.
     // 단 정답 섹션에 닿을 수 있는 구간(hint_count >= GATE_NO_ESCAPE_FROM)에서는
     // 시간으로 열어 주지 않는다. 기다리기만 해서 정답에 도달하는 경로를 막는다.
-    const escapeAllowed = hintCount < GATE_NO_ESCAPE_FROM;
+    const escapeAllowed = hintCount < gateNoEscapeFrom;
 
     if (escapeAllowed) {
       const lastHint = await this.prisma.hintHistory.findFirst({
@@ -155,7 +191,7 @@ export class AiTutorService {
       });
       if (lastHint) {
         const elapsedMin = (Date.now() - lastHint.usedAt.getTime()) / 60000;
-        if (elapsedMin >= GATE_ESCAPE_MIN) {
+        if (elapsedMin >= gateEscapeMin) {
           this.logger.log(
             `게이트 시간 해제 user=${userId} problem=${problemId} ` +
               `attempts=${attempts}/${required} elapsed=${elapsedMin.toFixed(1)}분`,
@@ -167,7 +203,7 @@ export class AiTutorService {
 
     const remaining = required - attempts;
     const tail = escapeAllowed
-      ? ` (${GATE_ESCAPE_MIN}분이 지나면 자동으로 열립니다.)`
+      ? ` (${gateEscapeMin}분이 지나면 자동으로 열립니다.)`
       : ' 이 단계부터는 시간이 지나도 자동으로 열리지 않습니다.';
 
     return {
