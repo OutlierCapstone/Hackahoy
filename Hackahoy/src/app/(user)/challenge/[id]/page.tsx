@@ -33,6 +33,51 @@ function getHintIcon(problem: Problem): string {
   return `/assets/icons/default-hint.png`;
 }
 
+// 리버스 프록시(OpenResty)가 떠 있는 호스트. 반드시 한 곳으로 고정한다.
+const CHALLENGE_HOST = process.env.NEXT_PUBLIC_CHALLENGE_HOST ?? '44.199.70.243';
+
+/**
+ * 챌린지 진입 주소를 만든다. 화면에 보이는 문자열과 실제 이동 주소가 항상 같다.
+ *
+ * 왜 이렇게 하는가
+ *   uid 쿠키는 프록시의 /set-uid 를 거칠 때만 심기고, 쿠키가 없으면 학습자의 모든
+ *   요청이 서버에서 anonymous 로 폐기된다(로그가 하나도 안 쌓인다).
+ *   이전 코드는 href 가 44.199.70.243, 화면 표시가 52.78.240.6 으로 서로 달랐다.
+ *   학습자가 보이는 주소를 복사해 접속하면 쿠키 없는 다른 오리진이 되어
+ *   공격 시도 로그가 전부 사라졌다.
+ *
+ *   포트도 `500${problem.id}` 로 문자열 결합하고 있었다. 문제 id 가 8 이상이면
+ *   5008(nginx 에 listen 이 없다), 두 자리면 50010 이 된다.
+ *
+ * 호스트와 포트를 분리해서 다루는 이유
+ *   serverLink 는 관리자가 문제 등록 화면에서 직접 입력하는 자유 텍스트라
+ *   옛 호스트가 섞여 있을 수 있다. 그래서 호스트는 CHALLENGE_HOST 로 고정하고
+ *   포트만 serverLink 에서 가져온다. 포트를 못 찾으면 문제 번호 규칙으로 되돌린다.
+ */
+function buildChallengeEntry(
+  problem: Problem,
+  userId?: string,
+): { display: string; href: string } {
+  let port = '';
+
+  try {
+    port = new URL(problem.serverLink).port;
+  } catch {
+    // serverLink 가 URL 형식이 아닐 수 있다 (예: "52.78.240.6:5004")
+  }
+  if (!port) {
+    const matched = problem.serverLink?.match(/:(\d{4,5})(?:\D|$)/);
+    port = matched ? matched[1] : String(5000 + problem.id);
+  }
+
+  const origin = `http://${CHALLENGE_HOST}:${port}`;
+  const entry = new URL('/set-uid', origin);
+  // uid 가 없으면 파라미터를 붙이지 않는다. 프록시가 "uid 없음" 경고를 남긴다.
+  if (userId) entry.searchParams.set('uid', userId);
+
+  return { display: origin, href: entry.toString() };
+}
+
 export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
   const [flagInput, setFlagInput] = useState('');
@@ -181,18 +226,21 @@ export default function ChallengePage() {
           <div className={styles.board}>
             <h1 className={styles.title}>{problem.title}</h1>
             <p className={styles.desc}>{problem.description}</p>
-            {problem.serverLink && (
-              <p className={styles.link}>
-                Server: <a
-                  href={`http://44.199.70.243:500${problem.id}/set-uid?uid=${user?.userId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => saveUserLog('VISIT', { url: problem.serverLink })}
-                >
-                  {`http://52.78.240.6:500${problem.id}`}
-                </a>
-              </p>
-            )}
+            {problem.serverLink && (() => {
+              const entry = buildChallengeEntry(problem, user?.userId);
+              return (
+                <p className={styles.link}>
+                  Server: <a
+                    href={entry.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => saveUserLog('VISIT', { url: problem.serverLink })}
+                  >
+                    {entry.display}
+                  </a>
+                </p>
+              );
+            })()}
             <form className={styles.formRow} onSubmit={onSubmit}>
               <input
                 className={styles.input}
