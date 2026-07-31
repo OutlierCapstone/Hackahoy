@@ -8,6 +8,10 @@ on:
         description: "벡터DB를 강제로 섹션 재적재 (평소에는 불필요)"
         type: boolean
         default: false
+      verify_hint_pipeline:
+        description: "배포 후 실제 Gemini 힌트 1회 생성 검증"
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-main
@@ -24,9 +28,12 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 20m
-          envs: FORCE_RESEED
+          # GitHub Actions secret 값은 로그에 마스킹되며, deploy.sh 는 값을 출력하지 않는다.
+          envs: FORCE_RESEED,GEMINI_API_KEY,VERIFY_HINT_PIPELINE
           script: |
             cd /home/ubuntu/Hackahoy
             bash deploy/deploy.sh
         env:
           FORCE_RESEED: ${{ inputs.force_reseed && '1' || '0' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VERIFY_HINT_PIPELINE: ${{ inputs.verify_hint_pipeline && '1' || '0' }}
