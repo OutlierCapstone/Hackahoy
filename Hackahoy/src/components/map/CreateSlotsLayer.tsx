@@ -1,4 +1,3 @@
-// src/components/map/CreateSlotsLayer.tsx
 'use client';
 
 import Image from 'next/image';
@@ -30,39 +29,16 @@ export default function CreateSlotsLayer({
 
   const isAdmin = user?.role === 'ADMIN';
 
+  // Logic: Pins 1 and 2 are hardcoded as occupied.
+  // Others check the DB (islands) or local store state.
   const isOccupied = (id: PinId) => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-    const dbOccupied = islands.some(isl => isl.id === id);
-=======
-    // 1번과 2번 핀은 무조건 활성화 상태(true)로 리턴합니다.
     if (id === 1 || id === 2) return true;
 
     const dbOccupied = islands.some((isl) => isl.id === id);
->>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
     const localOccupied = storeOccupiedPins?.has(id) ?? false;
 
     return dbOccupied || localOccupied;
   };
-<<<<<<< HEAD
-=======
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-  // 1번과 2번 핀은 무조건 활성화 상태(true)로 리턴합니다.
-  if (id === 1 || id === 2) return true;
-
-  const dbOccupied = islands.some(isl => isl.id === id);
-  const localOccupied = storeOccupiedPins?.has(id) ?? false;
-  
-  return dbOccupied || localOccupied;
-};
-<<<<<<< HEAD
-=======
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-=======
->>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
 
   const goIsland = (pinId: PinId) => {
     if (!user) {
@@ -77,6 +53,8 @@ export default function CreateSlotsLayer({
       {PIN_POS.map((pin) => {
         const occupied = isOccupied(pin.id);
 
+        // Play mode: can click occupied pins.
+        // Select mode: Admin can click empty pins (excluding Pin 1).
         const clickable =
           mode === 'play' ? occupied : isAdmin && !occupied && pin.id !== 1;
 

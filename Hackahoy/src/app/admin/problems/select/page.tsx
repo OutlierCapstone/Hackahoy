@@ -1,25 +1,27 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/common/AuthContext";
-import axios from "axios";
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/common/AuthContext';
+import axios from 'axios';
 
 const PIN_SLOTS = [
-  { id: 1, left: "20%", top: "56%" },
-  { id: 2, left: "50%", top: "42%" },
-  { id: 3, left: "82%", top: "56%" },
+  { id: 1, left: '20%', top: '56%' },
+  { id: 2, left: '50%', top: '42%' },
+  { id: 3, left: '82%', top: '56%' },
 ];
 
 export default function AdminSelectPinPage() {
   const router = useRouter();
   const { user } = useAuth() as any;
-  
+
   const isAdmin = user?.isAdmin === true;
 
   const [pinCounts, setPinCounts] = useState<{ [key: number]: number }>({
-    1: 0, 2: 0, 3: 0
+    1: 0,
+    2: 0,
+    3: 0,
   });
 
   useEffect(() => {
@@ -27,18 +29,18 @@ export default function AdminSelectPinPage() {
 
     const fetchCounts = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        const res = await axios.get("http://localhost:4000/admin/problems", {
-          headers: { Authorization: `Bearer ${token}` }
+        const token = localStorage.getItem('accessToken');
+        const res = await axios.get('http://localhost:4000/admin/problems', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         const counts = { 1: 0, 2: 0, 3: 0 };
         res.data.forEach((p: any) => {
           if (counts[p.islandId] !== undefined) counts[p.islandId]++;
         });
         setPinCounts(counts);
       } catch (err) {
-        console.error("핀 데이터 로드 실패", err);
+        console.error('핀 데이터 로드 실패', err);
       }
     };
 
@@ -50,34 +52,38 @@ export default function AdminSelectPinPage() {
   return (
     <div
       style={{
-        position: "relative", width: "100vw", height: "100vh", overflow: "hidden",
+        position: 'relative',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
         backgroundImage: "url('/assets/backgrounds/main-map.png')",
-        backgroundRepeat: "no-repeat", backgroundPosition: "center",
-        backgroundSize: "80% auto", backgroundColor: "#1F6396",
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+        backgroundSize: '80% auto',
+        backgroundColor: '#1F6396',
       }}
     >
-      <div style={{
-        position: "absolute", left: 24, top: 24, zIndex: 50, padding: "10px 14px",
-        borderRadius: 12, background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 14,
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: 24,
+          top: 24,
+          zIndex: 50,
+          padding: '10px 14px',
+          borderRadius: 12,
+          background: 'rgba(0,0,0,0.55)',
+          color: '#fff',
+          fontSize: 14,
+        }}
+      >
         문제를 생성할 핀을 선택하세요. (현재 서버 기반)
       </div>
 
       {PIN_SLOTS.map((pin) => {
         const count = pinCounts[pin.id] || 0;
-<<<<<<< HEAD
-        
-        // 1번과 2번 핑은 이미 문제가 배정되어 있으므로 선택 불가능하게 수정
+
+        // ✅ 최종 정책: 1,2번 핀 막고 + 최대 3개 제한
         const selectable = pin.id !== 1 && pin.id !== 2 && count < 3;
-=======
-<<<<<<< HEAD
-        const selectable = pin.id !== 1 && count < 3;
-=======
-        
-        // 1번과 2번 핑은 이미 문제가 배정되어 있으므로 선택 불가능하게 수정
-        const selectable = pin.id !== 1 && pin.id !== 2 && count < 3;
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
 
         return (
           <button
@@ -90,53 +96,43 @@ export default function AdminSelectPinPage() {
             }}
             disabled={!selectable}
             style={{
-              position: "absolute", left: pin.left, top: pin.top,
-              transform: "translate(-50%, -50%)", background: "none",
-              border: "none", padding: 0,
-              cursor: selectable ? "pointer" : "not-allowed",
-<<<<<<< HEAD
-              opacity: selectable ? 1 : 0.35, // 비활성 시 회색으로 보임
-            }}
-            title={selectable ? `현재 문제 수: ${count}개` : "이 핑은 선택할 수 없습니다."}
-=======
-<<<<<<< HEAD
+              position: 'absolute',
+              left: pin.left,
+              top: pin.top,
+              transform: 'translate(-50%, -50%)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: selectable ? 'pointer' : 'not-allowed',
               opacity: selectable ? 1 : 0.35,
             }}
-            title={`현재 문제 수: ${count}개`}
-=======
-              opacity: selectable ? 1 : 0.35, // 비활성 시 회색으로 보임
-            }}
-            title={selectable ? `현재 문제 수: ${count}개` : "이 핑은 선택할 수 없습니다."}
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
+            title={
+              selectable
+                ? `현재 문제 수: ${count}개`
+                : '이 핀은 선택할 수 없습니다.'
+            }
           >
             <Image
               src="/assets/icons/main-marker.png"
-              alt="pin" width={48} height={48} priority
-              style={{ imageRendering: "pixelated", display: "block" }}
+              alt="pin"
+              width={48}
+              height={48}
+              priority
+              style={{ imageRendering: 'pixelated', display: 'block' }}
             />
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '12px' }}>
-               {pin.id}번 ({count}/3)
-            </span>
-=======
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
+
             <div style={{ textAlign: 'center', marginTop: '4px' }}>
-              <span style={{ 
-                color: 'white', 
-                fontWeight: 'bold', 
-                fontSize: '12px',
-                textShadow: '1px 1px 2px black'
-              }}>
-                 {pin.id}번 ({count}/3)
+              <span
+                style={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  textShadow: '1px 1px 2px black',
+                }}
+              >
+                {pin.id}번 ({count}/3)
               </span>
             </div>
-<<<<<<< HEAD
-=======
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
           </button>
         );
       })}

@@ -25,10 +25,10 @@ export default function ChallengePage() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth() as any;
   const router = useRouter();
 
-  // 1. 문제 데이터 페칭 로직 정리
+  // 1. Fetch Problem Data
   useEffect(() => {
     if (!id) return;
 
@@ -47,7 +47,7 @@ export default function ChallengePage() {
           setProblem(null);
         }
       } catch (error) {
-        console.error('❌ 문제 로드 실패:', error);
+        console.error('❌ Problem load failed:', error);
         setProblem(null);
       } finally {
         setLoading(false);
@@ -56,7 +56,7 @@ export default function ChallengePage() {
     fetchProblem();
   }, [id]);
 
-  // 2. 플래그 제출 로직
+  // 2. Submit Flag Logic (수정됨)
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!problem || submitting) return;
@@ -72,25 +72,22 @@ export default function ChallengePage() {
           return;
         }
 
+        // --- 결과 페이지 이동 로직 시작 ---
         const prevLevel = user?.levelNum ?? 1;
         const newLevel = result.newLevel;
-        await refreshUser();
+        const isLevelUp = newLevel > prevLevel; // 레벨업 여부 확인
 
-        if (newLevel > prevLevel) {
-          const prevShip = encodeURIComponent(
-            `/assets/ships/ship-${prevLevel}.png`,
-          );
-          const newShip = encodeURIComponent(
-            `/assets/ships/ship-${newLevel}.png`,
-          );
-          const redirect = encodeURIComponent(`/`);
-          router.push(
-            `/level-up?prevShip=${prevShip}&newShip=${newShip}&redirect=${redirect}`,
-          );
-        } else {
-          alert('정답입니다! 🎉');
-          setFlagInput('');
-        }
+        await refreshUser(); // 최신 유저 정보 동기화
+
+        // 배 이미지 경로 생성
+        const prevShip = `/assets/ships/ship-${prevLevel}.png`;
+        const newShip = `/assets/ships/ship-${newLevel}.png`;
+
+        // 결과창으로 이동 (쿼리 파라미터 전달)
+        router.push(
+          `/level-up?isLevelUp=${isLevelUp}&prevShip=${encodeURIComponent(prevShip)}&newShip=${encodeURIComponent(newShip)}&redirect=/`,
+        );
+        // --- 결과 페이지 이동 로직 끝 ---
       } else {
         alert('틀렸습니다. 다시 생각해보세요! ❌');
       }
@@ -101,33 +98,10 @@ export default function ChallengePage() {
     }
   };
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-const getBackgroundImage = (islandId: number) => {
-  // islandId === 1 조건을 제거하여 모든 구역의 1~6번 문제가 전용 배경을 갖도록 합니다.
-  if (problem && problem.id >= 1 && problem.id <= 6) {
-    return `/assets/backgrounds/island-${problem.id}.png`;
-  }
-  
-  // 특정 구역(1, 2번 핑)에 따른 기본 배경 설정
-  if (islandId === 1 || islandId === 2) {
-    return `/assets/backgrounds/island-map.png`; 
-  }
-
-=======
-<<<<<<< HEAD
-  const getBackgroundImage = (islandId: number) => {
-    if (islandId === 1 && problem && problem.id <= 3) {
-      return `/assets/backgrounds/island-${problem.id}.png`;
-    }
-    if (islandId === 1) return `/assets/backgrounds/island-1.png`;
-    return "/assets/backgrounds/default-island.png";
-  };
-=======
-  // 3. 배경 및 힌트 이미지 결정 로직
+  // 3. Asset & UI Helpers
   const getBackgroundImage = useCallback(
     (islandId: number) => {
-      if (problem && problem.id >= 1 && problem.id <= 6) {
+      if (problem && problem.id >= 1 && problem.id <= 7) {
         return `/assets/backgrounds/island-${problem.id}.png`;
       }
       if (islandId === 1 || islandId === 2) {
@@ -137,16 +111,14 @@ const getBackgroundImage = (islandId: number) => {
     },
     [problem],
   );
->>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
 
   const getHintImage = useCallback((problemId: number) => {
-    if ([1, 2, 3, 4, 5, 6].includes(problemId)) {
+    if ([1, 2, 3, 4, 5, 6, 7].includes(problemId)) {
       return `/assets/icons/hint-${problemId}.png`;
     }
     return '/assets/icons/default-hint.png';
   }, []);
 
-  // 4. 힌트 클릭 핸들러 (ESLint 경고 해결을 위해 별도 분리)
   const handleHintClick = async () => {
     if (!problem) return;
     try {
@@ -159,41 +131,10 @@ const getBackgroundImage = (islandId: number) => {
         },
       });
     } catch (error) {
-      console.error('❌ 힌트 로그 저장 실패:', error);
+      console.error('❌ Failed to log hint access:', error);
     }
     setHintOpen(true);
   };
-<<<<<<< HEAD
-=======
-const getBackgroundImage = (islandId: number) => {
-  // islandId === 1 조건을 제거하여 모든 구역의 1~6번 문제가 전용 배경을 갖도록 합니다.
-  if (problem && problem.id >= 1 && problem.id <= 6) {
-    return `/assets/backgrounds/island-${problem.id}.png`;
-  }
-  
-  // 특정 구역(1, 2번 핑)에 따른 기본 배경 설정
-  if (islandId === 1 || islandId === 2) {
-    return `/assets/backgrounds/island-map.png`; 
-  }
-
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-  return "/assets/backgrounds/default-island.png";
-};
-
-  // 2. 힌트 아이콘 로직 (6번까지 확장)
-const getHintImage = (problemId: number, islandId: number) => {
-  // islandId 조건 없이 problemId가 1~6 사이이면 해당 이미지를 가져오도록 수정
-  if ([1, 2, 3, 4, 5, 6].includes(problemId)) {
-    return `/assets/icons/hint-${problemId}.png`;
-  }
-  return "/assets/icons/default-hint.png";
-};
-<<<<<<< HEAD
-=======
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-=======
->>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
 
   if (loading) {
     return (
@@ -232,53 +173,7 @@ const getHintImage = (problemId: number, islandId: number) => {
           <div className={styles.board}>
             <h1 className={styles.title}>{problem.title}</h1>
             <p className={styles.desc}>{problem.description}</p>
-<<<<<<< HEAD
 
-<<<<<<< HEAD
-            {/* 3. 서버 링크 출력 로직 (6번까지 확장 및 정리) */}
-=======
-<<<<<<< HEAD
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-            {problem.serverLink && (
-              <p className={styles.link}>
-                Server link: &nbsp;
-                <a href={problem.serverLink} target="_blank" rel="noopener noreferrer">
-                  {(() => {
-<<<<<<< HEAD
-                    if (problem.id >= 1 && problem.id <= 6) {
-                      return `http://52.78.240.6:800${problem.id}`;
-                    }
-=======
-                    if (problem.id === 1) return "http://52.78.240.6:8001";
-                    if (problem.id === 2) return "http://52.78.240.6:8002";
-                    if (problem.id === 3) return "http://52.78.240.6:8003";
-=======
-            {/* 3. 서버 링크 출력 로직 (6번까지 확장 및 정리) */}
-            {problem.serverLink && (
-              <p className={styles.link}>
-                Server link: &nbsp;
-                <a href={problem.serverLink} target="_blank" rel="noopener noreferrer">
-                  {(() => {
-                    if (problem.id >= 1 && problem.id <= 6) {
-                      return `http://52.78.240.6:800${problem.id}`;
-                    }
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-                    return problem.serverLink; 
-                  })()}
-                </a>
-              </p>
-            )}
-
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-            
-
-=======
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-=======
             {problem.serverLink && (
               <p className={styles.link}>
                 Server link: &nbsp;
@@ -293,7 +188,7 @@ const getHintImage = (problemId: number, islandId: number) => {
                 </a>
               </p>
             )}
->>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
+
             <form className={styles.formRow} onSubmit={onSubmit}>
               <input
                 className={styles.input}
@@ -321,45 +216,8 @@ const getHintImage = (problemId: number, islandId: number) => {
             <button
               type="button"
               className={styles.hintBtn}
-<<<<<<< HEAD
-              onClick={async () => {
-                try {
-<<<<<<< HEAD
-                  const token = localStorage.getItem('accessToken'); 
-=======
-<<<<<<< HEAD
-                  // 1. 서버에 로그 쏘기 (토큰을 헤더에 포함)
-                  // 로컬 스토리지가 아닌 쿠키나 다른 곳에 저장하신다면 그에 맞춰 토큰을 가져와야 합니다.
-                  const token = localStorage.getItem('accessToken'); 
-
-=======
-                  const token = localStorage.getItem('accessToken'); 
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-                  await fetch(`http://localhost:4000/problem/${problem.id}/hint`, {
-                    method: 'GET',
-                    headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                  });
-                } catch (error) {
-                  console.error('❌ 힌트 로그 저장 실패:', error);
-                }
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-                // 2. 모달 열기 (로그 성공 여부와 상관없이 유저에겐 보여줌)
-=======
->>>>>>> 18190ce (feat: implement user unban logic and automated daily security report)
->>>>>>> 229fd6d (feat: implement user unban logic and automated daily security report)
-                setHintOpen(true);
-              }}           
-              aria-label="open hint"
-=======
               onClick={handleHintClick}
->>>>>>> fae79c4 (Feat: OpenResty 설정 및 collect 서비스 추가, 챌린지 로직 수정)
+              aria-label="open hint"
             >
               <Image src={hintData.img} alt="hint" width={260} height={320} />
             </button>
