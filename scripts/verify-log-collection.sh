@@ -34,18 +34,65 @@ head1(){ echo; echo "======== $* ========"; }
 
 load_db_url() {
   if [[ -z "${DATABASE_URL:-}" && -f .env ]]; then
-    DATABASE_URL="$(grep -E '^DATABASE_URL=' .env | head -1 | cut -d= -f2- | tr -d '"'"'"'')"
+    # DATABASE_URL="postgres://..." 또는 DATABASE_URL=postgres://... 양쪽 모두 처리
+    local raw
+    raw="$(grep -E '^[[:space:]]*DATABASE_URL[[:space:]]*=' .env | head -1 | sed -E 's/^[^=]*=[[:space:]]*//')"
+    raw="${raw%$'\r'}"                 # CRLF 대비
+    raw="${raw#\"}"; raw="${raw%\"}"   # 양쪽 큰따옴표 제거
+    raw="${raw#\'}"; raw="${raw%\'}"   # 양쪽 작은따옴표 제거
+    DATABASE_URL="$raw"
     export DATABASE_URL
   fi
 }
 
-psql_q() {
+# DB 접근 방식을 한 번만 판정한다. psql 이 없으면 Prisma 로 폴백한다.
+#   예전에는 psql 오류를 2>/dev/null 로 버려서, psql 미설치와
+#   "테이블이 비어 있음" 을 구분할 수 없었다. 그래서 3단계가 조용히 실패했다.
+DB_MODE=""
+db_init() {
+  [[ -n "$DB_MODE" ]] && return 0
   load_db_url
+
   if [[ -z "${DATABASE_URL:-}" ]]; then
-    ng "DATABASE_URL 을 찾을 수 없다. .env 를 확인하거나 DATABASE_URL=... 로 넘겨라."
-    return 1
+    ng "DATABASE_URL 을 찾을 수 없다."
+    info "레포 루트에서 실행했는지 확인하고, 아니면 DATABASE_URL=... 로 직접 넘겨라."
+    info "  예: DATABASE_URL='postgresql://user:pw@localhost:5432/db' bash $0 db"
+    DB_MODE="none"; return 1
   fi
-  psql "$DATABASE_URL" -At -c "$1" 2>/dev/null
+  info "DATABASE_URL 인식: ${DATABASE_URL%%:*}://... (호스트 이후 생략)"
+
+  if command -v psql >/dev/null 2>&1; then
+    local err
+    if err="$(psql "$DATABASE_URL" -At -c 'SELECT 1;' 2>&1)" && [[ "$err" == "1" ]]; then
+      DB_MODE="psql"; ok "psql 로 DB 연결 성공"; return 0
+    fi
+    warn "psql 연결 실패, Prisma 로 폴백한다. psql 오류:"
+    echo "$err" | sed 's/^/        /' | head -5
+  else
+    info "psql 이 설치돼 있지 않다. Prisma 로 조회한다."
+  fi
+
+  if [[ -f scripts/db-query.js ]] && command -v node >/dev/null 2>&1; then
+    local err2
+    if err2="$(node scripts/db-query.js 'SELECT 1 AS ok;' 2>&1)" && [[ "$err2" == "1" ]]; then
+      DB_MODE="prisma"; ok "Prisma 로 DB 연결 성공"; return 0
+    fi
+    ng "Prisma 조회도 실패했다:"
+    echo "$err2" | sed 's/^/        /' | head -8
+  else
+    ng "node 또는 scripts/db-query.js 가 없다."
+  fi
+
+  DB_MODE="none"; return 1
+}
+
+psql_q() {
+  db_init || return 1
+  case "$DB_MODE" in
+    psql)   psql "$DATABASE_URL" -At -c "$1" ;;
+    prisma) node scripts/db-query.js "$1" ;;
+    *)      return 1 ;;
+  esac
 }
 
 # ---------------------------------------------------------------- 1. 문법 검증
@@ -101,10 +148,23 @@ step_debug() {
 step_probe() {
   head1 "3. 정답 경로 합성 요청"
 
-  local uid
-  uid="$(psql_q 'SELECT id FROM "User" ORDER BY "createdAt" LIMIT 1;' | head -1)"
+  if ! db_init; then
+    ng "DB 에 접근할 수 없어 합성 요청을 건너뛴다. 위 오류를 먼저 해결해라."
+    return 1
+  fi
+
+  local uid ucount
+  ucount="$(psql_q 'SELECT COUNT(*) FROM "User";' | head -1)"
+  info "User 테이블 사용자 수: ${ucount:-?}"
+
+  # TEST_UID 로 직접 지정할 수도 있다 (특정 계정으로 확인하고 싶을 때)
+  uid="${TEST_UID:-}"
+  [[ -z "$uid" ]] && uid="$(psql_q 'SELECT id FROM "User" ORDER BY "createdAt" LIMIT 1;' | head -1)"
+
   if [[ -z "$uid" ]]; then
     ng "User 테이블에 사용자가 없다. UserLog.userId 는 FK 라서 실제 사용자 id 가 필요하다."
+    info "플랫폼에 한 번 로그인해서 계정을 만든 뒤 다시 실행하거나,"
+    info "TEST_UID=<실제 User.id> bash $0 probe 로 지정해라."
     return 1
   fi
   ok "테스트 사용자: $uid"
