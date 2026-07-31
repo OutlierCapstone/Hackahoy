@@ -16,3 +16,9 @@ jobs:
         run: npm run build
       - name: Lint (정보용, 실패해도 머지 막지 않음)
         run: npm run lint || true
+
+      # 로그 수집 파이프라인 회귀 검사.
+      # 자산 필터에 "missions" 같은 부분 문자열이 들어가면 특정 문제의 정답 경로가
+      # 통째로 수집되지 않는데, 배포 후에는 "로그가 안 쌓인다" 로만 보여서 찾기 어렵다.
+      - name: Validate nginx.conf (로그 수집 회귀 검사)
+        run: python3 nginx/validate-conf.py nginx/nginx.conf

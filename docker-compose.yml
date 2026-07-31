@@ -1,6 +1,14 @@
 services:
   openresty:
     build: ./nginx
+    # 문제를 추가할 때는 세 곳을 함께 고쳐야 한다.
+    #   1) 아래 ports
+    #   2) nginx/nginx.conf 의 listen
+    #   3) nginx/nginx.conf 의 map $server_port $upstream_port / $prob_id
+    # nginx/validate-conf.py 가 listen 과 map 의 불일치를 검사한다.
+    #
+    # 이전에는 5008~5011 을 노출하고 있었지만 nginx.conf 에 listen 도 매핑도 없었다.
+    # 그 포트로 들어온 요청은 연결 거부되거나 prob_id=0 으로 기록돼 FK 위반으로 유실됐다.
     ports:
       - '5001:5001'
       - '5002:5002'
@@ -9,12 +17,17 @@ services:
       - '5005:5005'
       - '5006:5006'
       - '5007:5007'
-      - '5008:5008'
-      - '5009:5009'
-      - '5010:5010'
-      - '5011:5011'
     volumes:
       - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+    environment:
+      # 챌린지 서버와 collect API 가 떠 있는 호스트 주소.
+      # 반드시 IP 여야 한다. nginx.conf 는 resolver(127.0.0.11) 를 쓰기 때문에
+      # /etc/hosts 에만 존재하는 host.docker.internal 은 해석되지 않는다.
+      - HOST_GATEWAY=172.17.0.1
+      # 1 로 두면 수집을 건너뛴 이유까지 error_log 에 남는다.
+      # 로그가 안 쌓인다는 신고가 들어오면 1 로 올리고 docker compose logs openresty 를 본다.
+      - COLLECT_DEBUG=0
     extra_hosts:
+      # 참고용. 위에 적었듯 proxy_pass / resty.http 에서는 쓸 수 없다.
       - 'host.docker.internal:host-gateway'
     restart: unless-stopped
