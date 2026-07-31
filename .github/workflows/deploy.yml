@@ -8,6 +8,18 @@ on:
         description: "벡터DB를 강제로 섹션 재적재 (평소에는 불필요)"
         type: boolean
         default: false
+      verify_hint_pipeline:
+        description: "배포 후 실제 Gemini 힌트 1회 생성 검증"
+        type: boolean
+        default: false
+      hint_gate_mode:
+        description: "힌트 게이팅 (keep=EC2 현재 설정 유지, enable=활성화, disable=비활성화)"
+        type: choice
+        default: keep
+        options:
+          - keep
+          - enable
+          - disable
 
 concurrency:
   group: deploy-main
@@ -24,9 +36,14 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 20m
-          envs: FORCE_RESEED
+          # GitHub Actions secret 값은 로그에 마스킹되며, deploy.sh 는 값을 출력하지 않는다.
+          envs: FORCE_RESEED,GEMINI_API_KEY,VERIFY_HINT_PIPELINE,HINT_GATE_MODE
           script: |
             cd /home/ubuntu/Hackahoy
             bash deploy/deploy.sh
         env:
           FORCE_RESEED: ${{ inputs.force_reseed && '1' || '0' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VERIFY_HINT_PIPELINE: ${{ inputs.verify_hint_pipeline && '1' || '0' }}
+          # push 이벤트에는 입력이 없다. 그때는 EC2 의 현재 게이팅 설정을 건드리지 않는다.
+          HINT_GATE_MODE: ${{ inputs.hint_gate_mode || 'keep' }}
