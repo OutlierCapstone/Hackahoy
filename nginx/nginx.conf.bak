@@ -63,12 +63,15 @@ http {
             set $upstream "";
 
             access_by_lua_block {
-                local uri    = ngx.var.request_uri
+                local http = require "resty.http"
+                local cjson = require "cjson"
+                local hc = http.new()
+
+                local uri = ngx.var.request_uri
                 local method = ngx.req.get_method()
 
                 ngx.var.upstream = "http://172.17.0.1:" .. ngx.var.upstream_port
 
-                -- 사용자 식별
                 local raw_headers = ngx.req.get_headers()
                 local user_id = "anonymous"
                 local auth = raw_headers["authorization"]
@@ -81,9 +84,7 @@ http {
                     end
                 end
 
-                -- 정적 자원 / 프레임워크 내부 요청 제외
-                local is_asset =
-                    uri:find("%.ico$") or uri:find("%.js$")
+                if uri:find("%.ico$") or uri:find("%.js$")
                     or uri:find("%.css$") or uri:find("%.png$")
                     or uri:find("%.jpg$") or uri:find("%.jpeg$")
                     or uri:find("%.PNG$") or uri:find("%.gif$")
@@ -93,24 +94,15 @@ http {
                     or uri:find("_rsc=")
                     or uri:find("webpack")
                     or uri:find("missions")
-                    or uri:find("/img/") or uri:find("__nextjs")
-
-                if is_asset then
-                    ngx.ctx.skip_collect = true
+                    or uri:find("/img/") or uri:find("__nextjs") or method == "GET"
+                    then
                     return
                 end
 
-                -- GET 은 쿼리스트링이 있을 때만 수집한다.
-                -- (단순 페이지 이동은 노이즈, 파라미터가 붙은 GET 은 공격 시도일 수 있음)
-                if method == "GET" then
-                    local args = ngx.var.args
-                    if not args or args == "" then
-                        ngx.ctx.skip_collect = true
-                        return
-                    end
-                end
+                local prob_id = tonumber(ngx.var.prob_id) or 0
 
-                -- 요청 바디는 log 단계에서 읽을 수 없으므로 여기서 확보해 둔다
+                ngx.log(ngx.ERR, "=== LUA ?�행??method=", method, " uri=", uri, " user_id=", user_id)
+
                 ngx.req.read_body()
                 local req_body = ngx.req.get_body_data()
                 if not req_body then
@@ -123,60 +115,35 @@ http {
                         end
                     end
                 end
+                req_body = req_body or ""
 
-                ngx.ctx.collect = {
-                    user_id    = user_id,
-                    problem_id = tonumber(ngx.var.prob_id) or 0,
-                    method     = method,
-                    uri        = uri,
-                    query      = ngx.var.args or "",
-                    payload    = req_body or "",
-                }
+                ngx.log(ngx.ERR, "=== collect ?�송 user_id=", user_id, " prob_id=", prob_id)
+                local ok, err = pcall(function()
+                    hc:set_timeout(3000)
+                    hc:request_uri("http://172.17.0.1:4000/api/collect", {
+                        method = "POST",
+                        body = cjson.encode({
+                            user_id    = user_id,
+                            problem_id = prob_id,
+                            method     = method,
+                            uri        = uri,
+                            payload    = req_body,
+                        }),
+                        headers = { ["Content-Type"] = "application/json" }
+                    })
+                end)
+
+                if not ok then
+                    ngx.log(ngx.ERR, "collect error: ", err)
+                else
+                    ngx.log(ngx.ERR, "=== collect ?�공!")
+                end
             }
 
             proxy_pass $upstream;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
-
-            log_by_lua_block {
-                if ngx.ctx.skip_collect or not ngx.ctx.collect then
-                    return
-                end
-
-                local data = ngx.ctx.collect
-
-                -- 여기서만 얻을 수 있는 응답 정보
-                data.status     = ngx.status
-                data.resp_bytes = tonumber(ngx.var.body_bytes_sent) or 0
-                data.elapsed_ms = math.floor((tonumber(ngx.var.request_time) or 0) * 1000)
-
-                -- log 단계에서는 cosocket 을 쓸 수 없으므로 타이머로 넘겨 비동기 전송한다.
-                -- 응답은 이미 사용자에게 나갔으므로 체감 지연이 없다.
-                local ok, err = ngx.timer.at(0, function(premature, payload)
-                    if premature then return end
-
-                    local http  = require "resty.http"
-                    local cjson = require "cjson"
-                    local hc = http.new()
-                    hc:set_timeout(3000)
-
-                    local ok2, err2 = pcall(function()
-                        hc:request_uri("http://172.17.0.1:4000/api/collect", {
-                            method  = "POST",
-                            body    = cjson.encode(payload),
-                            headers = { ["Content-Type"] = "application/json" }
-                        })
-                    end)
-
-                    if not ok2 then
-                        ngx.log(ngx.ERR, "collect error: ", err2)
-                    end
-                end, data)
-
-                if not ok then
-                    ngx.log(ngx.ERR, "collect timer failed: ", err)
-                end
-            }
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         }
     }
 }

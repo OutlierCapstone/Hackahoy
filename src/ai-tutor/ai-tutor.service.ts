@@ -1,6 +1,18 @@
+// src/ai-tutor/ai-tutor.service.ts
+//
+// 변경 요약 (getDebugContext 만 변경, 나머지 메서드는 기존과 동일)
+//   1) 로그에 status / resp_bytes / elapsed_ms 를 실어 보낸다.
+//   2) 틀린 flag 제출 기록(SubmitFlag)을 함께 넘긴다.
+//      "학습자가 무엇을 정답이라고 생각했는가"는 막힌 지점을 드러내는 강한 신호인데
+//      이미 DB 에 쌓여 있으면서 힌트 컨텍스트에는 안 들어가고 있었다.
+//      LogEntry 스키마를 바꾸지 않으려고 의사(pseudo) 로그 엔트리로 합쳐 시간순 정렬한다.
+//   3) 최근 20건으로 상한을 둔다 (전체를 넘기면 프롬프트가 터진다).
+
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import axios from 'axios';
+
+const MAX_LOGS = 20;
 
 @Injectable()
 export class AiTutorService {
@@ -8,84 +20,43 @@ export class AiTutorService {
 
   private readonly AI_TUTOR_URL = 'http://127.0.0.1:8000';
 
-  // 🔥 날짜를 "YYYY-MM-DD HH:mm:ss" 형식으로 변환하는 헬퍼 함수
   private formatDate(date: Date | null): string {
-    if (!date) return "2026-01-01 00:00:00";
+    if (!date) return '2026-01-01 00:00:00';
     const pad = (n: number) => n.toString().padStart(2, '0');
     return (
-      date.getFullYear() + '-' +
-      pad(date.getMonth() + 1) + '-' +
-      pad(date.getDate()) + ' ' +
-      pad(date.getHours()) + ':' +
-      pad(date.getMinutes()) + ':' +
+      date.getFullYear() +
+      '-' +
+      pad(date.getMonth() + 1) +
+      '-' +
+      pad(date.getDate()) +
+      ' ' +
+      pad(date.getHours()) +
+      ':' +
+      pad(date.getMinutes()) +
+      ':' +
       pad(date.getSeconds())
     );
   }
 
-// 1. getAiHint 함수 수정
-async getAiHint(userId: string, problemId: number) {
-  const context = await this.getDebugContext(userId, problemId);
-  try {
-    const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context);
-    
-    // 🔥 AI 서버의 응답 구조가 response.data.hint 인지 다시 확인하세요!
-    const aiHint = response.data;
-
-    if (aiHint) {
-      console.log("✅ DB에 저장할 힌트:", aiHint);
-      // 🔥 여기서 aiHint가 확실히 전달되는지 확인
-      await this.createHintRecord(userId, problemId, aiHint);
-    } else {
-      console.warn("⚠️ AI 서버가 응답했으나 힌트 문자열이 비어있음");
-    }
-
-    return aiHint;
-  } catch (error) {
-    console.error("[ERROR] 연동 실패:", error.response?.data || error.message);
-    throw new HttpException('AI 튜터 응답 실패', HttpStatus.BAD_GATEWAY);
-  }
-}
-
-  /**
-   * 2. [연동] AI 문제 추천 요청 (에러 해결용 함수 추가)
-   */
-  async getAiRecommendation(userId: string) {
-    const context = await this.getSolvedProblemContext(userId);
-    console.log("[STEP 2] AI 추천 요청 데이터:", JSON.stringify(context, null, 2));
-
+  async getAiHint(userId: string, problemId: number) {
+    const context = await this.getDebugContext(userId, problemId);
     try {
-      const response = await axios.post(`${this.AI_TUTOR_URL}/recommendation/`, context);
-      
-      console.log("[STEP 3] AI 추천 서버 응답(RAW):", response.data);
+      const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context);
+      const aiHint = response.data;
 
-      // 🔥 응답이 "3" 같은 문자열이므로 숫자로 변환
-      const recommendedId = Number(response.data);
-
-      // 만약 응답이 숫자가 아니거나(예: "No more problems"), 0 이하라면 예외 처리
-      if (!recommendedId || isNaN(recommendedId)) {
-        return { 
-          recommended_problem_id: null, 
-          message: typeof response.data === 'string' ? response.data : "추천할 문제를 찾지 못했습니다." 
-        };
+      if (aiHint) {
+        await this.createHintRecord(userId, problemId, aiHint);
       }
-      
-      console.log(`✅ 추출된 추천 문제 ID: ${recommendedId}`);
-      return { 
-        recommended_problem_id: recommendedId, 
-        message: "AI 튜터의 추천 문제입니다!" 
-      };
-      
+
+      return aiHint;
     } catch (error) {
-      console.error('❌ AI 추천 API 에러:', error.response?.data || error.message);
-      return { 
-        recommended_problem_id: null, 
-        message: "추천 서버 연결에 실패했습니다." 
-      };
+      console.error('[ERROR] 연동 실패:', error.response?.data || error.message);
+      throw new HttpException('AI 튜터 응답 실패', HttpStatus.BAD_GATEWAY);
     }
   }
 
   /**
-   * --- 데이터 추출 헬퍼 함수 (힌트용) ---
+   * 힌트 생성에 넘길 컨텍스트 조립
    */
   async getDebugContext(userId: string, problemId: number) {
     const lastHint = await this.prisma.hintHistory.findFirst({
@@ -97,13 +68,93 @@ async getAiHint(userId: string, problemId: number) {
       orderBy: { createdAt: 'asc' },
     });
 
-    // 힌트가 있든 없든 로그를 긁어오되, 필터링 시간을 안전하게 잡음
+    // 직전 힌트 이후(없으면 문제를 처음 본 시점 이후)의 활동만 본다
     const filterTime = lastHint?.usedAt || firstView?.createdAt || new Date(0);
-    const logs = await this.prisma.userLog.findMany({
+
+    const rawLogs = await this.prisma.userLog.findMany({
       where: { userId, problemId, createdAt: { gt: filterTime } },
-      orderBy: { createdAt: 'asc' },
-      // take: 10, // 너무 많으면 터질 수 있으니 최근 10개만
+      orderBy: { createdAt: 'desc' },
+      take: MAX_LOGS,
     });
+
+    // 틀린 flag 제출 = 학습자가 무엇을 답이라고 생각했는지 드러나는 신호
+    const wrongSubmits = await this.prisma.submitFlag.findMany({
+      where: {
+        userId,
+        problemId,
+        isCorrect: false,
+        submittedAt: { gt: filterTime },
+      },
+      orderBy: { submittedAt: 'desc' },
+      take: 5,
+    });
+
+    type Entry = {
+      at: Date;
+      timestamp: string;
+      header: string;
+      body: any;
+      status?: number | null;
+      resp_bytes?: number | null;
+      elapsed_ms?: number | null;
+    };
+
+    const entries: Entry[] = [];
+
+    for (const l of rawLogs) {
+      let displayHeader: any = l.header;
+      if (
+        typeof l.header === 'object' &&
+        l.header !== null &&
+        'request' in (l.header as any)
+      ) {
+        displayHeader = (l.header as any).request;
+      }
+
+      // 쿼리스트링이 있으면 요청 라인에 붙여 준다 (GET 기반 시도를 살리기 위함)
+      let header = String(displayHeader || 'Unknown Request');
+      if ((l as any).query) {
+        header = `${header}?${(l as any).query}`;
+      }
+
+      entries.push({
+        at: l.createdAt,
+        timestamp: this.formatDate(l.createdAt),
+        header,
+        body: l.body || {},
+        status: (l as any).status ?? null,
+        resp_bytes: (l as any).respBytes ?? null,
+        elapsed_ms: (l as any).elapsedMs ?? null,
+      });
+    }
+
+    for (const s of wrongSubmits) {
+      entries.push({
+        at: s.submittedAt,
+        timestamp: this.formatDate(s.submittedAt),
+        header: 'SUBMIT FLAG (오답)',
+        body: { submitted_flag: s.submittedFlag },
+        status: null,
+        resp_bytes: null,
+        elapsed_ms: null,
+      });
+    }
+
+    // 시간 오름차순 정렬 (AI 가 시도 순서를 읽을 수 있어야 한다)
+    entries.sort((a, b) => a.at.getTime() - b.at.getTime());
+
+    const logs = entries.length
+      ? entries.map(({ at, ...rest }) => rest)
+      : [
+          {
+            timestamp: this.formatDate(new Date()),
+            header: 'No logs found',
+            body: {},
+            status: null,
+            resp_bytes: null,
+            elapsed_ms: null,
+          },
+        ];
 
     return {
       problem_id: problemId.toString(),
@@ -111,32 +162,15 @@ async getAiHint(userId: string, problemId: number) {
       history: {
         first_viewed_at: this.formatDate(firstView?.createdAt || new Date()),
         last_hint_at: this.formatDate(lastHint?.usedAt || new Date()),
-        // 💡 빈 문자열("") 대신 "None" 또는 실제 내용을 명시
-        previous_hint: lastHint?.lastHintContent && lastHint.lastHintContent.trim() !== "" 
-          ? lastHint.lastHintContent 
-          : "None"
+        previous_hint:
+          lastHint?.lastHintContent && lastHint.lastHintContent.trim() !== ''
+            ? lastHint.lastHintContent
+            : 'None',
       },
-      // 💡 중요: 로그가 비어있으면 AI가 분석할 게 없어 500 에러가 날 수 있음
-      logs: logs.length > 0 
-        ? logs.map(l => {
-            let displayHeader = l.header;
-            if (typeof l.header === 'object' && l.header !== null && 'request' in (l.header as any)) {
-              displayHeader = (l.header as any).request;
-            }
-            return {
-              timestamp: this.formatDate(l.createdAt),
-              header: String(displayHeader || "Unknown Request"),
-              body: l.body || {}
-            };
-          })
-        : [{ timestamp: this.formatDate(new Date()), header: "No logs found", body: {} }] 
+      logs,
     };
   }
 
-  /**
-   * --- 힌트 기록 저장 ---
-   */
-  // 2. createHintRecord 함수 수정
   async createHintRecord(userId: string, problemId: number, content: string) {
     const last = await this.prisma.hintHistory.findFirst({
       where: { userId, problemId },
@@ -144,68 +178,96 @@ async getAiHint(userId: string, problemId: number) {
     });
 
     return await this.prisma.hintHistory.create({
-      data: { 
-        userId, 
-        problemId, 
-        lastHintContent: content, // 🔥 여기에 null이 들어가지 않도록 content 확인
+      data: {
+        userId,
+        problemId,
+        lastHintContent: content,
         hintCount: (last?.hintCount || 0) + 1,
-        usedAt: new Date() // 타임스탬프 강제 업데이트
+        usedAt: new Date(),
       },
     });
   }
 
   /**
-   * --- 데이터 추출 헬퍼 함수 (추천용) ---
+   * [연동] AI 문제 추천 요청
+   */
+  async getAiRecommendation(userId: string) {
+    const context = await this.getSolvedProblemContext(userId);
+
+    try {
+      const response = await axios.post(
+        `${this.AI_TUTOR_URL}/recommendation/`,
+        context,
+      );
+
+      const recommendedId = Number(response.data);
+
+      if (!recommendedId || isNaN(recommendedId)) {
+        return {
+          recommended_problem_id: null,
+          message:
+            typeof response.data === 'string'
+              ? response.data
+              : '추천할 문제를 찾지 못했습니다.',
+        };
+      }
+
+      return {
+        recommended_problem_id: recommendedId,
+        message: 'AI 튜터의 추천 문제입니다!',
+      };
+    } catch (error) {
+      console.error('AI 추천 API 에러:', error.response?.data || error.message);
+      return {
+        recommended_problem_id: null,
+        message: '추천 서버 연결에 실패했습니다.',
+      };
+    }
+  }
+
+  /**
+   * --- 데이터 추출 헬퍼 (추천용) ---
    */
   async getSolvedProblemContext(userId: string) {
-    // 1. 유저의 풀이 기록 가져오기
     const solvedRecords = await this.prisma.solvedHistory.findMany({
       where: { userId },
       orderBy: { solvedAt: 'desc' },
     });
 
-    // 2. 기록이 없으면 빈 배열 반환
     if (solvedRecords.length === 0) {
-      return { 
-        last_solved_problem_id: null, 
-        solved_problems: [] 
-      };
+      return { last_solved_problem_id: null, solved_problems: [] };
     }
 
-    // 3. 마지막으로 푼 문제 ID (가장 최근 기록)
     const lastId = solvedRecords[0].problemId;
 
-    // 4. 각 문제별 상세 데이터 가공
     const solved_problems = await Promise.all(
       solvedRecords.map(async (record) => {
-        // 해당 문제를 처음 본 시간 찾기 (시간 측정용)
         const firstView = await this.prisma.userEvent.findFirst({
           where: { userId, problemId: record.problemId, type: 'VIEW_PROBLEM' },
           orderBy: { createdAt: 'asc' },
         });
 
-        // 해당 문제에서 힌트를 몇 번 썼는지 확인
         const hintCount = await this.prisma.hintHistory.count({
-          where: { userId, problemId: record.problemId }
+          where: { userId, problemId: record.problemId },
         });
 
-        // 소요 시간 계산 (초 단위)
-        const timeSpent = firstView 
-          ? Math.floor((record.solvedAt.getTime() - firstView.createdAt.getTime()) / 1000) 
+        const timeSpent = firstView
+          ? Math.floor(
+              (record.solvedAt.getTime() - firstView.createdAt.getTime()) / 1000,
+            )
           : 0;
 
-        return { 
-          problem_id: record.problemId.toString(), 
-          time_spent: timeSpent, 
-          hint_count: hintCount // 🔥 hint_used 대신 hint_count로 수정
+        return {
+          problem_id: record.problemId.toString(),
+          time_spent: timeSpent,
+          hint_count: hintCount,
         };
-      })
+      }),
     );
 
-    // 5. 🔥 AI 서버가 요구하는 최종 JSON 구조 (필드명 수정)
-    return { 
-      last_solved_problem_id: lastId.toString(), // 🔥 last_problem_id 대신 수정
-      solved_problems 
+    return {
+      last_solved_problem_id: lastId.toString(),
+      solved_problems,
     };
   }
 }
