@@ -8,14 +8,75 @@
 //      LogEntry 스키마를 바꾸지 않으려고 의사(pseudo) 로그 엔트리로 합쳐 시간순 정렬한다.
 //   3) 최근 20건으로 상한을 둔다 (전체를 넘기면 프롬프트가 터진다).
 
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import axios from 'axios';
 
 const MAX_LOGS = 20;
 
+// ---------------------------------------------------------------------------
+// 힌트 게이팅
+//
+// 왜 필요한가
+//   힌트 레벨은 hint_count 로 올라가고, 레벨 3 이 되면 참조 문서에 write-up(정답)이
+//   포함된다. 즉 버튼을 연타하면 시도 없이도 정답 풀이에 도달한다.
+//   섹션 필터만으로는 "힌트를 반복하면 답이 나온다"를 막지 못한다.
+//
+// 어떻게 막는가
+//   다음 힌트를 열려면 직전 힌트 이후 "서로 다른 실제 시도" 가 필요하고,
+//   그 개수가 힌트를 받을수록 늘어난다(누진). required = min(hint_count, CAP).
+//     1번째 힌트: 0건 (무료)   2번째: 1건   3번째: 2건   4번째: 3건 ...
+//   write-up 이 검색 후보에 처음 들어오는 것은 7번째 힌트(hint_count=6 -> level 3)이고,
+//   그때까지 필요한 누적 시도는 20건이다.
+//
+// 시간 탈출구와 정답 섹션의 관계 (중요)
+//   오래 막힌 학습자를 구제하려고 "직전 힌트 후 N분 경과 시 해제" 를 두는데,
+//   이걸 무제한 허용하면 기다리기만 해도 정답에 도달한다. 게다가 파이썬쪽
+//   calculate_level 은 10분 경과에 score +1 을 주므로 기다리는 쪽이 오히려 빠르다.
+//   그래서 hint_count >= GATE_NO_ESCAPE_FROM 부터는 시간으로 열어 주지 않는다.
+//   => 정답 섹션은 시간으로 열 수 없고 실제 시도만으로 도달한다.
+//
+// 왜 기본값이 off 인가
+//   로그 수집이 정상 동작하지 않으면 시도 건수가 항상 0 이라 모든 힌트가 영구 차단된다.
+//   실서버에서 UserLog 에 공격 로그가 쌓이는 것을 확인한 뒤 HINT_GATE_ENABLED=true 로 켠다.
+//   (scripts/verify-log-collection.sh 로 확인 가능)
+// ---------------------------------------------------------------------------
+const GATE_ENABLED = process.env.HINT_GATE_ENABLED === 'true';
+const GATE_CAP = Number(process.env.HINT_GATE_CAP ?? 5);
+const GATE_ESCAPE_MIN = Number(process.env.HINT_GATE_ESCAPE_MIN ?? 10);
+
+/**
+ * hint_count 가 이 값 이상이면 시간 경과로 게이트를 열어 주지 않는다.
+ *
+ * 3 으로 두는 근거
+ *   초반 3번까지는 시간으로 구제한다. 아직 단서가 부족한 단계에서 하드 블록하면
+ *   학습이 아니라 이탈이 되고, 로그 수집 장애 시 완전 차단되는 것도 막아야 한다.
+ *   4번째부터는 시간으로 열리지 않으므로, 정답 섹션(write-up)에 닿기 위해서는
+ *   최소 3+4+5 = 12건의 서로 다른 실제 시도가 반드시 필요하다.
+ *   기다리지 않는 경우에는 누적 20건이 필요하다.
+ *
+ * hints.py 의 SECTION_MAP / calculate_level 을 바꾸면 이 값도 함께 검토해야 한다.
+ */
+const GATE_NO_ESCAPE_FROM = Number(process.env.HINT_GATE_NO_ESCAPE_FROM ?? 3);
+
+/** 시도로 세지 않는 요청. 힌트 요청 자체가 시도로 잡히면 게이트가 스스로 열린다. */
+const NON_ATTEMPT_PATTERNS = [
+  /ai[-/]?tutor/i,
+  /\/api\/ai\//i,
+  /\/hint\b/i,
+];
+
+export interface HintResult {
+  hint: string;
+  gated: boolean;
+  attempts?: number;
+  required?: number;
+}
+
 @Injectable()
 export class AiTutorService {
+  private readonly logger = new Logger('AiTutorService');
+
   constructor(private prisma: PrismaService) {}
 
   private readonly AI_TUTOR_URL = 'http://127.0.0.1:8000';
@@ -38,8 +99,106 @@ export class AiTutorService {
     );
   }
 
-  async getAiHint(userId: string, problemId: number) {
+  /**
+   * 직전 힌트 이후의 "서로 다른 실제 시도" 개수.
+   *
+   * 같은 요청을 반복해서 게이트를 여는 것을 막기 위해 (요청라인, 바디) 서명으로
+   * 중복을 제거한다. 힌트 요청 자체와 로그가 없을 때 채워지는 더미는 제외한다.
+   */
+  private countMeaningfulAttempts(logs: any[]): number {
+    const seen = new Set<string>();
+    for (const l of logs ?? []) {
+      const header = String(l?.header ?? '');
+      if (!header || header === 'No logs found') continue;
+      if (NON_ATTEMPT_PATTERNS.some((re) => re.test(header))) continue;
+      seen.add(`${header}|${JSON.stringify(l?.body ?? {})}`);
+    }
+    return seen.size;
+  }
+
+  /**
+   * 게이트 판정. blocked 이면 LLM 을 호출하지 않고 HintHistory 도 남기지 않는다.
+   * (차단된 요청으로 hint_count 가 오르면 막힐수록 레벨이 올라가 정답에 가까워진다)
+   */
+  private async evaluateGate(
+    userId: string,
+    problemId: number,
+    context: any,
+  ): Promise<{
+    blocked: boolean;
+    attempts: number;
+    required: number;
+    message?: string;
+  }> {
+    const hintCount: number = context?.hint_count ?? 0;
+    const attempts = this.countMeaningfulAttempts(context?.logs);
+    const required = Math.min(Math.max(hintCount, 0), GATE_CAP);
+
+    if (!GATE_ENABLED) return { blocked: false, attempts, required };
+
+    // 첫 힌트는 항상 열어 준다. 아무 단서도 없이 시도를 요구하는 것은 학습에 도움이 안 된다.
+    if (hintCount <= 0) return { blocked: false, attempts, required };
+
+    if (attempts >= required) return { blocked: false, attempts, required };
+
+    // 탈출구: 오래 막혀 있으면 시도 건수와 무관하게 열어 준다.
+    // 로그 수집 장애로 영구 차단되는 것을 막고, 타이핑 대신 고민한 학습자도 구제한다.
+    // 단 정답 섹션에 닿을 수 있는 구간(hint_count >= GATE_NO_ESCAPE_FROM)에서는
+    // 시간으로 열어 주지 않는다. 기다리기만 해서 정답에 도달하는 경로를 막는다.
+    const escapeAllowed = hintCount < GATE_NO_ESCAPE_FROM;
+
+    if (escapeAllowed) {
+      const lastHint = await this.prisma.hintHistory.findFirst({
+        where: { userId, problemId },
+        orderBy: { usedAt: 'desc' },
+        select: { usedAt: true },
+      });
+      if (lastHint) {
+        const elapsedMin = (Date.now() - lastHint.usedAt.getTime()) / 60000;
+        if (elapsedMin >= GATE_ESCAPE_MIN) {
+          this.logger.log(
+            `게이트 시간 해제 user=${userId} problem=${problemId} ` +
+              `attempts=${attempts}/${required} elapsed=${elapsedMin.toFixed(1)}분`,
+          );
+          return { blocked: false, attempts, required };
+        }
+      }
+    }
+
+    const remaining = required - attempts;
+    const tail = escapeAllowed
+      ? ` (${GATE_ESCAPE_MIN}분이 지나면 자동으로 열립니다.)`
+      : ' 이 단계부터는 시간이 지나도 자동으로 열리지 않습니다.';
+
+    return {
+      blocked: true,
+      attempts,
+      required,
+      message:
+        `직접 시도한 기록이 ${attempts}건입니다. ` +
+        `다음 힌트는 서로 다른 시도가 ${required}건 쌓이면 열립니다. ` +
+        `지금까지 받은 힌트를 바탕으로 ${remaining}번만 더 시도해 보세요.` +
+        tail,
+    };
+  }
+
+  async getAiHint(userId: string, problemId: number): Promise<HintResult> {
     const context = await this.getDebugContext(userId, problemId);
+
+    const gate = await this.evaluateGate(userId, problemId, context);
+    if (gate.blocked) {
+      this.logger.log(
+        `힌트 차단 user=${userId} problem=${problemId} ` +
+          `attempts=${gate.attempts}/${gate.required}`,
+      );
+      return {
+        gated: true,
+        hint: gate.message as string,
+        attempts: gate.attempts,
+        required: gate.required,
+      };
+    }
+
     try {
       const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context);
       const aiHint = response.data;
@@ -48,7 +207,12 @@ export class AiTutorService {
         await this.createHintRecord(userId, problemId, aiHint);
       }
 
-      return aiHint;
+      return {
+        gated: false,
+        hint: aiHint,
+        attempts: gate.attempts,
+        required: gate.required,
+      };
     } catch (error) {
       console.error('[ERROR] 연동 실패:', error.response?.data || error.message);
       throw new HttpException('AI 튜터 응답 실패', HttpStatus.BAD_GATEWAY);
@@ -161,11 +325,19 @@ export class AiTutorService {
       hint_count: lastHint ? lastHint.hintCount : 0,
       history: {
         first_viewed_at: this.formatDate(firstView?.createdAt || new Date()),
-        last_hint_at: this.formatDate(lastHint?.usedAt || new Date()),
+
+        // 힌트를 받은 적이 없으면 null 을 보낸다. 예전에는 new Date() 를 채웠는데,
+        // 그러면 파이썬 쪽 calculate_level 에서 last_hint_at 이 항상 truthy 가 되어
+        // "첫 조회 후 30분 경과" 분기가 죽고, "직전 힌트 후 10분 경과" 도 0분이라
+        // 시간 가산점이 사실상 동작하지 않았다. 두 필드 모두 Optional 이다.
+        last_hint_at: lastHint ? this.formatDate(lastHint.usedAt) : null,
+
+        // 문자열 'None' 을 보내면 파이썬이 truthy 로 보고 프롬프트에
+        // "직전에 제공된 힌트: None, 이것보다 조금만 더 알려주세요." 를 붙인다.
         previous_hint:
           lastHint?.lastHintContent && lastHint.lastHintContent.trim() !== ''
             ? lastHint.lastHintContent
-            : 'None',
+            : null,
       },
       logs,
     };
