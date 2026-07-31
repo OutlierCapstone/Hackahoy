@@ -8,12 +8,14 @@ export class AiTutorController {
   @Post('hint')
     async getAiHint(@Body('problemId') problemId: number, @Req() req: any) {
       const userId = req.user.id;
-      const generatedHint = await this.aiTutorService.getAiHint(userId, Number(problemId));
-      
-      // 🔥 프론트엔드가 result.hint로 받을 수 있게 "hint" 키에 담아 보냄
-      return { 
-        success: true, 
-        hint: generatedHint 
+      const result = await this.aiTutorService.getAiHint(userId, Number(problemId));
+
+      // 프론트엔드는 result.hint 를 읽는다.
+      // gated=true 면 힌트가 아니라 "먼저 시도하라" 는 안내 메시지이고,
+      // 이 경우 LLM 호출도 hint_count 증가도 일어나지 않았다.
+      return {
+        success: true,
+        ...result,
       };
     }
 
