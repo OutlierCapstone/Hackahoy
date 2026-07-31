@@ -3,9 +3,16 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force_reseed:
+        description: "벡터DB를 강제로 섹션 재적재 (평소에는 불필요)"
+        type: boolean
+        default: false
+
 concurrency:
   group: deploy-main
   cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,7 +24,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 20m
+          envs: FORCE_RESEED
           script: |
-            set -euo pipefail
             cd /home/ubuntu/Hackahoy
             bash deploy/deploy.sh
+        env:
+          FORCE_RESEED: ${{ inputs.force_reseed && '1' || '0' }}
