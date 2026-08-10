@@ -20,7 +20,7 @@ router = APIRouter(prefix="/hint", tags=["hint"])
 
 N_RESULTS = 5
 MAX_LOGS = 10          # 힌트 1회당 참조할 최근 로그 최대 개수
-QUERY_MODEL = "gemini-2.5-flash-lite"
+QUERY_MODEL = "gemini-2.5-flash"
 HINT_MODEL = "gemini-2.5-flash"
 
 SECTION_MAP = {
