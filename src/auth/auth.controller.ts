@@ -3,7 +3,7 @@ import { Controller, Get, Req, UseGuards, Post, Body, Res, ForbiddenException } 
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { DevUserGuard } from './dev-user.guard';
+import { Public } from './decorators/public.decorator';
 import { LoginThrottlerGuard } from '.././login-throttler.guard';
 
 @Controller('auth')
@@ -11,12 +11,12 @@ import { LoginThrottlerGuard } from '.././login-throttler.guard';
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
-  @UseGuards(DevUserGuard)
   @Get('me/profile')
   async myProfile(@Req() req: any) {
     return this.auth.getMyProfile(req.user.id);
   }
 
+  @Public()
   // @UseGuards(LoginThrottlerGuard)
   @Post('login')
   async login(@Body() body: { oauthProvider: 'kakao'|'google'|'naver'; oauthToken: string }) {
@@ -72,10 +72,12 @@ export class AuthController {
   }
   
   // KAKAO
+  @Public()
   @UseGuards(AuthGuard('kakao'))
   @Get('kakao')
   kakaoLogin() {}
 
+  @Public()
   @UseGuards(AuthGuard('kakao'))
   @Get('kakao/callback')
   async kakaoCallback(@Req() req: any, @Res() res: any) {
@@ -100,10 +102,12 @@ export class AuthController {
   }
 
 // GOOGLE
+  @Public()
   @UseGuards(AuthGuard('google'))
   @Get('google')
   googleLogin() {}
 
+  @Public()
   @UseGuards(AuthGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() req: any, @Res() res: any) {
@@ -132,10 +136,12 @@ export class AuthController {
   }
 
   // NAVER
+  @Public()
   @UseGuards(AuthGuard('naver'))
   @Get('naver')
   naverLogin() {}
 
+  @Public()
   @UseGuards(AuthGuard('naver'))
   @Get('naver/callback')
   async naverCallback(@Req() req: any, @Res() res: any) {

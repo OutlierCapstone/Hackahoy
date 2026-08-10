@@ -107,7 +107,19 @@ export class ProblemService {
   async listProblems() {
     return this.prisma.problem.findMany({
       orderBy: { id: 'asc' },
-      include: { island: true },
+      select: {
+        id: true,
+        islandId: true,
+        title: true,
+        description: true,
+        hint: true,
+        createdAt: true,
+        updatedAt: true,
+        serverLink: true,
+        category: true,
+        metadata: true,
+        island: true,
+      },
     });
   }
 
