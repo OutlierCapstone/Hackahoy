@@ -6,6 +6,7 @@
 import { Controller, Post, Body, Logger } from '@nestjs/common';
 import { CollectService } from './collect.service';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('api/collect')
 export class CollectController {
@@ -13,6 +14,7 @@ export class CollectController {
 
   constructor(private readonly collectService: CollectService) {}
 
+  @Public()
   @Post()
   @SkipThrottle()
   async collectData(@Body() data: any) {

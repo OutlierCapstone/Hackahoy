@@ -1,5 +1,4 @@
 import { Controller, Get, Param, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
-import { DevUserGuard } from '../auth/dev-user.guard';
 import { IslandsService } from './islands.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { BanCheckGuard } from 'src/common/guard/ban-check.guard';
@@ -13,7 +12,6 @@ export class IslandsController {
     return this.islandsService.getAllIslands();
   }
 
-  @UseGuards(DevUserGuard)
   @UseGuards(JwtAuthGuard, BanCheckGuard)
   @Get(':id/problems')
   async getIslandProblems(@Param('id', ParseIntPipe) id: number, @Req() req) {
