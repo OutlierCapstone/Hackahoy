@@ -17,7 +17,7 @@ type UserShape = {
 
 export default function MyPage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, authReady } = useAuth();
 
   const safeUser = useMemo(() => (user as any) ?? {}, [user]);
 
@@ -34,10 +34,12 @@ export default function MyPage() {
     setNickname(safeUser.nickname ?? 'PLAYER');
   }, [user, safeUser.nickname]);
 
+  // authReady 를 기다린다. 세션 복구가 끝나기 전의 user=null 은 "비로그인" 이 아니라
+  // "아직 모름" 이라, 이걸 안 보면 새로고침·직접 진입이 매번 홈으로 튕긴다.
   useEffect(() => {
-    if (user) return;
+    if (!authReady || user) return;
     router.replace('/');
-  }, [user, router]);
+  }, [authReady, user, router]);
 
   if (!user) {
     return <main className={styles.pageRoot} />;
