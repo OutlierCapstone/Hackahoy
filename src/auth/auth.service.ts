@@ -1,4 +1,5 @@
 // src/auth/auth.service.ts
+import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, ForbiddenException } from '@nestjs/common';
@@ -55,6 +56,21 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  // 비회원(게스트) 유저 생성. 소셜 로그인 없이 User 레코드를 만든다.
+  // providerId 는 재사용하지 않는다 — 프론트가 localStorage 토큰을 재사용해
+  // 같은 게스트로 돌아오고, 토큰이 없을 때만 이 메서드가 호출된다.
+  async createGuestUser() {
+    const providerId = randomUUID();
+
+    return this.prisma.user.create({
+      data: {
+        provider: 'GUEST',
+        providerId,
+        nickname: `게스트-${providerId.slice(0, 4)}`,
+      },
+    });
   }
 
   // Mypage 정보 조회
