@@ -12,10 +12,12 @@ import {
   type IslandsStore,
 } from "@/lib/islandStore";
 import { getIslands } from "@/lib/api/islands";
+import { API_BASE_URL } from "@/lib/api/config";
 import type { Island } from "@/domain/types/Island";
 
 export default function MapView() {
-  const { login, user, loginModalOpen, closeLoginModal, openLoginModal } = useAuth();
+  const { user, loginModalOpen, closeLoginModal, loginAsGuest } = useAuth();
+  const [guestPending, setGuestPending] = useState(false);
 
   const isLoggedIn = !!user;
 
@@ -30,19 +32,43 @@ export default function MapView() {
     return `/assets/ships/ship-${shipNumber}.png`;
   }, [currentLevel]);
 
+  // 세션이 살아 있는 동안 /islands 를 한 번만 부르기 위한 표시.
+  // user 가 null → 값으로 바뀔 때 effect 가 다시 도는데, 섬 목록은 유저별로 다르지 않다.
+  const islandsFetchedRef = useRef(false);
+
+  // /islands 는 인증이 필요하다.
+  //  - 로그인 전에는 부르지 않는다. 토큰이 없으면 무조건 401 이라 콘솔만 더럽힌다.
+  //  - 로그인(게스트 포함) 직후에는 불러야 방금 만든 세션의 토큰으로 섬이 채워진다.
   useEffect(() => {
+    // user 상태는 /auth/me 응답을 기다리므로, 새로고침 직후에는 아직 null 이다.
+    // 저장된 토큰까지 같이 보면 재방문 때 섬이 늦게 뜨는 깜빡임이 없다.
+    const hasSession =
+      !!user || (typeof window !== "undefined" && !!localStorage.getItem("accessToken"));
+
+    if (!hasSession) {
+      islandsFetchedRef.current = false;
+      setIslands([]);
+      setLoading(false);
+      return;
+    }
+
+    if (islandsFetchedRef.current) return;
+    islandsFetchedRef.current = true;
+
     async function fetchIslands() {
       try {
         const data = await getIslands();
         setIslands(data);
       } catch (error) {
+        // 실패했으면 표시를 되돌린다. 안 그러면 이 세션에서는 영영 재시도하지 않는다.
+        islandsFetchedRef.current = false;
         console.error('❌ Failed to fetch islands:', error);
       } finally {
         setLoading(false);
       }
     }
     fetchIslands();
-  }, []);
+  }, [user?.userId]);
 
   // 로컬 스토리지 동기화
   useEffect(() => {
@@ -63,9 +89,21 @@ export default function MapView() {
 
   const occupiedPins = useMemo(() => getOccupiedPinsWithFixed(store), [store]);
 
-  const handleKakaoLogin = () => window.location.href = "http://44.199.70.243:4000/auth/kakao";
-  const handleNaverLogin = () => window.location.href = "http://44.199.70.243:4000/auth/naver";
-  const handleGoogleLogin = () => window.location.href = "http://44.199.70.243:4000/auth/google";
+  const handleKakaoLogin = () => window.location.href = `${API_BASE_URL}/auth/kakao`;
+  const handleNaverLogin = () => window.location.href = `${API_BASE_URL}/auth/naver`;
+  const handleGoogleLogin = () => window.location.href = `${API_BASE_URL}/auth/google`;
+
+  // 비회원으로 시작하기. 이미 메인 화면이라 성공해도 페이지 이동은 하지 않는다.
+  const handleGuestStart = async () => {
+    if (guestPending) return;
+    setGuestPending(true);
+    try {
+      const guest = await loginAsGuest();
+      if (!guest) alert("비회원으로 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setGuestPending(false);
+    }
+  };
 
   return (
     <div
@@ -129,7 +167,7 @@ export default function MapView() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
-              <p className="retro-title text-center" style={{ marginTop: 20, marginBottom: 40 }}>
+              <p className="retro-title text-center" style={{ marginTop: 12, marginBottom: 28 }}>
                 소셜로 시작하기
               </p>
 
@@ -146,6 +184,28 @@ export default function MapView() {
               {/* 구글 */}
               <button type="button" className="social-login-btn" onClick={handleGoogleLogin} style={{ background: "none", border: "none", cursor: "pointer" }}>
                 <Image src="/assets/ui/google.png" alt="구글" width={400} height={90} />
+              </button>
+
+              {/* 비회원 — 소셜 버튼과 달리 이미지 자산이 없어 CSS 로만 그린다. */}
+              <button
+                type="button"
+                onClick={handleGuestStart}
+                disabled={guestPending}
+                style={{
+                  marginTop: 12,
+                  width: 400,
+                  padding: "10px 0",
+                  background: "transparent",
+                  border: "2px solid #7b3b0a",
+                  borderRadius: 4,
+                  color: "#f4b452",
+                  fontSize: 18,
+                  letterSpacing: "0.02em",
+                  cursor: guestPending ? "wait" : "pointer",
+                  opacity: guestPending ? 0.6 : 1,
+                }}
+              >
+                {guestPending ? "세션을 만드는 중..." : "비회원으로 시작하기"}
               </button>
             </div>
           </div>
