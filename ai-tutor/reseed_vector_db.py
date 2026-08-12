@@ -26,7 +26,12 @@ from app.clients import collection, logger
 from app.models import WargameInformation
 from app.routers.wargames import add_wargame
 
-SOURCE_FILE = Path(__file__).parent / "build_vector_db.py"
+# 문제 데이터의 진실은 build_vector_db_recom.py 다.
+# build_vector_db.py 는 Gen1(문제=통짜 문서) 시절 로더라 더 이상 관리하지 않는다.
+# 이 스크립트는 파일을 실행하지 않고 wargames 리터럴만 AST 로 읽으므로,
+# _recom 이 어느 컬렉션에 쓰도록 작성돼 있는지와는 무관하다.
+# (적재는 clients.py 의 collection = wargame_collection 으로 간다)
+SOURCE_FILE = Path(__file__).parent / "build_vector_db_recom.py"
 
 
 def load_wargames() -> list[dict]:

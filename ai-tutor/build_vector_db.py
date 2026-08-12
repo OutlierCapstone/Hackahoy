@@ -1,4 +1,17 @@
 # build_vector_db.py
+#
+# [사용하지 않는다 — Gen1 로더]
+#
+# 이 파일은 문제 1개를 통짜 문서 1개(id="1"~"7")로 넣던 옛 방식이다.
+# 그 상태에서는 where={"problem_id": X} 필터의 후보가 1개뿐이라 검색이 no-op 이 되고,
+# write-up(정답)이 매 힌트마다 컨텍스트에 딸려 들어간다.
+#
+# 현재 진실은 build_vector_db_recom.py 의 wargames 리스트이고,
+# 적재는 reseed_vector_db.py(→ app/routers/wargames.py 의 add_wargame)가 담당한다.
+# 여기 있는 wargames 는 갱신되지 않으므로 참고하지 말 것.
+#
+# 실행도 하지 말 것: create_collection("wargame_collection") 은 이미 있는 컬렉션에서
+# 예외가 나고, 성공하더라도 서비스가 읽는 컬렉션을 Gen1 로 되돌린다.
 
 import os
 from dotenv import load_dotenv
