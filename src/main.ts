@@ -15,9 +15,15 @@ async function bootstrap() {
   const eventsService = app.get(EventsService);
   // app.useGlobalFilters(new AllExceptionsFilter(eventsService, app.get('JwtService')));  
 
+  // 기본값은 기존 실서버 오리진 하나. CORS_ORIGINS 로 로컬 개발 오리진만 추가한다.
+  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://44.199.70.243:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
 
-    origin: 'http://44.199.70.243:3000',
+    origin: corsOrigins,
 
     credentials: true,
 

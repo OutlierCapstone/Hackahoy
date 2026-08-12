@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './new.module.css';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/api/config";
 
 function toPinId(v: string | null): number | null {
   if (!v) return null;
@@ -85,7 +86,7 @@ function AdminCreateProblemContent() {
       };
 
       await axios.post(
-        'http://44.199.70.243:4000/admin/problems',
+        `${API_BASE_URL}/admin/problems`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );

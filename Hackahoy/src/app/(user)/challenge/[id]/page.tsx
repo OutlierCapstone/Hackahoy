@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import styles from './challenge.module.css';
 import { getProblem, submitFlag } from '@/lib/api/islands';
 import { useAuth } from '@/components/common/AuthContext';
+import { API_BASE_URL } from "@/lib/api/config";
 
 type Problem = {
   id: number;
@@ -120,7 +121,7 @@ export default function ChallengePage() {
         fakePayload = { current_attempt: data.input };
       }
 
-      await fetch(`http://44.199.70.243:4000/api/collect`, {
+      await fetch(`${API_BASE_URL}/api/collect`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -199,7 +200,7 @@ export default function ChallengePage() {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const res = await fetch(`http://44.199.70.243:4000/ai-tutor/hint`, {
+      const res = await fetch(`${API_BASE_URL}/ai-tutor/hint`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ problemId: problem.id })

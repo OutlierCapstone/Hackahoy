@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import styles from './Mypage.module.css';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/api/config";
 
 type UserShape = {
   id?: string;
@@ -17,7 +18,7 @@ type UserShape = {
 
 export default function MyPage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, authReady } = useAuth();
 
   const safeUser = useMemo(() => (user as any) ?? {}, [user]);
 
@@ -34,10 +35,12 @@ export default function MyPage() {
     setNickname(safeUser.nickname ?? 'PLAYER');
   }, [user, safeUser.nickname]);
 
+  // authReady 를 기다린다. 세션 복구가 끝나기 전의 user=null 은 "비로그인" 이 아니라
+  // "아직 모름" 이라, 이걸 안 보면 새로고침·직접 진입이 매번 홈으로 튕긴다.
   useEffect(() => {
-    if (user) return;
+    if (!authReady || user) return;
     router.replace('/');
-  }, [user, router]);
+  }, [authReady, user, router]);
 
   if (!user) {
     return <main className={styles.pageRoot} />;
@@ -59,7 +62,7 @@ export default function MyPage() {
       if (!token) return alert('로그인이 필요합니다.');
 
       await axios.post(
-        'http://44.199.70.243:4000/auth/update-nickname',
+        `${API_BASE_URL}/auth/update-nickname`,
         { nickname: nickname },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -84,7 +87,7 @@ export default function MyPage() {
       if (!token) return;
 
       await axios.post(
-        'http://44.199.70.243:4000/auth/unsubscribe',
+        `${API_BASE_URL}/auth/unsubscribe`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

@@ -141,6 +141,7 @@ enum AuthProvider {
   KAKAO
   GOOGLE
   NAVER
+  GUEST
 }
 
 enum ProblemCategory {

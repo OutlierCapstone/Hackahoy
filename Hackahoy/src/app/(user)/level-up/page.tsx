@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react'; // useEffect, useState 추가
 import styles from './levelUp.module.css';
+import { API_BASE_URL } from "@/lib/api/config";
 
 function LevelUpContent() {
   const router = useRouter();
@@ -22,7 +23,7 @@ function LevelUpContent() {
     const fetchRecommendation = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const res = await fetch(`http://44.199.70.243:4000/ai-tutor/recommend`, {
+        const res = await fetch(`${API_BASE_URL}/ai-tutor/recommend`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

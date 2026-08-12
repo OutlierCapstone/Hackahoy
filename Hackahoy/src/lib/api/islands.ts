@@ -1,17 +1,20 @@
 // src/lib/api/islands.ts
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 
-const API_URL = 'http://44.199.70.243:4000';
+const API_URL = API_BASE_URL;
 
-const getAuthHeader = () => {
+const getAuthHeader = (): Record<string, string> => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// /islands 는 JwtAuthGuard 가 걸린 보호 엔드포인트라 토큰 없이 부르면 401 이다.
+// 인증 헤더가 빠져 있어서 로그인한 뒤에도 섬이 하나도 안 뜨고 있었다.
 export async function getIslands() {
   const response = await fetch(`${API_URL}/islands`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
   });
   if (!response.ok) throw new Error('Failed to fetch islands');
   return response.json();

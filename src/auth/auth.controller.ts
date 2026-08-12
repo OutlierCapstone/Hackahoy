@@ -6,6 +6,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
 import { LoginThrottlerGuard } from '.././login-throttler.guard';
 
+// OAuth 콜백이 돌려보낼 프론트 주소. 기본값은 기존 실서버 주소라 프로덕션 동작은 그대로다.
+const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://44.199.70.243:3000';
+
 @Controller('auth')
 @UseGuards(LoginThrottlerGuard)
 export class AuthController {
@@ -47,6 +50,32 @@ export class AuthController {
       },
     };
   }
+  // 비회원(게스트)으로 시작하기.
+  // 소셜 로그인 없이 User 를 만들고 JWT 를 발급한다.
+  // uid 는 챌린지 프록시(5001~5007)의 /set-uid 쿠키에 그대로 쓰이는 플랫폼 User.id 다.
+  @Public()
+  @Post('guest')
+  async guest() {
+    const user = await this.auth.createGuestUser();
+    const token = this.auth.signToken({ userId: user.id, provider: 'guest' });
+
+    return {
+      success: true,
+      data: {
+        token,
+        uid: user.id,
+        user: {
+          userId: user.id,
+          nickname: user.nickname,
+          level: user.levelNum,
+          oauthProvider: 'guest',
+          isAdmin: user.isAdmin,
+          isBanned: user.isBanned,
+        },
+      },
+    };
+  }
+
   @Get('me')
   @UseGuards(LoginThrottlerGuard, JwtAuthGuard)
   async me(@Req() req: any) {
@@ -90,14 +119,14 @@ export class AuthController {
       });
 
       const token = this.auth.signToken({ userId: user.id, provider: 'kakao' });
-      return res.redirect(`http://44.199.70.243:3000/auth/kakao/callback?token=${token}`);
+      return res.redirect(`${FRONTEND_URL}/auth/kakao/callback?token=${token}`);
 
     } catch (error) {
       console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
-        return res.redirect(`http://44.199.70.243:3000/auth/kakao/callback?error=banned`);
+        return res.redirect(`${FRONTEND_URL}/auth/kakao/callback?error=banned`);
       }
-      return res.redirect(`http://44.199.70.243:3000/auth/kakao/callback?error=unknown`);
+      return res.redirect(`${FRONTEND_URL}/auth/kakao/callback?error=unknown`);
     }
   }
 
@@ -125,13 +154,13 @@ export class AuthController {
         provider: 'google',
       });
 
-      return res.redirect(`http://44.199.70.243:3000/auth/google/callback?token=${token}`);
+      return res.redirect(`${FRONTEND_URL}/auth/google/callback?token=${token}`);
     } catch (error) {
       console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
-        return res.redirect(`http://44.199.70.243:3000/auth/google/callback?error=banned`);
+        return res.redirect(`${FRONTEND_URL}/auth/google/callback?error=banned`);
       }
-      return res.redirect(`http://44.199.70.243:3000/auth/google/callback?error=unknown`);
+      return res.redirect(`${FRONTEND_URL}/auth/google/callback?error=unknown`);
     }
   }
 
@@ -159,13 +188,13 @@ export class AuthController {
         provider: 'naver',
       });
 
-      return res.redirect(`http://44.199.70.243:3000/auth/naver/callback?token=${token}`);
+      return res.redirect(`${FRONTEND_URL}/auth/naver/callback?token=${token}`);
     } catch (error) {
       console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
-        return res.redirect(`http://44.199.70.243:3000/auth/naver/callback?error=banned`);
+        return res.redirect(`${FRONTEND_URL}/auth/naver/callback?error=banned`);
       }
-      return res.redirect(`http://44.199.70.243:3000/auth/naver/callback?error=unknown`);
+      return res.redirect(`${FRONTEND_URL}/auth/naver/callback?error=unknown`);
     }
   }
 }

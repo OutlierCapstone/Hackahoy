@@ -1,8 +1,8 @@
 // src/lib/api/client.ts
 
-const BASE_URL =
+import { API_BASE_URL } from "./config";
 
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://44.199.70.243:4000";
+const BASE_URL = API_BASE_URL;
 
 
 
