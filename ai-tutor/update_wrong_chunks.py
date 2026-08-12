@@ -25,6 +25,7 @@
 
 import argparse
 import ast
+import re
 import sys
 from pathlib import Path
 
@@ -49,12 +50,49 @@ def split_lines(text: str) -> list[str]:
     return [line.strip() for line in text.split("\n") if line.strip()]
 
 
+# wrong 섹션에 들어가면 안 되는 어미.
+#
+# SECTION_MAP 을 보면 wrong 은 레벨 1~4 전부에 들어간다. write-up 은 레벨 3 아래로
+# 물리적으로 차단되지만 wrong 은 그렇지 않아서, 여기에 "~하는 것이 핵심이다" 같은
+# 해법 방향이 들어가면 첫 힌트부터 정답이 새어 나간다.
+# wrong 은 오답을 배제하고 학습자가 무엇을 확인하지 않았는지를 짚는 데까지만 쓴다.
+LEAK_PATTERN = re.compile(
+    r"(핵심이다|중요하다|효과적이다|집중해야 한다|고려해야 한다|시도해볼 수 있다|필요가 있다)\.?$"
+)
+
+
+def lint(wargames: list[dict]) -> list[str]:
+    """반영 전 형식 점검. 문제가 있으면 사유 목록을 돌려준다."""
+    problems: list[str] = []
+    for game in wargames:
+        pid = game["problem_id"]
+        for line in split_lines(game["wrong"]):
+            if not line.startswith("-"):
+                # "주장 + 설명" 을 두 줄로 적으면 설명만 맥락 없이 떨어져 나온다.
+                problems.append(f"문제 {pid}: 불릿(-)으로 시작하지 않는 줄 — {line[:60]}")
+            if LEAK_PATTERN.search(line):
+                problems.append(f"문제 {pid}: 해법 방향 제시로 끝남 — {line[:60]}")
+    return problems
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true", help="실제로 반영")
+    parser.add_argument(
+        "--skip-lint", action="store_true", help="형식 점검을 건너뛴다(권장하지 않음)"
+    )
     args = parser.parse_args()
 
     wargames = load_wargames()
+
+    issues = lint(wargames)
+    if issues:
+        print("형식 점검에서 걸린 항목:")
+        for msg in issues:
+            print(f"  - {msg}")
+        if not args.skip_lint:
+            raise SystemExit("\n반영을 중단했습니다. 문장을 고치거나 --skip-lint 를 쓰세요.")
+        print("  (--skip-lint 로 무시하고 진행합니다)\n")
     print(f"컬렉션: {collection.name} (총 {collection.count()}개)")
 
     existing = collection.get(where={"section": "wrong"})
