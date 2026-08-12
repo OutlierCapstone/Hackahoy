@@ -7,6 +7,7 @@
 #  4) LLM 실패 시 룰 기반 압축문으로 fail-open (힌트가 절대 죽지 않음)
 
 import json
+import os
 import re
 from datetime import datetime
 from urllib.parse import unquote_plus
@@ -20,8 +21,28 @@ router = APIRouter(prefix="/hint", tags=["hint"])
 
 N_RESULTS = 5
 MAX_LOGS = 10          # 힌트 1회당 참조할 최근 로그 최대 개수
-QUERY_MODEL = "gemini-2.5-flash"
-HINT_MODEL = "gemini-2.5-flash"
+
+# 모델은 환경변수로 뺀다.
+#
+# Gemini 무료 티어 쿼터는 프로젝트 단위가 아니라 "프로젝트 x 모델" 단위다
+# (에러 페이로드의 quota_id 가 ...PerProjectPerModel-FreeTier).
+# ai-tutor 를 챌린지(prob1/prob3)와 다른 모델로 돌리면 같은 키를 쓰더라도
+# 쿼터 버킷이 분리된다. 문제 난이도는 챌린지가 쓰는 모델에 맞춰 조정돼 있으므로
+# 챌린지 쪽 모델은 건드리지 않고 여기만 옮기는 것이 안전하다.
+#
+# 기본값은 기존 값 그대로다. 환경변수를 안 넣으면 동작이 변하지 않는다.
+QUERY_MODEL = os.getenv("AI_TUTOR_QUERY_MODEL", "gemini-2.5-flash")
+HINT_MODEL = os.getenv("AI_TUTOR_HINT_MODEL", "gemini-2.5-flash")
+
+# 힌트 1회당 LLM 호출 수를 2 -> 1 로 줄이는 스위치.
+#
+# 기본 파이프라인은 (1) 로그 -> 의미쿼리 합성 (2) 힌트 생성 으로 flash 를 두 번 부른다.
+# 이 값을 1 로 두면 (1) 을 건너뛰고 룰 기반 압축문을 그대로 검색 쿼리로 쓴다.
+# 원래 LLM 실패 시 쓰던 fail-open 경로와 같은 값이라 새로 만드는 동작이 아니다.
+#
+# 트레이드오프: 검색 쿼리가 자연어 문장이 아니라 압축 로그라 청크 매칭이 거칠어진다.
+# 힌트가 아예 안 나오는 것보다는 낫다는 판단이고, 쿼터가 풀리면 되돌리면 된다.
+SKIP_QUERY_SYNTH = os.getenv("AI_TUTOR_SKIP_QUERY_SYNTH", "0") == "1"
 
 SECTION_MAP = {
     1: ["observation", "wrong"],
@@ -204,6 +225,12 @@ def synthesize_query(problem_id: str, distilled: str, techniques: list[str]) -> 
     fallback = distilled
     if techniques:
         fallback = "학습자 시도 요약: " + ", ".join(techniques) + "\n" + distilled
+
+    # 쿼터 절약 모드: LLM 합성을 건너뛰고 폴백(룰 기반 압축문)을 그대로 쓴다.
+    # stage 는 None 이라 레벨 계산은 hint_count 와 경과시간만 반영한다.
+    if SKIP_QUERY_SYNTH:
+        logger.info("[query-synth] SKIP (AI_TUTOR_SKIP_QUERY_SYNTH=1), 룰 기반 쿼리 사용")
+        return fallback, None
 
     try:
         response = genai_client.models.generate_content(
