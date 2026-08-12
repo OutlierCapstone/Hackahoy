@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import styles from './Mypage.module.css';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/api/config";
 
 type UserShape = {
   id?: string;
@@ -61,7 +62,7 @@ export default function MyPage() {
       if (!token) return alert('로그인이 필요합니다.');
 
       await axios.post(
-        'http://44.199.70.243:4000/auth/update-nickname',
+        `${API_BASE_URL}/auth/update-nickname`,
         { nickname: nickname },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -86,7 +87,7 @@ export default function MyPage() {
       if (!token) return;
 
       await axios.post(
-        'http://44.199.70.243:4000/auth/unsubscribe',
+        `${API_BASE_URL}/auth/unsubscribe`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

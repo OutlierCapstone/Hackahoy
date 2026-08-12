@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './admin.module.css';
 import { listUsers, setUserBanned, AdminUser } from '@/lib/api/admin';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/api/config";
 
 type Role = 'ADMIN' | 'USER';
 
@@ -65,7 +66,7 @@ export default function AdminPage() {
       const token = localStorage.getItem('accessToken');
 
       await axios.post(
-        'http://44.199.70.243:4000/admin/users/batch-update',
+        `${API_BASE_URL}/admin/users/batch-update`,
         { users: rows },
         {
           headers: { Authorization: `Bearer ${token}` },

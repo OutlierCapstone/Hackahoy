@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/common/AuthContext";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/api/config";
 
 const PIN_SLOTS = [
   { id: 1, left: "20%", top: "56%" },
@@ -28,7 +29,7 @@ export default function AdminSelectPinPage() {
     const fetchCounts = async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const res = await axios.get("http://44.199.70.243:4000/admin/problems", {
+        const res = await axios.get(`${API_BASE_URL}/admin/problems`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

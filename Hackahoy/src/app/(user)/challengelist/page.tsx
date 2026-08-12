@@ -6,6 +6,7 @@ import axios from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './challengelist.module.css';
+import { API_BASE_URL } from "@/lib/api/config";
 
 interface Problem {
   id: number;
@@ -27,7 +28,7 @@ export default function ChallengeListPage() {
       try {
         const token = localStorage.getItem('accessToken');
         const response = await axios.get<Problem[]>(
-          'http://44.199.70.243:4000/problem/user-list',
+          `${API_BASE_URL}/problem/user-list`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         setProblems(response.data);

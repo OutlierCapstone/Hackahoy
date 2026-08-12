@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from '../admin.module.css';
 import axios from 'axios';
+import { API_BASE_URL } from "@/lib/api/config";
 
 interface Notification {
   id: number;
@@ -39,7 +40,7 @@ export default function AdminNotificationPage() {
           return;
         }
 
-        const response = await axios.get('http://44.199.70.243:4000/admin/notifications', {
+        const response = await axios.get(`${API_BASE_URL}/admin/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);

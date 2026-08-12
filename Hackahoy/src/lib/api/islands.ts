@@ -4,7 +4,7 @@ import { API_BASE_URL } from './config';
 
 const API_URL = API_BASE_URL;
 
-const getAuthHeader = () => {
+const getAuthHeader = (): Record<string, string> => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
