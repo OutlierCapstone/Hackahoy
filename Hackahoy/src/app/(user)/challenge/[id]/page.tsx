@@ -15,6 +15,8 @@ type Problem = {
   hint: string | null;
   serverLink: string;
   islandId: number;
+  /** 이 사용자가 이미 해결한 문제인지. 서버가 내려준다. */
+  solved?: boolean;
 };
 
 // 1~7번 문제는 고정 에셋 사용, 그 외는 default
@@ -164,12 +166,23 @@ export default function ChallengePage() {
     e.preventDefault();
     if (!problem || submitting) return;
 
+    // 이미 푼 문제는 서버가 제출을 받지 않는다. 요청을 보내기 전에 끊는다.
+    if (problem.solved) {
+      alert('이미 해결한 문제입니다. ✅');
+      return;
+    }
+
     saveUserLog('SUBMIT', { input: flagInput });
 
     setSubmitting(true);
     try {
       const result = await submitFlag(problem.id, flagInput.trim());
-      if (result.correct) {
+      if (result.alreadySolved) {
+        // 다른 탭에서 먼저 풀었거나 화면 상태가 오래된 경우.
+        // 레벨업 화면을 다시 띄우면 안 된다.
+        setProblem((prev) => (prev ? { ...prev, solved: true } : prev));
+        alert('이미 해결한 문제입니다. ✅');
+      } else if (result.correct) {
         const prevLevel = user?.levelNum ?? 1;
         const newLevel = result.newLevel;
         if (refreshUser) await refreshUser();
@@ -247,10 +260,14 @@ export default function ChallengePage() {
                 className={styles.input}
                 value={flagInput}
                 onChange={(e) => setFlagInput(e.target.value)}
-                placeholder="hackahoy{...}"
-                disabled={submitting}
+                placeholder={problem.solved ? '이미 해결한 문제입니다' : 'hackahoy{...}'}
+                disabled={submitting || Boolean(problem.solved)}
               />
-              <button type="submit" className={styles.flagBtn} disabled={submitting}>
+              <button
+                type="submit"
+                className={styles.flagBtn}
+                disabled={submitting || Boolean(problem.solved)}
+              >
                 <Image src="/assets/ui/flag.png" alt="flag" width={94} height={70} />
               </button>
             </form>

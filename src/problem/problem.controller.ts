@@ -54,8 +54,8 @@ export class ProblemController {
     @Req() req: any,
   ) {
     await this.eventsService.trackUserEvent(req.user.id, id, 'VIEW_PROBLEM');
-    
-    return this.problemService.getProblem(id);
+
+    return this.problemService.getProblem(id, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, BanCheckGuard)
