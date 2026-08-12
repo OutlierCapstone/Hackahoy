@@ -28,10 +28,22 @@
   box-sizing: border-box;
 }
 
+/* 컨테이너를 이미지 크기에 맞춘다.
+ *
+ * 예전에는 display:flex + justify-content:center 라 컨테이너가 남는 폭을 다 먹고
+ * (실측 704px) 그 안에서 이미지(580px)만 가운데 놓였다. 그런데 .filterOverlay 는
+ * left:0; width:100% 라 컨테이너 전체를 덮어서, 클릭존 5등분이 이미지보다
+ * 좌우로 62px 씩 넓어졌다. 그 결과 라벨 가장자리를 누르면 옆 필터가 걸렸다
+ * (ALL 우측 -> AI, SOLVED 좌측 -> WEB).
+ *
+ * width:fit-content 로 컨테이너를 이미지에 맞추면 100% 가 곧 이미지 폭이 되어
+ * 클릭존과 라벨이 일치한다. 가운데 정렬은 margin-inline:auto 가 대신한다. */
 .filterBarContainer {
   position: relative;
   display: flex;
   justify-content: center;
+  width: fit-content;
+  margin-inline: auto;
   margin-bottom: 25px;
   flex-shrink: 0;
 }
