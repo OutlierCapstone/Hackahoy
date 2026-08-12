@@ -7,6 +7,7 @@
 #  4) LLM 실패 시 룰 기반 압축문으로 fail-open (힌트가 절대 죽지 않음)
 
 import json
+import os
 import re
 from datetime import datetime
 from urllib.parse import unquote_plus
@@ -20,8 +21,31 @@ router = APIRouter(prefix="/hint", tags=["hint"])
 
 N_RESULTS = 5
 MAX_LOGS = 10          # 힌트 1회당 참조할 최근 로그 최대 개수
-QUERY_MODEL = "gemini-2.5-flash"
-HINT_MODEL = "gemini-2.5-flash"
+
+# 모델은 환경변수로 뺀다.
+#
+# Gemini 무료 티어 쿼터는 프로젝트 단위가 아니라 "프로젝트 x 모델" 단위다
+# (에러 페이로드의 quota_id 가 ...PerProjectPerModel-FreeTier).
+# ai-tutor 를 챌린지(prob1/prob3)와 다른 모델로 돌리면 같은 키를 쓰더라도
+# 쿼터 버킷이 분리된다. 문제 난이도는 챌린지가 쓰는 모델에 맞춰 조정돼 있으므로
+# 챌린지 쪽 모델은 건드리지 않고 여기만 옮기는 것이 안전하다.
+#
+# 기본값은 기존 값 그대로다. 환경변수를 안 넣으면 동작이 변하지 않는다.
+QUERY_MODEL = os.getenv("AI_TUTOR_QUERY_MODEL", "gemini-2.5-flash")
+HINT_MODEL = os.getenv("AI_TUTOR_HINT_MODEL", "gemini-2.5-flash")
+
+# 힌트 1회당 LLM 호출은 2회(의미쿼리 합성 + 힌트 생성)를 유지한다.
+#
+# 쿼터를 아끼려고 (1) 합성을 건너뛰는 방안을 검토했으나 채택하지 않았다.
+# 합성 단계는 검색 쿼리만 만드는 게 아니라 stage(탐색/취약점_식별/익스플로잇/근접)를
+# 같이 반환하고, 그 값이 STAGE_MIN_LEVEL 을 통해 힌트 레벨의 하한을 올린다.
+# 건너뛰면 stage 가 None 이 되어 calculate_hint_level 의 상향 로직이 통째로 죽고,
+# 익스플로잇 단계까지 간 학습자도 hint_count 가 낮으면 레벨 1 에 머문다.
+# 레벨 1 은 참조 섹션이 observation/wrong 뿐이라 thinking 청크를 못 받는다.
+#
+# 실측상 힌트는 전체 호출의 12% 뿐이라 여기서 아껴도 쿼터에 거의 영향이 없다.
+# 병목은 prob1/prob3 챗(88%)이고 그쪽은 이 파일과 무관하다.
+# 쿼터는 결제 연결(Tier 1)로 해결한다.
 
 SECTION_MAP = {
     1: ["observation", "wrong"],
