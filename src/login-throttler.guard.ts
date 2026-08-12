@@ -54,7 +54,14 @@ export class LoginThrottlerGuard extends ThrottlerGuard {
       return true;
     }
 
-    return super.handleRequest(requestProps);
+    // 로그인 경로의 한도는 현재 배포본과 동일하게 유지한다(20 -> 100).
+    // 스로틀러 설정값(20)을 그대로 쓰면 지금 돌아가는 것보다 오히려 빡빡해진다.
+    // 추적 키가 IP 라, 같은 와이파이를 쓰는 베타에서 참가자들이 소셜 로그인을
+    // 누르면 20 은 쉽게 넘는다. 이 PR 은 일반 요청 문제만 고치고
+    // 로그인 쪽 동작은 건드리지 않는다.
+    const currentLimit = isLoginPath(path) ? 100 : requestProps.limit;
+
+    return super.handleRequest({ ...requestProps, limit: currentLimit });
   }
 
 // src/common/guards/login-throttler.guard.ts
