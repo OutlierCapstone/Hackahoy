@@ -6,14 +6,37 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { ProblemCategory } from '@prisma/client';
 
+/**
+ * 베타에서 잠시 내릴 문제 id 목록.
+ *
+ * 예: HIDDEN_PROBLEM_IDS=7
+ *
+ * 문제 데이터를 지우지 않고 노출만 막는다. 목록에서 빠지고, 상세 조회와
+ * 플래그 제출도 막힌다. 값을 비우고 재시작하면 그대로 돌아온다.
+ *
+ * 문제 7(과자 마을)이 대상이다. prob7/ai/clip_infer.py 가 커밋된 적이 없고
+ * 서버에 torch 도 없어서, 참가자가 사진을 올리면 "서버 오류가 발생했습니다"
+ * 만 보게 된다.
+ */
+function hiddenProblemIds(): number[] {
+  return (process.env.HIDDEN_PROBLEM_IDS ?? '')
+    .split(',')
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isInteger(n) && n > 0);
+}
+
 @Injectable()
 export class ProblemService {
   constructor(private readonly prisma: PrismaService) {}
 
   // 1. 사용자의 문제 목록 조회 (섬 연동 + 카테고리 필터링)
   async getProblemsForUser(userId: string, islandId?: number) {
+    const hidden = hiddenProblemIds();
     const problems = await this.prisma.problem.findMany({
-      where: islandId ? { islandId: islandId } : {},
+      where: {
+        ...(islandId ? { islandId } : {}),
+        ...(hidden.length ? { id: { notIn: hidden } } : {}),
+      },
       orderBy: { id: 'asc' },
       select: {
         id: true,
@@ -43,6 +66,11 @@ export class ProblemService {
     flag: string;
   }) {
     const { problemId, userId, flag } = params;
+
+    if (hiddenProblemIds().includes(problemId)) {
+      throw new NotFoundException('problem not found');
+    }
+
     const trimmed = (flag ?? '').trim();
     if (!trimmed) throw new BadRequestException('flag is required');
 
@@ -52,6 +80,19 @@ export class ProblemService {
     });
     if (!problem) throw new NotFoundException('problem not found');
 
+    // 이미 푼 문제는 제출 자체를 받지 않는다.
+    //
+    // 예전에는 제출 기록을 먼저 만들고 나서 풀이 이력을 확인했다. 그래서
+    // 이미 해결한 문제에도 SubmitFlag 가 계속 쌓였고, 정답을 다시 넣으면
+    // 레벨업 화면이 다시 떴다. 시도 횟수로 힌트를 여는 게이팅이 있는데
+    // 해결한 문제의 제출까지 시도로 세면 그 판단이 흐려진다.
+    const already = await this.prisma.solvedHistory.findUnique({
+      where: { userId_problemId: { userId, problemId } },
+    });
+    if (already) {
+      return { correct: true, alreadySolved: true };
+    }
+
     const isCorrect = trimmed === problem.correctFlag;
 
     // 제출 기록 저장
@@ -60,12 +101,6 @@ export class ProblemService {
     });
 
     if (!submit.isCorrect) return { correct: false };
-
-    // 이미 푼 문제인지 확인
-    const already = await this.prisma.solvedHistory.findUnique({
-      where: { userId_problemId: { userId, problemId } },
-    });
-    if (already) return { correct: true, alreadySolved: true };
 
     // 풀이 이력 생성
     await this.prisma.solvedHistory.create({ data: { userId, problemId } });
@@ -88,8 +123,14 @@ export class ProblemService {
   }
 
   // 3. 개별 문제 상세 조회
-  async getProblem(problemId: number) {
-    return this.prisma.problem.findUnique({
+  // userId 를 받으면 해결 여부(solved)를 같이 돌려준다.
+  // 화면에서 이미 푼 문제의 제출창을 잠그는 데 쓴다.
+  async getProblem(problemId: number, userId?: string) {
+    if (hiddenProblemIds().includes(problemId)) {
+      throw new NotFoundException('problem not found');
+    }
+
+    const problem = await this.prisma.problem.findUnique({
       where: { id: problemId },
       select: {
         id: true,
@@ -101,6 +142,15 @@ export class ProblemService {
         serverLink: true,
       },
     });
+    if (!problem) return problem;
+
+    if (!userId) return { ...problem, solved: false };
+
+    const solved = await this.prisma.solvedHistory.findUnique({
+      where: { userId_problemId: { userId, problemId } },
+      select: { userId: true },
+    });
+    return { ...problem, solved: Boolean(solved) };
   }
 
   // 4. 문제 전체 리스트 조회 (관리자용 등)

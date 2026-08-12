@@ -5,20 +5,39 @@ import { PrismaService } from './prisma/prisma.service';
 import type { ThrottlerModuleOptions } from '@nestjs/throttler';
 import { BanService } from './ban/ban.service';
 
-// 실제 "로그인 시도" 로 볼 경로.
+// 경로별 한도. 여기 없는 경로는 default(5분에 600회)만 받는다.
 //
-// /auth/me 나 /auth/guest 는 여기 넣지 않는다. 둘 다 정상 탐색 중에 반복 호출되는
-// 경로라, 로그인 시도용 엄격한 한도를 걸면 평범한 사용자가 막힌다.
-const LOGIN_PATHS = [
-  '/auth/login',
-  '/auth/kakao',
-  '/auth/google',
-  '/auth/naver',
+// 원래 'login' 스로틀러(5분에 20회)는 크리덴셜 브루트포스를 막으려던 것이다.
+// 그런데 이 프로젝트에는 비밀번호 로그인이 없다. POST /auth/login 은
+// { oauthProvider, oauthToken } 을 받아 제공자 토큰을 검증하는 것이고,
+// GET /auth/kakao|google|naver 는 제공자로 보내는 리다이렉트다.
+// 추측할 비밀번호가 없으니 고전적 브루트포스는 대상 자체가 없다.
+//
+// 실제로 조여야 하는 것은 인증 없이 부수효과를 만드는 엔드포인트다.
+// POST /auth/guest 는 호출 한 번마다 User 행을 하나 만든다(실측: 40연타 -> 40행).
+// default 만 적용되면 한 IP 가 5분에 600행, 하루 17만 행까지 만들 수 있어
+// 베타 데이터가 오염되고 DB 가 커진다.
+//
+// 한도를 100 으로 두는 이유: 같은 와이파이를 쓰는 베타 참가자 50명이 동시에
+// 시작해도(1인당 1~2회) 걸리지 않으면서, 대량 생성은 막는 선이다.
+type RateRule = { prefix: string; limit: number; ban: boolean };
+
+const RATE_LIMITED_PATHS: RateRule[] = [
+  // OAuth 진입·검증. 호출마다 제공자 쪽 요청이 붙으므로 남용을 막는다.
+  { prefix: '/auth/login', limit: 100, ban: true },
+  { prefix: '/auth/kakao', limit: 100, ban: true },
+  { prefix: '/auth/google', limit: 100, ban: true },
+  { prefix: '/auth/naver', limit: 100, ban: true },
+  // 인증 없이 User 행을 만든다. 로그인 시도가 아니므로 정지 대상은 아니다.
+  { prefix: '/auth/guest', limit: 100, ban: false },
 ];
 
-function isLoginPath(path: string): boolean {
+// /auth/me 는 일부러 넣지 않았다. 정상 탐색 중 반복 호출되는 경로다.
+function matchRule(path: string): RateRule | undefined {
   const clean = (path || '').split('?')[0];
-  return LOGIN_PATHS.some((p) => clean === p || clean.startsWith(`${p}/`));
+  return RATE_LIMITED_PATHS.find(
+    (r) => clean === r.prefix || clean.startsWith(`${r.prefix}/`),
+  );
 }
 
 @Injectable()
@@ -50,16 +69,16 @@ export class LoginThrottlerGuard extends ThrottlerGuard {
     // 엔드포인트까지 5분에 20회로 묶였다. 실측으로 동시 50 요청 중 30개가
     // 403 이었고, 화면 몇 번 넘기는 정상 탐색만으로도 한도에 닿는다.
     // 일반 요청은 'default'(5분에 600회)만 적용받게 둔다.
-    if (throttler.name === 'login' && !isLoginPath(path)) {
+    const rule = matchRule(path);
+
+    // 'login' 스로틀러(5분에 20회)는 위 표에 있는 경로에만 적용한다.
+    // 나머지는 default(5분에 600회)만 받는다.
+    if (throttler.name === 'login' && !rule) {
       return true;
     }
 
-    // 로그인 경로의 한도는 현재 배포본과 동일하게 유지한다(20 -> 100).
-    // 스로틀러 설정값(20)을 그대로 쓰면 지금 돌아가는 것보다 오히려 빡빡해진다.
-    // 추적 키가 IP 라, 같은 와이파이를 쓰는 베타에서 참가자들이 소셜 로그인을
-    // 누르면 20 은 쉽게 넘는다. 이 PR 은 일반 요청 문제만 고치고
-    // 로그인 쪽 동작은 건드리지 않는다.
-    const currentLimit = isLoginPath(path) ? 100 : requestProps.limit;
+    // 표에 있으면 그 한도를, 없으면 스로틀러 설정값을 그대로 쓴다.
+    const currentLimit = rule ? rule.limit : requestProps.limit;
 
     return super.handleRequest({ ...requestProps, limit: currentLimit });
   }
@@ -75,14 +94,15 @@ export class LoginThrottlerGuard extends ThrottlerGuard {
 
      if (path.includes('/api/collect')) return;
 
-    // 로그인 경로가 아니면 정지시키지 않는다.
+    // 정지(ban)는 표에서 ban: true 인 경로에만 적용한다.
     //
     // 스로틀러의 기본 추적 키는 IP 다. 베타처럼 여러 명이 같은 와이파이를 쓰면
-    // 한도가 사람별이 아니라 출구 IP 단위로 소모되고, 그러면 21번째 요청을 한
-    // 사람이 자기 잘못 없이 24시간 정지된다.
+    // 한도가 사람별이 아니라 출구 IP 단위로 소모되고, 그러면 한도를 넘긴 요청을
+    // 한 사람이 자기 잘못 없이 24시간 정지된다.
     // 실제로 부하 테스트 한 번에 게스트 계정이 정지됐다(BanHistory ruleId=3).
-    // 일반 요청 초과는 잠시 물러나라는 신호로 충분하다.
-    if (!isLoginPath(path)) {
+    // 일반 요청과 게스트 발급은 잠시 물러나라는 신호로 충분하다.
+    const rule = matchRule(path);
+    if (!rule?.ban) {
       throw new ForbiddenException('요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.');
     }
 
