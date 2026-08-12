@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>내 명부 — 인력 사무소</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body id="dash-body">
+    <!-- =========================================================
+         main.js 가 참조하는 id / class 는 원본과 동일하게 유지한다.
+         id    user-profile, user-name, profileMenu, logout,
+               dash-user-name, create-task-btn, taskModal,
+               close-task-modal, taskForm, title, description,
+               taskMessage, taskItems, dash-admin-panel, admin-result
+         class close-btn
+         ========================================================= -->
+    <header class="dash-header">
+      <div class="dash-header-left">인력 사무소<span class="brand-mark">·명부</span></div>
+
+      <nav class="dash-nav-menu">
+        <a href="#">갑판원</a>
+        <a href="#">항해사</a>
+        <a href="#">포수</a>
+        <a href="#">요리사</a>
+        <a href="#">견습</a>
+      </nav>
+
+      <div class="dash-header-right">
+        <div id="user-profile">
+          <span id="user-name">선원</span>
+          <div class="profile-menu" id="profileMenu">
+            <a href="index.html" class="profile-menu-link">사무소</a>
+            <a href="#" id="logout" class="profile-menu-link">로그아웃</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="dash-main">
+      <div class="dash-welcome-box">
+        <h2>어서 오시오, <span id="dash-user-name">선원</span></h2>
+        <p id="dash-welcome-box-sub">
+          맡은 일감을 명부에 적어 두면 사무소가 관리해 준다.
+        </p>
+
+        <button class="dash-btn dash-btn-primary" id="create-task-btn">
+          일감 적어두기
+        </button>
+
+        <!-- 일감 등록 모달 -->
+        <div id="taskModal" class="modal">
+          <div class="modal-content">
+            <span class="close-btn" id="close-task-modal">&times;</span>
+            <form id="taskForm" class="dash-task-form">
+              <h3>일감 기록</h3>
+              <label>
+                일감 이름<br />
+                <input type="text" id="title" required />
+              </label>
+              <label>
+                내용<br />
+                <textarea id="description" rows="3" required></textarea>
+              </label>
+              <button type="submit" class="dash-btn dash-btn-submit">
+                기록하기
+              </button>
+              <p id="taskMessage"></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <section id="taskList" class="dash-task-list">
+        <h3>내가 맡은 일감</h3>
+        <ul id="taskItems"></ul>
+      </section>
+
+      <!-- 사무장 전용 명부. main.js 가 block 으로 켠다 -->
+      <section id="dash-admin-panel" style="display: none">
+        <h3>사무장 전용 명부</h3>
+        <div class="admin-data-box">
+          <div id="admin-result">
+            <!-- 유저 목록과 플래그 정보가 여기에 표시됨 -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="main.js"></script>
+  </body>
+</html>
