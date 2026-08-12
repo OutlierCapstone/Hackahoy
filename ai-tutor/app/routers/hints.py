@@ -34,15 +34,18 @@ MAX_LOGS = 10          # 힌트 1회당 참조할 최근 로그 최대 개수
 QUERY_MODEL = os.getenv("AI_TUTOR_QUERY_MODEL", "gemini-2.5-flash")
 HINT_MODEL = os.getenv("AI_TUTOR_HINT_MODEL", "gemini-2.5-flash")
 
-# 힌트 1회당 LLM 호출 수를 2 -> 1 로 줄이는 스위치.
+# 힌트 1회당 LLM 호출은 2회(의미쿼리 합성 + 힌트 생성)를 유지한다.
 #
-# 기본 파이프라인은 (1) 로그 -> 의미쿼리 합성 (2) 힌트 생성 으로 flash 를 두 번 부른다.
-# 이 값을 1 로 두면 (1) 을 건너뛰고 룰 기반 압축문을 그대로 검색 쿼리로 쓴다.
-# 원래 LLM 실패 시 쓰던 fail-open 경로와 같은 값이라 새로 만드는 동작이 아니다.
+# 쿼터를 아끼려고 (1) 합성을 건너뛰는 방안을 검토했으나 채택하지 않았다.
+# 합성 단계는 검색 쿼리만 만드는 게 아니라 stage(탐색/취약점_식별/익스플로잇/근접)를
+# 같이 반환하고, 그 값이 STAGE_MIN_LEVEL 을 통해 힌트 레벨의 하한을 올린다.
+# 건너뛰면 stage 가 None 이 되어 calculate_hint_level 의 상향 로직이 통째로 죽고,
+# 익스플로잇 단계까지 간 학습자도 hint_count 가 낮으면 레벨 1 에 머문다.
+# 레벨 1 은 참조 섹션이 observation/wrong 뿐이라 thinking 청크를 못 받는다.
 #
-# 트레이드오프: 검색 쿼리가 자연어 문장이 아니라 압축 로그라 청크 매칭이 거칠어진다.
-# 힌트가 아예 안 나오는 것보다는 낫다는 판단이고, 쿼터가 풀리면 되돌리면 된다.
-SKIP_QUERY_SYNTH = os.getenv("AI_TUTOR_SKIP_QUERY_SYNTH", "0") == "1"
+# 실측상 힌트는 전체 호출의 12% 뿐이라 여기서 아껴도 쿼터에 거의 영향이 없다.
+# 병목은 prob1/prob3 챗(88%)이고 그쪽은 이 파일과 무관하다.
+# 쿼터는 결제 연결(Tier 1)로 해결한다.
 
 SECTION_MAP = {
     1: ["observation", "wrong"],
@@ -225,12 +228,6 @@ def synthesize_query(problem_id: str, distilled: str, techniques: list[str]) -> 
     fallback = distilled
     if techniques:
         fallback = "학습자 시도 요약: " + ", ".join(techniques) + "\n" + distilled
-
-    # 쿼터 절약 모드: LLM 합성을 건너뛰고 폴백(룰 기반 압축문)을 그대로 쓴다.
-    # stage 는 None 이라 레벨 계산은 hint_count 와 경과시간만 반영한다.
-    if SKIP_QUERY_SYNTH:
-        logger.info("[query-synth] SKIP (AI_TUTOR_SKIP_QUERY_SYNTH=1), 룰 기반 쿼리 사용")
-        return fallback, None
 
     try:
         response = genai_client.models.generate_content(
