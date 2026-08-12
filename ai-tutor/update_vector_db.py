@@ -1,4 +1,14 @@
 # update_vector_db.py
+#
+# [사용하지 않는다 — Gen1 방식]
+#
+# 이 스크립트는 id=problem_id 인 통짜 문서를 add 한다. 실행하면 해당 문제의
+# 섹션 조각 구조가 깨지고 write-up 이 다시 힌트 컨텍스트로 새어 들어간다.
+#
+# 문제 데이터를 고칠 때는 build_vector_db_recom.py 의 wargames 를 수정한 뒤
+# reseed_vector_db.py --apply 를 쓰고, wrong 만 고칠 때는
+# update_wrong_chunks.py --apply 를 쓴다.
+#
 # Modify the content in 'new_contents' (line 51) to add or update problems.
 
 import os
