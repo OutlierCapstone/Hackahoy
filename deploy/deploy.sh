@@ -38,6 +38,13 @@ echo "==> [1/6] pull ($BRANCH)"
 git fetch --prune origin
 git reset --hard "origin/${BRANCH}"
 
+echo "==> [1.1] Caddy config validation"
+if ! command -v caddy >/dev/null 2>&1; then
+  echo "    -> Caddy is not installed; install it before deploying" >&2
+  exit 1
+fi
+sudo caddy validate --config deploy/Caddyfile --adapter caddyfile
+
 echo "==> [1.5] Gemini API key sync"
 if [ -n "${GEMINI_API_KEY:-}" ]; then
   # 환경변수 값을 인자로 넘기거나 출력하지 않는다. Python 이 프로세스 환경에서 직접 읽는다.
@@ -229,6 +236,37 @@ pm2 save
 
 echo "==> [5/6] openresty"
 docker compose up -d --build openresty
+
+echo "==> [5.1] HTTPS reverse proxy"
+sudo install -o root -g root -m 0644 deploy/Caddyfile /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+sudo systemctl is-active --quiet caddy
+
+HTTPS_ORIGINS=("https://hackahoy.duckdns.org")
+for challenge_number in {1..7}; do
+  HTTPS_ORIGINS+=("https://challenge-${challenge_number}.hackahoy.duckdns.org")
+done
+
+https_ready=0
+for attempt in {1..15}; do
+  https_ready=1
+  for origin in "${HTTPS_ORIGINS[@]}"; do
+    if ! curl --fail --silent --show-error --max-time 10 --output /dev/null "${origin}/"; then
+      https_ready=0
+      break
+    fi
+  done
+  if [ "$https_ready" = "1" ]; then
+    break
+  fi
+  sleep 2
+done
+
+if [ "$https_ready" != "1" ]; then
+  echo "    -> HTTPS verification failed" >&2
+  exit 1
+fi
+echo "    -> main site and challenges 1-7 passed HTTPS verification"
 
 echo "==> [5.5] optional hint pipeline verification"
 if [ "${VERIFY_HINT_PIPELINE:-0}" = "1" ]; then

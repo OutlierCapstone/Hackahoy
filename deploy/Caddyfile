@@ -1,0 +1,48 @@
+hackahoy.duckdns.org {
+	encode zstd gzip
+
+	handle_path /backend/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}
+
+challenge-1.hackahoy.duckdns.org, challenge-2.hackahoy.duckdns.org, challenge-3.hackahoy.duckdns.org, challenge-4.hackahoy.duckdns.org, challenge-5.hackahoy.duckdns.org, challenge-6.hackahoy.duckdns.org, challenge-7.hackahoy.duckdns.org {
+	@challenge1 host challenge-1.hackahoy.duckdns.org
+	handle @challenge1 {
+		reverse_proxy 127.0.0.1:5001
+	}
+
+	@challenge2 host challenge-2.hackahoy.duckdns.org
+	handle @challenge2 {
+		reverse_proxy 127.0.0.1:5002
+	}
+
+	@challenge3 host challenge-3.hackahoy.duckdns.org
+	handle @challenge3 {
+		reverse_proxy 127.0.0.1:5003
+	}
+
+	@challenge4 host challenge-4.hackahoy.duckdns.org
+	handle @challenge4 {
+		reverse_proxy 127.0.0.1:5004
+	}
+
+	@challenge5 host challenge-5.hackahoy.duckdns.org
+	handle @challenge5 {
+		reverse_proxy 127.0.0.1:5005
+	}
+
+	@challenge6 host challenge-6.hackahoy.duckdns.org
+	handle @challenge6 {
+		reverse_proxy 127.0.0.1:5006
+	}
+
+	@challenge7 host challenge-7.hackahoy.duckdns.org
+	handle @challenge7 {
+		reverse_proxy 127.0.0.1:5007
+	}
+}

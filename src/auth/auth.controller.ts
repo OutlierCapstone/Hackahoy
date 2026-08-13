@@ -6,8 +6,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
 import { LoginThrottlerGuard } from '.././login-throttler.guard';
 
-// OAuth 콜백이 돌려보낼 프론트 주소. 기본값은 기존 실서버 주소라 프로덕션 동작은 그대로다.
-const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://44.199.70.243:3000';
+// OAuth 콜백이 돌려보낼 HTTPS 프론트 주소.
+const FRONTEND_URL = process.env.FRONTEND_URL ?? 'https://hackahoy.duckdns.org';
 
 @Controller('auth')
 @UseGuards(LoginThrottlerGuard)

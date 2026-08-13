@@ -88,7 +88,8 @@ NAVER_CLIENT_SECRET=your_naver_client_secret
 KAKAO_CLIENT_ID=your_kakao_client_id
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-FRONTEND_URL=http://your-server-ip:3000
+FRONTEND_URL=https://hackahoy.duckdns.org
+CORS_ORIGINS=https://hackahoy.duckdns.org,http://44.199.70.243:3000
 ```
 
 ### AI 튜터 (`~/ai-tutor/.env`)
