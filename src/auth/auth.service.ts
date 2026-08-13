@@ -117,6 +117,10 @@ export class AuthService {
       return await this.prisma.$transaction(async (tx) => {
         await tx.submitFlag.deleteMany({ where: { userId } });
         await tx.solvedHistory.deleteMany({ where: { userId } });
+        await tx.userEvent.deleteMany({ where: { userId } });
+        await tx.hintHistory.deleteMany({ where: { userId } });
+        await tx.userLog.deleteMany({ where: { userId } });
+        await tx.banHistory.deleteMany({ where: { userId } });
         return await tx.user.delete({ where: { id: userId } });
       });
     } catch (error) {
