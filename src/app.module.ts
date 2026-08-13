@@ -25,6 +25,7 @@ import { BanCheckGuard } from './common/guard/ban-check.guard';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { CollectModule } from './collect/collect.module';
 import { AiTutorModule } from './ai-tutor/ai-tutor.module';
+import { SensitiveFieldsInterceptor } from './common/interceptors/sensitive-fields.interceptor';
 
 @Module({
   imports: [
@@ -47,6 +48,10 @@ import { AiTutorModule } from './ai-tutor/ai-tutor.module';
   ],
   controllers: [AppController, AdminController],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: SensitiveFieldsInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,  

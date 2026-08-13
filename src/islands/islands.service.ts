@@ -37,8 +37,9 @@ export class IslandsService {
     const hidden = hiddenIslandIds();
     return this.prisma.island.findMany({
       where: hidden.length ? { id: { notIn: hidden } } : {},
-      include: {
-        problems: true,
+      select: {
+        id: true,
+        image: true,
       },
     });
   }
