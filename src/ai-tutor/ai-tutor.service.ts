@@ -398,8 +398,17 @@ export class AiTutorService {
 
   /**
    * [연동] AI 문제 추천 요청
+   *
+   * HIDDEN_PROBLEM_IDS 로 숨긴 문제는 추천 결과에서도 제외한다.
+   * ChromaDB 에는 그 데이터가 남아 있어서, ai-tutor 가 7번을 추천해도
+   * 여기서 걸러 null 로 돌려보낸다.
    */
   async getAiRecommendation(userId: string) {
+    const hidden = (process.env.HIDDEN_PROBLEM_IDS ?? '')
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n > 0);
+
     const context = await this.getSolvedProblemContext(userId);
 
     try {
@@ -417,6 +426,13 @@ export class AiTutorService {
             typeof response.data === 'string'
               ? response.data
               : '추천할 문제를 찾지 못했습니다.',
+        };
+      }
+
+      if (hidden.includes(recommendedId)) {
+        return {
+          recommended_problem_id: null,
+          message: '추천할 문제를 찾지 못했습니다.',
         };
       }
 
