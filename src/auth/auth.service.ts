@@ -27,10 +27,21 @@ export class AuthService {
     if (!token) return null;
 
     try {
-      const payload = await this.jwt.verifyAsync<{ userId?: string; provider?: string }>(
-        token,
-      );
+      const payload = await this.jwt.verifyAsync<{
+        userId?: string;
+        provider?: string;
+        exp?: number;
+      }>(token);
       if (!payload.userId || !payload.provider) return null;
+
+      // Tokens issued before the cookie migration did not expire. Accept those
+      // only during the explicit transition window, then make them unusable.
+      if (!payload.exp) {
+        const deadline = Date.parse(
+          process.env.LEGACY_MIGRATION_UNTIL ?? '',
+        );
+        if (!Number.isFinite(deadline) || Date.now() > deadline) return null;
+      }
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.userId },
