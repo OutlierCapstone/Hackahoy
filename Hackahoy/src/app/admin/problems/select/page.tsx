@@ -28,9 +28,8 @@ export default function AdminSelectPinPage() {
 
     const fetchCounts = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
         const res = await axios.get(`${API_BASE_URL}/admin/problems`, {
-          headers: { Authorization: `Bearer ${token}` }
+          withCredentials: true,
         });
         
         const counts = { 1: 0, 2: 0, 3: 0 };

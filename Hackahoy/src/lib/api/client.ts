@@ -16,8 +16,6 @@ interface RequestOptions {
 
   body?: unknown;
 
-  token?: string | null;
-
 }
 
 
@@ -30,7 +28,7 @@ export async function apiRequest<T>(
 
 ): Promise<T> {
 
-  const { method = "GET", body, token } = options;
+  const { method = "GET", body } = options;
 
 
 
@@ -39,14 +37,6 @@ export async function apiRequest<T>(
     "Content-Type": "application/json",
 
   };
-
-
-
-  if (token) {
-
-    headers.Authorization = `Bearer ${token}`;
-
-  }
 
 
 

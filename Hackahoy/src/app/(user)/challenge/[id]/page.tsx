@@ -95,6 +95,10 @@ export default function ChallengePage() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitFeedback, setSubmitFeedback] = useState<{
+    type: 'status' | 'error' | 'success';
+    message: string;
+  } | null>(null);
 
   const auth: any = useAuth();
   const user = auth?.user;
@@ -106,11 +110,9 @@ export default function ChallengePage() {
 
   const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: any = {}) => {
     try {
-      const token = localStorage.getItem('accessToken');
       const currentUserId = user?.userId;
-      console.log('[saveUserLog] 호출됨', { type, token: !!token, id, currentUserId });
 
-      if (!token || !id || !currentUserId) return;
+      if (!id || !currentUserId) return;
 
       let fakeMethod = "POST";
       let fakeUri = "/";
@@ -133,9 +135,9 @@ export default function ChallengePage() {
       await fetch(`${API_BASE_URL}/api/collect`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           user_id: currentUserId,
           problem_id: Number(id),
@@ -173,23 +175,31 @@ export default function ChallengePage() {
     e.preventDefault();
     if (!problem || submitting) return;
 
+    const normalizedFlag = flagInput.trim();
+    if (!normalizedFlag) {
+      setSubmitFeedback({ type: 'error', message: 'flag를 입력해 주세요.' });
+      return;
+    }
+
     // 이미 푼 문제는 서버가 제출을 받지 않는다. 요청을 보내기 전에 끊는다.
     if (problem.solved) {
       alert('이미 해결한 문제입니다. ✅');
       return;
     }
 
-    saveUserLog('SUBMIT', { input: flagInput });
+    saveUserLog('SUBMIT', { input: normalizedFlag });
 
     setSubmitting(true);
+    setSubmitFeedback({ type: 'status', message: 'flag를 확인하고 있습니다...' });
     try {
-      const result = await submitFlag(problem.id, flagInput.trim());
+      const result = await submitFlag(problem.id, normalizedFlag);
       if (result.alreadySolved) {
         // 다른 탭에서 먼저 풀었거나 화면 상태가 오래된 경우.
         // 레벨업 화면을 다시 띄우면 안 된다.
         setProblem((prev) => (prev ? { ...prev, solved: true } : prev));
-        alert('이미 해결한 문제입니다. ✅');
+        setSubmitFeedback({ type: 'success', message: '이미 해결한 문제입니다. ✅' });
       } else if (result.correct) {
+        setSubmitFeedback({ type: 'success', message: '정답입니다! ✅' });
         const prevLevel = user?.levelNum ?? 1;
         const newLevel = result.newLevel;
         if (refreshUser) await refreshUser();
@@ -201,10 +211,17 @@ export default function ChallengePage() {
           router.push(`/level-up?newShip=${encodeURIComponent(`/assets/ships/ship-${currentLevel}.png`)}&isLevelUp=false&redirect=/`);
         }
       } else {
-        alert("틀렸습니다. 다시 생각해보세요! ❌");
+        setSubmitFeedback({
+          type: 'error',
+          message: '틀렸습니다. 다시 생각해보세요! ❌',
+        });
       }
     } catch (err) {
-      alert("서버 통신 오류");
+      console.error('flag 제출 실패:', err);
+      setSubmitFeedback({
+        type: 'error',
+        message: 'flag를 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -212,24 +229,39 @@ export default function ChallengePage() {
 
   // 3. AI 힌트
   const handleHintClick = async () => {
-    if (!problem) return;
+    if (!problem || isAiLoading) return;
     setIsAiLoading(true);
     setHintOpen(true);
+    setAiHint(null);
 
     saveUserLog('HINT', { input: flagInput });
 
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 45000);
     try {
-      const token = localStorage.getItem('accessToken');
       const res = await fetch(`${API_BASE_URL}/ai-tutor/hint`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: problem.id })
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ problemId: problem.id }),
+        signal: controller.signal,
       });
+      if (!res.ok) throw new Error(`AI tutor returned ${res.status}`);
       const result = await res.json();
-      setAiHint(typeof result === 'string' ? result : result.hint);
+      const hint = typeof result === 'string' ? result : result.hint;
+      if (!hint || typeof hint !== 'string') {
+        throw new Error('AI tutor returned an empty hint');
+      }
+      setAiHint(hint);
     } catch (err) {
       console.error("힌트 에러:", err);
+      setAiHint(
+        err instanceof DOMException && err.name === 'AbortError'
+          ? 'AI 튜터 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.'
+          : 'AI 힌트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     } finally {
+      window.clearTimeout(timeout);
       setIsAiLoading(false);
     }
   };
@@ -267,40 +299,66 @@ export default function ChallengePage() {
                 className={styles.input}
                 value={flagInput}
                 onChange={(e) => setFlagInput(e.target.value)}
+                onInput={() => setSubmitFeedback(null)}
                 placeholder={problem.solved ? '이미 해결한 문제입니다' : 'hackahoy{...}'}
                 disabled={submitting || Boolean(problem.solved)}
+                aria-label="flag 입력"
+                aria-describedby="flag-feedback"
               />
               <button
                 type="submit"
                 className={styles.flagBtn}
                 disabled={submitting || Boolean(problem.solved)}
+                aria-label="flag 제출"
               >
-                <Image src="/assets/ui/flag.png" alt="flag" width={94} height={70} />
+                <Image src="/assets/ui/flag.png" alt="" width={94} height={70} />
               </button>
             </form>
+            <p
+              id="flag-feedback"
+              className={`${styles.submitFeedback} ${
+                submitFeedback?.type === 'error' ? styles.submitError : ''
+              }`}
+              role={submitFeedback?.type === 'error' ? 'alert' : 'status'}
+              aria-live="polite"
+            >
+              {submitFeedback?.message ?? ''}
+            </p>
           </div>
 
           {/* 힌트 아이콘: 1~7번은 고정 에셋, 그 외는 default */}
-          <button type="button" className={styles.hintBtn} onClick={handleHintClick}>
-            <Image src={getHintIcon(problem)} alt="hint" width={260} height={320} />
+          <button
+            type="button"
+            className={styles.hintBtn}
+            onClick={handleHintClick}
+            disabled={isAiLoading}
+            aria-label="AI 튜터 힌트 열기"
+          >
+            <Image src={getHintIcon(problem)} alt="" width={260} height={320} />
           </button>
         </div>
       </section>
 
       {hintOpen && (
         <div className={styles.modalDim} onClick={() => setHintOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-hint-title"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
-              <div className={styles.modalTitle}>🤖 AI TUTOR HINT</div>
-              <button className={styles.modalClose} onClick={() => setHintOpen(false)}>✕</button>
+              <div id="ai-hint-title" className={styles.modalTitle}>🤖 AI TUTOR HINT</div>
+              <button type="button" aria-label="힌트 닫기" className={styles.modalClose} onClick={() => setHintOpen(false)}>✕</button>
             </div>
             <div className={styles.modalBody}>
               <p className={styles.modalText}>
-                {isAiLoading ? "AI 분석 중..." : (aiHint || problem.hint || "힌트가 없습니다.")}
+                {isAiLoading ? "AI 분석 중... 최대 45초 정도 걸릴 수 있습니다." : (aiHint || problem.hint || "힌트가 없습니다.")}
               </p>
             </div>
             <div className={styles.modalFooter}>
-              <button className={styles.okBtn} onClick={() => setHintOpen(false)}>ok</button>
+              <button type="button" className={styles.okBtn} onClick={() => setHintOpen(false)}>확인</button>
             </div>
           </div>
         </div>

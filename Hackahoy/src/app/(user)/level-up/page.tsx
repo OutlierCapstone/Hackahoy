@@ -22,13 +22,12 @@ function LevelUpContent() {
   useEffect(() => {
     const fetchRecommendation = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
         const res = await fetch(`${API_BASE_URL}/ai-tutor/recommend`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
         const data = await res.json();
         

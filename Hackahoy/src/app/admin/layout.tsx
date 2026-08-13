@@ -8,13 +8,13 @@ import AppTopNav from "@/components/common/AppTopNav";
 import styles from "./adminLayout.module.css"; 
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { user, token } = useAuth();
+  const { user, authReady } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("accessToken");
-    
-    if (!savedToken) {
+    if (!authReady) return;
+
+    if (!user) {
       alert("로그인이 필요합니다.");
       router.replace("/");
       return;
@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       alert("관리자 권한이 없습니다.");
       router.replace("/");
     }
-  }, [user, router]);
+  }, [authReady, user, router]);
 
   if (!user || !user.isAdmin) {
     return (
@@ -42,12 +42,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <main className={styles.page}>
       <div className={styles.bg} aria-hidden />
 
-      <AppTopNav
-        variant="admin"
-        authPath="/login"
-        showMyPageInAdmin={false}
-        confirmLogout={false}
-      />
+      <AppTopNav />
 
       <div className={styles.stage}>{children}</div>
     </main>

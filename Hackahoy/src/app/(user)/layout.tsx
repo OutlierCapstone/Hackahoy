@@ -6,7 +6,7 @@ export default function UserLayout({ children }: { children: ReactNode }) {
   return (
     <main className={styles.pageRoot}>
       <div className={styles.bg} aria-hidden />
-      <AppTopNav variant="user" />
+      <AppTopNav />
       <div className={styles.stage}>{children}</div>
     </main>
   );

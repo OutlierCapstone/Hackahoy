@@ -236,7 +236,16 @@ export class AiTutorService {
     }
 
     try {
-      const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context);
+      const configuredTimeout = Number(
+        this.config.get<string>('AI_TUTOR_TIMEOUT_MS', '40000'),
+      );
+      const timeout =
+        Number.isFinite(configuredTimeout) && configuredTimeout > 0
+          ? configuredTimeout
+          : 40000;
+      const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context, {
+        timeout,
+      });
       const aiHint = response.data;
 
       if (aiHint) {
@@ -251,7 +260,11 @@ export class AiTutorService {
       };
     } catch (error) {
       console.error('[ERROR] 연동 실패:', error.response?.data || error.message);
-      throw new HttpException('AI 튜터 응답 실패', HttpStatus.BAD_GATEWAY);
+      const timedOut = axios.isAxiosError(error) && error.code === 'ECONNABORTED';
+      throw new HttpException(
+        timedOut ? 'AI 튜터 응답 시간 초과' : 'AI 튜터 응답 실패',
+        timedOut ? HttpStatus.GATEWAY_TIMEOUT : HttpStatus.BAD_GATEWAY,
+      );
     }
   }
 

@@ -18,7 +18,7 @@ interface Problem {
 
 export default function ChallengeListPage() {
   const router = useRouter();
-  const { token, authReady } = useAuth();
+  const { user, authReady } = useAuth();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function ChallengeListPage() {
   useEffect(() => {
     if (!authReady) return;
 
-    if (!token) {
+    if (!user) {
       setLoading(false);
       setLoadError(true);
       return;
@@ -47,7 +47,7 @@ export default function ChallengeListPage() {
       try {
         const response = await axios.get<Problem[]>(
           `${API_BASE_URL}/problem/user-list`,
-          { headers: { Authorization: `Bearer ${token}` } },
+          { withCredentials: true },
         );
         if (cancelled) return;
         setProblems(response.data);
@@ -64,7 +64,7 @@ export default function ChallengeListPage() {
     return () => {
       cancelled = true;
     };
-  }, [authReady, token]);
+  }, [authReady, user?.userId]);
 
   const filteredList = useMemo(() => {
     return problems.filter((p) => {
@@ -102,9 +102,12 @@ export default function ChallengeListPage() {
           />
           <div className={styles.filterOverlay}>
             {['ALL', 'AI', 'WEB', 'SOLVED', 'UNSOLVED'].map((type) => (
-              <div
+              <button
                 key={type}
+                type="button"
                 className={styles.filterZone}
+                aria-label={`${type} 문제 필터`}
+                aria-pressed={filter === type}
                 onClick={() => {
                   setFilter(type);
                   setCurrentPage(0);
@@ -122,10 +125,12 @@ export default function ChallengeListPage() {
             </div>
           )}
           {pagedList.map((p) => (
-            <div
+            <button
               key={p.id}
+              type="button"
               className={styles.challengeItem}
               onClick={() => router.push(`/challenge/${p.id}`)}
+              aria-label={`${p.title}, ${p.solved ? '해결함' : '미해결'}`}
             >
               <span className={styles.challengeTitle}>{p.title}</span>
               <div className={styles.statusIcon}>
@@ -135,12 +140,12 @@ export default function ChallengeListPage() {
                       ? '/assets/ui/solved.png'
                       : '/assets/ui/unsolved.png'
                   }
-                  alt={p.solved ? 'SOLVED' : 'UNSOLVED'}
+                  alt=""
                   width={130}
                   height={p.solved ? 40 : 35}
                 />
               </div>
-            </div>
+            </button>
           ))}
         </div>
 

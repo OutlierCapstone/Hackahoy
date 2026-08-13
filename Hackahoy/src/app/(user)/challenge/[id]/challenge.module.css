@@ -109,6 +109,19 @@
   outline: none;
 }
 
+.submitFeedback {
+  min-height: 22px;
+  margin: 8px 0 0;
+  text-align: center;
+  color: #174c2c;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.submitError {
+  color: #8b1111;
+}
+
 /* FLAG 버튼 */
 .flagBtn {
   background: none;
@@ -132,6 +145,19 @@
 .hintBtn:hover {
   transform: translateY(-2px) scale(1.02);
   filter: brightness(1.05);
+}
+
+.flagBtn:focus-visible,
+.hintBtn:focus-visible,
+.modalClose:focus-visible,
+.okBtn:focus-visible {
+  outline: 3px solid #fff3a3;
+  outline-offset: 3px;
+}
+
+.hintBtn:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .modalDim {

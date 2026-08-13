@@ -72,8 +72,6 @@ function AdminCreateProblemContent() {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
-
       const payload = {
         islandId: pinId,
         title: rawTitle,
@@ -88,7 +86,7 @@ function AdminCreateProblemContent() {
       await axios.post(
         `${API_BASE_URL}/admin/problems`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } },
+        { withCredentials: true },
       );
 
       alert('✅ 문제가 성공적으로 등록되었습니다!');

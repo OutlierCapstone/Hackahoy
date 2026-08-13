@@ -15,10 +15,9 @@ export function loginApi(body: LoginRequest) {
 }
 
 // 공통 로그아웃 API
-export function logoutApi(token: string) {
+export function logoutApi() {
   return apiRequest<ApiResponse<{ message: string }>>("/auth/logout", {
     method: "POST",
-    token,
   });
 }
 

@@ -1,4 +1,48 @@
 import { AuthService } from './auth.service';
+import { BadRequestException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+describe('AuthService authentication', () => {
+  it('always signs JWTs with an expiration', () => {
+    const previous = process.env.JWT_EXPIRES_IN;
+    process.env.JWT_EXPIRES_IN = '1h';
+    try {
+      const jwt = new JwtService({ secret: 'unit-test-secret' });
+      const service = new AuthService(jwt, {} as any);
+      const payload = jwt.verify<{ iat: number; exp: number }>(
+        service.signToken({ userId: 'user-1', provider: 'guest' }),
+      );
+
+      expect(payload.exp).toBeGreaterThan(payload.iat);
+      expect(payload.exp - payload.iat).toBe(60 * 60);
+    } finally {
+      if (previous === undefined) delete process.env.JWT_EXPIRES_IN;
+      else process.env.JWT_EXPIRES_IN = previous;
+    }
+  });
+
+  it('rejects an empty nickname before writing to the database', async () => {
+    const prisma = { user: { update: jest.fn() } } as any;
+    const service = new AuthService({} as any, prisma);
+
+    await expect(service.updateNickname('user-1', '   ')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('trims a valid nickname before saving it', async () => {
+    const prisma = {
+      user: { update: jest.fn().mockResolvedValue({ nickname: 'captain' }) },
+    } as any;
+    const service = new AuthService({} as any, prisma);
+
+    await service.updateNickname('user-1', '  captain  ');
+    expect(prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { nickname: 'captain' } }),
+    );
+  });
+});
 
 describe('AuthService.deleteUserAccount', () => {
   it('deletes every dependent user record before deleting the user', async () => {
