@@ -11,6 +11,7 @@ module.exports = {
         CORS_ORIGINS: "https://hackahoy.duckdns.org",
         COOKIE_SECURE: "true",
         JWT_EXPIRES_IN: "7d",
+        LEGACY_MIGRATION_UNTIL: "2026-08-14T06:00:00Z",
       },
       autorestart: true,
       max_restarts: 10,

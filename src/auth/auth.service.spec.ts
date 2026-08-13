@@ -21,6 +21,54 @@ describe('AuthService authentication', () => {
     }
   });
 
+  it('rejects non-expiring legacy tokens outside the migration window', async () => {
+    const previous = process.env.LEGACY_MIGRATION_UNTIL;
+    delete process.env.LEGACY_MIGRATION_UNTIL;
+    const prisma = { user: { findUnique: jest.fn() } } as any;
+    const service = new AuthService(
+      {
+        verifyAsync: jest.fn().mockResolvedValue({
+          userId: 'legacy-user',
+          provider: 'guest',
+        }),
+      } as any,
+      prisma,
+    );
+
+    try {
+      await expect(service.restoreSessionUser('legacy-token')).resolves.toBeNull();
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.LEGACY_MIGRATION_UNTIL;
+      else process.env.LEGACY_MIGRATION_UNTIL = previous;
+    }
+  });
+
+  it('allows a legacy token during the explicit migration window', async () => {
+    const previous = process.env.LEGACY_MIGRATION_UNTIL;
+    process.env.LEGACY_MIGRATION_UNTIL = '2999-01-01T00:00:00Z';
+    const user = { id: 'legacy-user', isBanned: false };
+    const service = new AuthService(
+      {
+        verifyAsync: jest.fn().mockResolvedValue({
+          userId: user.id,
+          provider: 'guest',
+        }),
+      } as any,
+      { user: { findUnique: jest.fn().mockResolvedValue(user) } } as any,
+    );
+
+    try {
+      await expect(service.restoreSessionUser('legacy-token')).resolves.toEqual({
+        user,
+        provider: 'guest',
+      });
+    } finally {
+      if (previous === undefined) delete process.env.LEGACY_MIGRATION_UNTIL;
+      else process.env.LEGACY_MIGRATION_UNTIL = previous;
+    }
+  });
+
   it('rejects an empty nickname before writing to the database', async () => {
     const prisma = { user: { update: jest.fn() } } as any;
     const service = new AuthService({} as any, prisma);
