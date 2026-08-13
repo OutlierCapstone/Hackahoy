@@ -4,11 +4,6 @@ import { API_BASE_URL } from "./config";
 
 const API_URL = API_BASE_URL;
 
-const getAuthHeader = () => {
-  const token = localStorage.getItem('accessToken');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 export type AdminProblemCreatePayload = {
   title: string;
   description: string;
@@ -35,8 +30,6 @@ export type AdminLog = {
 };
 
 export async function createProblem(payload: any) {
-  const token = localStorage.getItem("accessToken");
-  
   const response = await axios.post(
     `${API_URL}/admin/problems`, 
     {
@@ -47,16 +40,14 @@ export async function createProblem(payload: any) {
       correctFlag: payload.flag, 
       serverUrl: payload.serverUrl,
     },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
+    { withCredentials: true }
   );
   return response.data;
 }
 
 export async function listUsers(q?: { keyword?: string }) {
   const response = await axios.get(`${API_URL}/admin/users`, {
-    headers: getAuthHeader(),
+    withCredentials: true,
     params: { q: q?.keyword }, 
   });
   return response.data; 
@@ -66,7 +57,7 @@ export async function setUserBanned(userId: string, banned: boolean) {
   const response = await axios.patch(
     `${API_URL}/admin/users/${userId}/ban`,
     { banned },
-    { headers: getAuthHeader() }
+    { withCredentials: true }
   );
   return response.data;
 }
@@ -78,7 +69,7 @@ export async function listLogs(q?: {
   to?: string;
 }) {
   const response = await axios.get(`${API_URL}/admin/logs`, {
-    headers: getAuthHeader(),
+    withCredentials: true,
     params: q, 
   });
   return response.data;

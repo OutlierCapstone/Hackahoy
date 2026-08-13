@@ -63,14 +63,10 @@ export default function AdminPage() {
 
   const onSave = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-
       await axios.post(
         `${API_BASE_URL}/admin/users/batch-update`,
         { users: rows },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { withCredentials: true },
       );
 
       alert('변경 사항이 성공적으로 저장되었습니다! 💾');

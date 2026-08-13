@@ -33,15 +33,8 @@ export default function AdminNotificationPage() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-          alert('관리자 권한이 필요합니다.');
-          router.push('/auth/login');
-          return;
-        }
-
         const response = await axios.get(`${API_BASE_URL}/admin/notifications`, {
-          headers: { Authorization: `Bearer ${token}` }
+          withCredentials: true,
         });
         setNotifications(response.data);
       } catch (error) {
@@ -52,7 +45,7 @@ export default function AdminNotificationPage() {
     };
 
     fetchNotifications();
-  }, [router]);
+  }, []);
 
   return (
     <section className={styles.board}>

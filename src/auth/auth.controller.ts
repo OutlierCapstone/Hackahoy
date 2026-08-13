@@ -1,10 +1,28 @@
 // src/auth/auth.controller.ts
-import { Controller, Get, Req, UseGuards, Post, Body, Res, ForbiddenException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
 import { LoginThrottlerGuard } from '.././login-throttler.guard';
+import {
+  ACCESS_TOKEN_COOKIE,
+  GUEST_TOKEN_COOKIE,
+  clearAuthCookie,
+  readCookie,
+  setAuthCookie,
+} from './auth-cookie';
 
 // OAuth 콜백이 돌려보낼 HTTPS 프론트 주소.
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'https://hackahoy.duckdns.org';
@@ -24,14 +42,18 @@ export class AuthController {
   // uid 는 챌린지 프록시(5001~5007)의 /set-uid 쿠키에 그대로 쓰이는 플랫폼 User.id 다.
   @Public()
   @Post('guest')
-  async guest() {
-    const user = await this.auth.createGuestUser();
+  async guest(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+    const existingGuestToken = readCookie(req, GUEST_TOKEN_COOKIE);
+    const user =
+      (await this.auth.restoreGuestUser(existingGuestToken)) ??
+      (await this.auth.createGuestUser());
     const token = this.auth.signToken({ userId: user.id, provider: 'guest' });
+    setAuthCookie(res, ACCESS_TOKEN_COOKIE, token);
+    setAuthCookie(res, GUEST_TOKEN_COOKIE, token);
 
     return {
       success: true,
       data: {
-        token,
         uid: user.id,
         user: {
           userId: user.id,
@@ -43,6 +65,45 @@ export class AuthController {
         },
       },
     };
+  }
+
+  @Public()
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    clearAuthCookie(res, ACCESS_TOKEN_COOKIE);
+    return { success: true };
+  }
+
+  @Public()
+  @Post('migrate-browser-session')
+  async migrateBrowserSession(
+    @Headers('authorization') authorization: string | undefined,
+    @Headers('x-legacy-guest-token') legacyGuestToken: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const legacyAccessToken = authorization?.startsWith('Bearer ')
+      ? authorization.slice('Bearer '.length)
+      : null;
+
+    const accessSession = await this.auth.restoreSessionUser(legacyAccessToken);
+    if (accessSession) {
+      const token = this.auth.signToken({
+        userId: accessSession.user.id,
+        provider: accessSession.provider,
+      });
+      setAuthCookie(res, ACCESS_TOKEN_COOKIE, token);
+    }
+
+    const guest = await this.auth.restoreGuestUser(legacyGuestToken ?? null);
+    if (guest) {
+      const token = this.auth.signToken({
+        userId: guest.id,
+        provider: 'guest',
+      });
+      setAuthCookie(res, GUEST_TOKEN_COOKIE, token);
+    }
+
+    return { success: Boolean(accessSession || guest) };
   }
 
   @Get('me')
@@ -63,9 +124,16 @@ export class AuthController {
 
   @Post('unsubscribe')
   @UseGuards(JwtAuthGuard)
-  async unsubscribe(@Req() req: any) {
+  async unsubscribe(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const userId = req.user.userId || req.user.id;
     await this.auth.deleteUserAccount(userId);
+    clearAuthCookie(res, ACCESS_TOKEN_COOKIE);
+    if (req.user.provider === 'GUEST') {
+      clearAuthCookie(res, GUEST_TOKEN_COOKIE);
+    }
     return { success: true, message: '탈퇴가 완료되었습니다.' };
   }
   
@@ -88,7 +156,8 @@ export class AuthController {
       });
 
       const token = this.auth.signToken({ userId: user.id, provider: 'kakao' });
-      return res.redirect(`${FRONTEND_URL}/auth/kakao/callback?token=${token}`);
+      setAuthCookie(res, ACCESS_TOKEN_COOKIE, token);
+      return res.redirect(`${FRONTEND_URL}/auth/kakao/callback`);
 
     } catch (error) {
       console.error("Auth error:", error);
@@ -122,8 +191,8 @@ export class AuthController {
         userId: user.id,
         provider: 'google',
       });
-
-      return res.redirect(`${FRONTEND_URL}/auth/google/callback?token=${token}`);
+      setAuthCookie(res, ACCESS_TOKEN_COOKIE, token);
+      return res.redirect(`${FRONTEND_URL}/auth/google/callback`);
     } catch (error) {
       console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {
@@ -156,8 +225,8 @@ export class AuthController {
         userId: user.id,
         provider: 'naver',
       });
-
-      return res.redirect(`${FRONTEND_URL}/auth/naver/callback?token=${token}`);
+      setAuthCookie(res, ACCESS_TOKEN_COOKIE, token);
+      return res.redirect(`${FRONTEND_URL}/auth/naver/callback`);
     } catch (error) {
       console.error("Auth error:", error);
       if (error instanceof ForbiddenException) {

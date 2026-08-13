@@ -158,6 +158,22 @@
   text-align: center;
 }
 
+.fieldError,
+.fieldSuccess {
+  min-height: 16px;
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fieldError {
+  color: #ff8d8d;
+}
+
+.fieldSuccess {
+  color: #9de4a8;
+}
+
 .buttonsRow {
   margin-top: auto;
   padding-top: 18px;
@@ -172,4 +188,9 @@
   border: none;
   padding: 0;
   cursor: pointer;
+}
+
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }

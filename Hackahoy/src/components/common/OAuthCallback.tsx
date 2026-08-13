@@ -21,13 +21,12 @@ function OAuthCallbackContent({ provider }: { provider: string }) {
   const [message, setMessage] = useState("로그인 처리 중...");
 
   useEffect(() => {
-    const token = searchParams.get("token");
     const error = searchParams.get("error");
 
-    if (token) {
-      localStorage.setItem("accessToken", token);
+    if (!error) {
       setMessage("로그인 성공! 이동 중...");
-      // 전체 새로고침으로 넘겨 AuthProvider 가 저장된 토큰으로 세션을 복구하게 한다.
+      // 백엔드가 HttpOnly cookie를 설정했다. JWT는 URL이나 JavaScript 저장소에
+      // 노출하지 않고, 새 화면의 AuthProvider가 /auth/me로 세션을 확인한다.
       window.location.href = "/";
       return;
     }

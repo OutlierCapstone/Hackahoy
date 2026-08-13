@@ -4,17 +4,13 @@ import { API_BASE_URL } from './config';
 
 const API_URL = API_BASE_URL;
 
-const getAuthHeader = (): Record<string, string> => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 // /islands 는 JwtAuthGuard 가 걸린 보호 엔드포인트라 토큰 없이 부르면 401 이다.
 // 인증 헤더가 빠져 있어서 로그인한 뒤에도 섬이 하나도 안 뜨고 있었다.
 export async function getIslands() {
   const response = await fetch(`${API_URL}/islands`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   });
   if (!response.ok) throw new Error('Failed to fetch islands');
   return response.json();
@@ -28,14 +24,14 @@ export async function getIslands() {
 export const getIslandProblems = async (islandId: number) => {
   const response = await axios.get(`${API_URL}/problem/user-list`, {
     params: { islandId }, // ?islandId=2 형태로 전달됨
-    headers: getAuthHeader(),
+    withCredentials: true,
   });
   return response.data;
 };
 
 export const getProblem = async (problemId: number) => {
   const response = await axios.get(`${API_URL}/problem/${problemId}`, {
-    headers: getAuthHeader(),
+    withCredentials: true,
   });
   return response.data;
 };
@@ -44,7 +40,7 @@ export const submitFlag = async (problemId: number, flag: string) => {
   const response = await axios.post(
     `${API_URL}/problem/${problemId}/submit`,
     { flag },
-    { headers: getAuthHeader() },
+    { withCredentials: true },
   );
   return response.data;
 };

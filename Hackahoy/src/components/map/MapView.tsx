@@ -15,7 +15,7 @@ import { getIslands } from "@/lib/api/islands";
 import type { Island } from "@/domain/types/Island";
 
 export default function MapView() {
-  const { user, loginModalOpen, closeLoginModal, loginAsGuest } = useAuth();
+  const { user, authReady, loginModalOpen, closeLoginModal, loginAsGuest } = useAuth();
   const [guestPending, setGuestPending] = useState(false);
 
   const isLoggedIn = !!user;
@@ -41,8 +41,8 @@ export default function MapView() {
   useEffect(() => {
     // user 상태는 /auth/me 응답을 기다리므로, 새로고침 직후에는 아직 null 이다.
     // 저장된 토큰까지 같이 보면 재방문 때 섬이 늦게 뜨는 깜빡임이 없다.
-    const hasSession =
-      !!user || (typeof window !== "undefined" && !!localStorage.getItem("accessToken"));
+    if (!authReady) return;
+    const hasSession = Boolean(user);
 
     if (!hasSession) {
       islandsFetchedRef.current = false;
@@ -67,7 +67,7 @@ export default function MapView() {
       }
     }
     fetchIslands();
-  }, [user?.userId]);
+  }, [authReady, user?.userId]);
 
   // 로컬 스토리지 동기화
   useEffect(() => {

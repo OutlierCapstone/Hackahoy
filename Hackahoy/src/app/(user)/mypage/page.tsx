@@ -18,11 +18,15 @@ type UserShape = {
 
 export default function MyPage() {
   const router = useRouter();
-  const { user, logout, authReady } = useAuth();
+  const { user, logout, authReady, refreshUser } = useAuth();
 
   const safeUser = useMemo(() => (user as any) ?? {}, [user]);
 
   const [nickname, setNickname] = useState('');
+  const [nicknameFeedback, setNicknameFeedback] = useState<{
+    type: 'error' | 'success';
+    message: string;
+  } | null>(null);
   const level = safeUser.levelNum ?? 1;
 
   const shipImgSrc = useMemo(() => {
@@ -51,28 +55,34 @@ export default function MyPage() {
   const displayProvider = (safeUser.provider ?? 'KAKAO').toUpperCase();
   const displayId = safeUser.providerId ?? 'Unknown ID';
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
-
   const handleSave = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return alert('로그인이 필요합니다.');
+    const normalizedNickname = nickname.trim();
+    if (!normalizedNickname) {
+      setNicknameFeedback({
+        type: 'error',
+        message: '닉네임을 입력해 주세요.',
+      });
+      return;
+    }
 
+    try {
       await axios.post(
         `${API_BASE_URL}/auth/update-nickname`,
-        { nickname: nickname },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { nickname: normalizedNickname },
+        { withCredentials: true },
       );
-
-      alert('닉네임이 성공적으로 변경되었습니다! 새로고침 시 반영됩니다.');
+      setNickname(normalizedNickname);
+      await refreshUser();
+      setNicknameFeedback({
+        type: 'success',
+        message: '닉네임이 변경되었습니다.',
+      });
     } catch (error) {
       console.error('닉네임 수정 실패:', error);
-      alert('닉네임 수정 중 오류가 발생했습니다.');
+      setNicknameFeedback({
+        type: 'error',
+        message: '닉네임을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      });
     }
   };
 
@@ -83,20 +93,15 @@ export default function MyPage() {
     if (!ok) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
       await axios.post(
         `${API_BASE_URL}/auth/unsubscribe`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { withCredentials: true },
       );
 
       alert('탈퇴 처리가 완료되었습니다. 이용해 주셔서 감사합니다.');
 
-      handleLogout();
+      await logout();
     } catch (error) {
       console.error('탈퇴 처리 실패:', error);
       alert('탈퇴 처리 중 오류가 발생했습니다.');
@@ -140,12 +145,33 @@ export default function MyPage() {
           {/* 오른쪽 패널 */}
           <section className={styles.rightPanel}>
             <div className={styles.field}>
-              <p className={styles.fieldLabel}>NICKNAME</p>
+              <label className={styles.fieldLabel} htmlFor="nickname">
+                NICKNAME
+              </label>
               <input
+                id="nickname"
                 className={styles.input}
                 value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                onChange={(e) => {
+                  setNickname(e.target.value);
+                  setNicknameFeedback(null);
+                }}
+                maxLength={20}
+                required
+                aria-describedby="nickname-feedback"
               />
+              <p
+                id="nickname-feedback"
+                className={
+                  nicknameFeedback?.type === 'error'
+                    ? styles.fieldError
+                    : styles.fieldSuccess
+                }
+                role={nicknameFeedback?.type === 'error' ? 'alert' : 'status'}
+                aria-live="polite"
+              >
+                {nicknameFeedback?.message ?? '1~20자로 입력해 주세요.'}
+              </p>
             </div>
 
             <div className={styles.field}>
@@ -184,6 +210,8 @@ export default function MyPage() {
                 type="button"
                 className={styles.iconButton}
                 onClick={handleSave}
+                disabled={!nickname.trim()}
+                aria-label="닉네임 저장"
               >
                 <Image
                   src="/assets/ui/save.png"

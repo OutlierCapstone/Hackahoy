@@ -1,8 +1,14 @@
 // src/auth/auth.service.ts
 import { randomUUID } from 'crypto';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
+
+export const MAX_NICKNAME_LENGTH = 20;
 
 @Injectable()
 export class AuthService {
@@ -12,7 +18,35 @@ export class AuthService {
   ) {}
 
   signToken(payload: { userId: string; provider: string }) {
-    return this.jwt.sign(payload);
+    const expiresIn = (process.env.JWT_EXPIRES_IN ??
+      '7d') as JwtSignOptions['expiresIn'];
+    return this.jwt.sign(payload, { expiresIn });
+  }
+
+  async restoreSessionUser(token: string | null) {
+    if (!token) return null;
+
+    try {
+      const payload = await this.jwt.verifyAsync<{ userId?: string; provider?: string }>(
+        token,
+      );
+      if (!payload.userId || !payload.provider) return null;
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.userId },
+      });
+      if (!user || user.isBanned) return null;
+      return { user, provider: payload.provider };
+    } catch {
+      return null;
+    }
+  }
+
+  async restoreGuestUser(token: string | null) {
+    const session = await this.restoreSessionUser(token);
+    return session?.provider === 'guest' && session.user.provider === 'GUEST'
+      ? session.user
+      : null;
   }
 
   async upsertSocialUser(params: {
@@ -105,9 +139,27 @@ export class AuthService {
 
   // 닉네임 수정
   async updateNickname(userId: string, newNickname: string) {
+    const nickname = (newNickname ?? '').trim();
+    if (!nickname) {
+      throw new BadRequestException('닉네임을 입력해 주세요.');
+    }
+    if (nickname.length > MAX_NICKNAME_LENGTH) {
+      throw new BadRequestException(
+        `닉네임은 ${MAX_NICKNAME_LENGTH}자 이하로 입력해 주세요.`,
+      );
+    }
+
     return this.prisma.user.update({
       where: { id: userId },
-      data: { nickname: newNickname },
+      data: { nickname },
+      select: {
+        id: true,
+        nickname: true,
+        levelNum: true,
+        isAdmin: true,
+        provider: true,
+        providerId: true,
+      },
     });
   }
 

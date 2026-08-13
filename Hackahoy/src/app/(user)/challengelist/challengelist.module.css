@@ -59,9 +59,21 @@
 
 .filterZone {
   flex: 1;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
   color: transparent;
   user-select: none;
+}
+
+.filterZone:focus-visible,
+.challengeItem:focus-visible,
+.mypageBtn:focus-visible,
+.arrowBtn:focus-visible {
+  outline: 3px solid #fff3a3;
+  outline-offset: 3px;
 }
 
 .listScroll {
@@ -77,6 +89,7 @@
 }
 
 .challengeItem {
+  appearance: none;
   height: 60px; /* 모든 개별 박스 높이 고정 */
   width: 100%;
   background-color: rgba(176, 99, 32, 0.2);
@@ -90,6 +103,8 @@
   box-sizing: border-box;
   transition: background-color 0.2s;
   flex-shrink: 0; /* 부모 크기에 따라 줄어들지 않음 */
+  font: inherit;
+  text-align: left;
 }
 
 .challengeItem:hover {
