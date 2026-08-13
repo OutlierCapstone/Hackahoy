@@ -37,7 +37,8 @@ function getHintIcon(problem: Problem): string {
 }
 
 // 리버스 프록시(OpenResty)가 떠 있는 호스트. 반드시 한 곳으로 고정한다.
-const CHALLENGE_HOST = process.env.NEXT_PUBLIC_CHALLENGE_HOST ?? '44.199.70.243';
+const CHALLENGE_HOST =
+  process.env.NEXT_PUBLIC_CHALLENGE_HOST ?? 'hackahoy.duckdns.org';
 
 /**
  * 챌린지 진입 주소를 만든다. 화면에 보이는 문자열과 실제 이동 주소가 항상 같다.
@@ -73,7 +74,13 @@ function buildChallengeEntry(
     port = matched ? matched[1] : String(5000 + problem.id);
   }
 
-  const origin = `http://${CHALLENGE_HOST}:${port}`;
+  const challengeNumber = Number(port) - 5000;
+  const hasHttpsProxy = Number.isInteger(challengeNumber)
+    && challengeNumber >= 1
+    && challengeNumber <= 7;
+  const origin = hasHttpsProxy
+    ? `https://challenge-${challengeNumber}.${CHALLENGE_HOST}`
+    : `http://${CHALLENGE_HOST}:${port}`;
   const entry = new URL('/set-uid', origin);
   // uid 가 없으면 파라미터를 붙이지 않는다. 프록시가 "uid 없음" 경고를 남긴다.
   if (userId) entry.searchParams.set('uid', userId);

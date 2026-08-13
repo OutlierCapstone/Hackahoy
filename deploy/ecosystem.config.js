@@ -4,7 +4,12 @@ module.exports = {
       name: "hackahoy-backend",
       cwd: "/home/ubuntu/Hackahoy",
       script: "dist/main.js",
-      env: { NODE_ENV: "production", PORT: "4000" },
+      env: {
+        NODE_ENV: "production",
+        PORT: "4000",
+        FRONTEND_URL: "https://hackahoy.duckdns.org",
+        CORS_ORIGINS: "https://hackahoy.duckdns.org,http://44.199.70.243:3000",
+      },
       autorestart: true,
       max_restarts: 10,
       max_memory_restart: "400M",
