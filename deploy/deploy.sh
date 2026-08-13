@@ -169,7 +169,22 @@ npm run build
 
 echo "==> [2.5] 프론트 빌드 (Next.js)"
 ( cd Hackahoy && npm ci && npm run build )
-( cd Hackahoy && cp -r .next/static .next/standalone/.next/static 2>/dev/null; cp -r public .next/standalone/public 2>/dev/null )
+(
+  cd Hackahoy
+  cp -r .next/static .next/standalone/.next/static 2>/dev/null
+
+  # challenge_files contains the challenge runtimes and flags. The challenge
+  # processes use the source tree directly, so keep it there but never publish
+  # it through the Next.js standalone static directory.
+  rm -rf .next/standalone/public
+  mkdir -p .next/standalone/public
+  rsync -a --exclude='/challenge_files/' public/ .next/standalone/public/
+
+  if [ -e .next/standalone/public/challenge_files ]; then
+    echo "challenge_files leaked into the frontend artifact" >&2
+    exit 1
+  fi
+)
 
 echo "==> [2.6] prisma migrate"
 npx prisma migrate deploy
