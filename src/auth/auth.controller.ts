@@ -19,37 +19,6 @@ export class AuthController {
     return this.auth.getMyProfile(req.user.id);
   }
 
-  @Public()
-  // @UseGuards(LoginThrottlerGuard)
-  @Post('login')
-  async login(@Body() body: { oauthProvider: 'kakao'|'google'|'naver'; oauthToken: string }) {
-    const { oauthProvider, oauthToken } = body;
-
-    const providerId = oauthToken;
-
-    const user = await this.auth.upsertSocialUser({
-      provider: oauthProvider.toUpperCase() as 'KAKAO'|'GOOGLE'|'NAVER',
-      providerId,
-      nickname: `${oauthProvider}-user`,
-    });
-
-    const token = this.auth.signToken({ userId: user.id, provider: oauthProvider });
-
-    return {
-      success: true,
-      data: {
-        token,
-        user: {
-          userId: user.id,                 
-          nickname: user.nickname,
-          level: user.levelNum,           
-          oauthProvider,                  
-          isAdmin: user.isAdmin,
-          isBanned: user.isBanned,
-        },
-      },
-    };
-  }
   // 비회원(게스트)으로 시작하기.
   // 소셜 로그인 없이 User 를 만들고 JWT 를 발급한다.
   // uid 는 챌린지 프록시(5001~5007)의 /set-uid 쿠키에 그대로 쓰이는 플랫폼 User.id 다.

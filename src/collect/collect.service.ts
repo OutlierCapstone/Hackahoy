@@ -10,16 +10,12 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class CollectService {
   private readonly logger = new Logger('CollectService');
 
-  constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async saveLog(data: any) {
     try {
@@ -28,17 +24,6 @@ export class CollectService {
       // Bearer 제거
       if (targetUserId && targetUserId.startsWith('Bearer ')) {
         targetUserId = targetUserId.replace('Bearer ', '');
-      }
-
-      // JWT decode
-      if (targetUserId && targetUserId.includes('.')) {
-        try {
-          const decoded = this.jwtService.decode(targetUserId) as any;
-          targetUserId =
-            decoded?.userId || decoded?.sub || decoded?.id || targetUserId;
-        } catch (e) {
-          this.logger.warn(`JWT 파싱 실패: ${e.message}`);
-        }
       }
 
       if (!targetUserId || targetUserId === 'anonymous') {
@@ -108,7 +93,7 @@ export class CollectService {
         return {
           success: false,
           reason: 'FK_VIOLATION',
-          error: error.message,
+          error: 'Invalid user or problem reference',
         };
       }
 
@@ -116,7 +101,7 @@ export class CollectService {
         `[실패] 저장 실패 userId=${data.userId} problemId=${data.problemId} uri=${data.uri}`,
       );
       this.logger.error(`에러: ${error.message}`);
-      return { success: false, reason: 'DB_ERROR', error: error.message };
+      return { success: false, reason: 'DB_ERROR', error: 'Log storage failed' };
     }
   }
 }
