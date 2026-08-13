@@ -31,8 +31,8 @@ MAX_LOGS = 10          # 힌트 1회당 참조할 최근 로그 최대 개수
 # 챌린지 쪽 모델은 건드리지 않고 여기만 옮기는 것이 안전하다.
 #
 # 기본값은 기존 값 그대로다. 환경변수를 안 넣으면 동작이 변하지 않는다.
-QUERY_MODEL = os.getenv("AI_TUTOR_QUERY_MODEL", "gemini-2.5-flash")
-HINT_MODEL = os.getenv("AI_TUTOR_HINT_MODEL", "gemini-2.5-flash")
+QUERY_MODEL = os.getenv("AI_TUTOR_QUERY_MODEL", "gemini-3.6-flash")
+HINT_MODEL = os.getenv("AI_TUTOR_HINT_MODEL", "gemini-3.6-flash")
 
 # 힌트 1회당 LLM 호출은 2회(의미쿼리 합성 + 힌트 생성)를 유지한다.
 #

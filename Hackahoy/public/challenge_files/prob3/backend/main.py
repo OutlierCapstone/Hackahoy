@@ -17,7 +17,7 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-MODEL_NAME = "models/gemini-2.5-flash"
+MODEL_NAME = "models/gemini-3.6-flash"
 model = genai.GenerativeModel(MODEL_NAME)
 
 app = FastAPI(title="Pirate Chatbot Server (Gemini)")

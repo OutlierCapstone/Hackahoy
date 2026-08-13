@@ -25,7 +25,7 @@ def generate_type_definition(game: WargameInformation) -> str:
     출력 예시: "Insecure Direct Object Reference (IDOR): 서버가 클라이언트 요청 내의 식별자에 대한 소유권 검증을 누락하여, 공격자가 다른 사용자의 데이터에 접근할 수 있는 취약점."
     """
     response = genai_client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.6-flash",
         contents=prompt
     )
     return response.text.strip()
