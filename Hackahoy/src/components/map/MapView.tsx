@@ -12,7 +12,6 @@ import {
   type IslandsStore,
 } from "@/lib/islandStore";
 import { getIslands } from "@/lib/api/islands";
-import { API_BASE_URL } from "@/lib/api/config";
 import type { Island } from "@/domain/types/Island";
 
 export default function MapView() {
@@ -89,10 +88,6 @@ export default function MapView() {
 
   const occupiedPins = useMemo(() => getOccupiedPinsWithFixed(store), [store]);
 
-  const handleKakaoLogin = () => window.location.href = `${API_BASE_URL}/auth/kakao`;
-  const handleNaverLogin = () => window.location.href = `${API_BASE_URL}/auth/naver`;
-  const handleGoogleLogin = () => window.location.href = `${API_BASE_URL}/auth/google`;
-
   // 비회원으로 시작하기. 이미 메인 화면이라 성공해도 페이지 이동은 하지 않는다.
   const handleGuestStart = async () => {
     if (guestPending) return;
@@ -167,22 +162,25 @@ export default function MapView() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
-              <p className="retro-title text-center" style={{ marginTop: 12, marginBottom: 28 }}>
+              <p className="retro-title text-center" style={{ marginTop: 12, marginBottom: 4 }}>
                 소셜로 시작하기
               </p>
+              <p className="text-center" style={{ marginBottom: 24, color: "#f4b452", fontSize: 14 }}>
+                테스트 중입니다
+              </p>
 
-              {/* 카카오 */}
-              <button type="button" className="social-login-btn" onClick={handleKakaoLogin} style={{ background: "none", border: "none", cursor: "pointer", marginBottom: 16 }}>
+              {/* 카카오 — 베타 기간 소셜 로그인 점검으로 비활성화 */}
+              <button type="button" className="social-login-btn" disabled style={{ background: "none", border: "none", cursor: "not-allowed", opacity: 0.4, marginBottom: 16 }}>
                 <Image src="/assets/ui/kakao.png" alt="카카오" width={400} height={90} />
               </button>
 
-              {/* 네이버 */}
-              <button type="button" className="social-login-btn" onClick={handleNaverLogin} style={{ background: "none", border: "none", cursor: "pointer", marginBottom: 16 }}>
+              {/* 네이버 — 베타 기간 소셜 로그인 점검으로 비활성화 */}
+              <button type="button" className="social-login-btn" disabled style={{ background: "none", border: "none", cursor: "not-allowed", opacity: 0.4, marginBottom: 16 }}>
                 <Image src="/assets/ui/naver.png" alt="네이버" width={400} height={90} />
               </button>
 
-              {/* 구글 */}
-              <button type="button" className="social-login-btn" onClick={handleGoogleLogin} style={{ background: "none", border: "none", cursor: "pointer" }}>
+              {/* 구글 — 베타 기간 소셜 로그인 점검으로 비활성화 */}
+              <button type="button" className="social-login-btn" disabled style={{ background: "none", border: "none", cursor: "not-allowed", opacity: 0.4 }}>
                 <Image src="/assets/ui/google.png" alt="구글" width={400} height={90} />
               </button>
 
