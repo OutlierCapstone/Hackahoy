@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/middleware/filters/all-exceptions.filter';
 import { EventsService } from './events/events.service';
+import { createOriginGuard } from './common/security/origin-guard';
 
 
 
@@ -20,6 +21,11 @@ async function bootstrap() {
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
+
+  // Cookie authentication makes state-changing endpoints CSRF targets. CORS
+  // does not block simple cross-origin POSTs, so reject browser mutations from
+  // every origin except the tracked frontend before they reach controllers.
+  app.use(createOriginGuard(corsOrigins));
 
   app.enableCors({
 

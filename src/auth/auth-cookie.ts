@@ -5,9 +5,13 @@ export const GUEST_TOKEN_COOKIE = 'hackahoy_guest_token';
 
 export function authCookieOptions(): CookieOptions {
   const configuredMaxAge = Number(process.env.AUTH_COOKIE_MAX_AGE_MS);
+  const secure =
+    process.env.COOKIE_SECURE === 'true' ||
+    (process.env.COOKIE_SECURE !== 'false' &&
+      process.env.NODE_ENV === 'production');
   return {
     httpOnly: true,
-    secure: process.env.COOKIE_SECURE === 'true',
+    secure,
     sameSite: 'lax',
     path: '/',
     maxAge:
@@ -29,7 +33,11 @@ export function readCookie(
     if (separator < 0) continue;
     const key = part.slice(0, separator).trim();
     if (key !== name) continue;
-    return decodeURIComponent(part.slice(separator + 1).trim());
+    try {
+      return decodeURIComponent(part.slice(separator + 1).trim());
+    } catch {
+      return null;
+    }
   }
 
   return null;

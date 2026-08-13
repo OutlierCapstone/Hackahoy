@@ -109,7 +109,6 @@ export class AuthController {
   @Get('me')
   @UseGuards(LoginThrottlerGuard, JwtAuthGuard)
   async me(@Req() req: any) {
-      console.log('req.user:', req.user); // ← 추가
 
     return this.auth.getMe(req.user.id);
   }

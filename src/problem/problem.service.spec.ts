@@ -6,7 +6,7 @@ describe('ProblemService.submitFlag', () => {
       problem: {
         findUnique: jest.fn().mockResolvedValue({
           id: 1,
-          correctFlag: 'hackahoy{correct}',
+          correctFlag: 'test-correct-flag',
         }),
       },
       solvedHistory: { findUnique: jest.fn().mockResolvedValue(null) },
@@ -20,7 +20,7 @@ describe('ProblemService.submitFlag', () => {
       service.submitFlag({
         problemId: 1,
         userId: 'user-1',
-        flag: 'hackahoy{wrong}',
+        flag: 'test-wrong-flag',
       }),
     ).resolves.toEqual({ correct: false });
   });
