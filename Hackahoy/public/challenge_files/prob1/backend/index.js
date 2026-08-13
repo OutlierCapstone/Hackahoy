@@ -101,8 +101,14 @@ app.post("/chat", async (req, res) => {
         const data = await response.json();
 
         if (!response.ok) {
+            // 상류(Gemini) 오류를 500 으로 노출하지 않는다. prob3 처럼 문지기 AI
+            // 톤을 유지한 안내를 200 으로 돌려줘서, 긴/과부하 입력에도 챌린지 흐름과
+            // 프론트가 멈추지 않게 한다. raw 오류 페이로드는 클라이언트에 노출하지 않고
+            // 서버 로그로만 남긴다. (성공 경로/프롬프트/문서 처리는 그대로 둔다)
             console.error("Gemini API error:", data);
-            return res.status(500).json({ error: data });
+            return res.json({
+                answer: "시스템이 지금은 응답할 수 없다. 입력을 줄이고 잠시 후 다시 시도하라.",
+            });
         }
 
         let answer =
@@ -114,13 +120,24 @@ app.post("/chat", async (req, res) => {
             .replace(/\n+/g, "\n") // 연속 줄바꿈 정리
             .trim();
 
+        // 세이프티 차단 등으로 후보가 비면 answer 가 "" 가 된다. 빈 화면 대신
+        // 인-캐릭터 안내를 돌려준다(응답 형식/상태코드는 정상 경로와 동일한 200).
+        if (!answer) {
+            return res.json({
+                answer: "무슨 말인지 알아듣지 못했다. 다시 신고서를 작성해 오라.",
+            });
+        }
 
         res.json({ answer });
 
 
     } catch (e) {
+        // 네트워크/파싱 등 예기치 못한 오류도 500 대신 인-캐릭터 안내로 흡수한다
+        // (prob3 main.py 와 동일한 fail-open 방침). 상세는 서버 로그로만 남긴다.
         console.error("Chat error:", e);
-        res.status(500).json({ error: String(e.message ?? e) });
+        res.json({
+            answer: "시스템이 지금은 응답할 수 없다. 잠시 후 다시 시도하라.",
+        });
     }
 });
 
