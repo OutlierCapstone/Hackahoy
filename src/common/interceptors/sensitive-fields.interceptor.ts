@@ -48,7 +48,8 @@ export function redactSensitiveResponse(value: unknown): unknown {
 
 @Injectable()
 export class SensitiveFieldsInterceptor implements NestInterceptor {
-  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    context.switchToHttp().getResponse().setHeader('Cache-Control', 'no-store');
     return next.handle().pipe(map(redactSensitiveResponse));
   }
 }
