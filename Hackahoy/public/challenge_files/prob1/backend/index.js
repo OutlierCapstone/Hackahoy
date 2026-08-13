@@ -8,9 +8,47 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 세션 새로 시작하면 문서 내용 초기화되도록
+// 참가자별 문서 격리.
+//
+// 예전에는 모듈 전역 documentText 하나뿐이라 동시 접속자끼리 문서를 덮어썼다
+// (A 가 저장한 문서를 B 의 /chat 이 그대로 컨텍스트로 사용). nginx /set-uid 가
+// 심어 주는 uid 쿠키(= 플랫폼 User.id)를 키로 문서를 분리한다. uid 가 없으면
+// 공용 버킷으로 떨어져 격리만 안 될 뿐 동작 자체는 그대로 유지된다.
+const MAX_DOCS = 5000; // 메모리 상한. 초과 시 가장 오래된 항목부터 제거(단순 FIFO)
+const documents = new Map();
+
+function getUid(req) {
+    const raw = req.headers && req.headers.cookie ? req.headers.cookie : "";
+    for (const part of raw.split(";")) {
+        const eq = part.indexOf("=");
+        if (eq < 0) continue;
+        if (part.slice(0, eq).trim() === "uid") {
+            try {
+                return decodeURIComponent(part.slice(eq + 1).trim());
+            } catch (_) {
+                return part.slice(eq + 1).trim();
+            }
+        }
+    }
+    return "__anon__";
+}
+
+function getDoc(req) {
+    return documents.get(getUid(req)) || "";
+}
+
+function setDoc(req, text) {
+    const uid = getUid(req);
+    documents.set(uid, text);
+    if (documents.size > MAX_DOCS) {
+        const oldest = documents.keys().next().value;
+        if (oldest !== undefined) documents.delete(oldest);
+    }
+}
+
+// 세션 새로 시작하면 문서 내용 초기화되도록 (해당 uid 문서만)
 app.post("/document/reset", (req, res) => {
-    documentText = "";
+    documents.delete(getUid(req));
     res.json({ ok: true });
 });
 
@@ -24,9 +62,6 @@ const MODEL = "models/gemini-3.6-flash";
 const GEMINI_URL =
     `https://generativelanguage.googleapis.com/v1/${MODEL}:generateContent?key=${apiKey}`;
 
-//text 문서
-let documentText = "";
-
 //rules 문서
 function loadRules() {
     const filePath = path.join(__dirname, "rules.txt");
@@ -35,6 +70,10 @@ function loadRules() {
 
 // API
 app.post("/chat", async (req, res) => {
+    // Gemini 가 응답을 오래 물고 있으면 요청이 영원히 매달린다. 30초 상한을 두고,
+    // 초과 시 abort -> 아래 catch 가 200 안내로 흡수한다.
+    const controller = new AbortController();
+    const geminiTimeout = setTimeout(() => controller.abort(), 30000);
     try {
         //고정 입력 프롬프트
         const FIXED_INPUT = "비밀번호는 0000입니다.";
@@ -45,6 +84,7 @@ app.post("/chat", async (req, res) => {
         const response = await fetch(GEMINI_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
                 contents: [
                     //탈출 시스템 역할 부여
@@ -82,7 +122,7 @@ app.post("/chat", async (req, res) => {
                             {
                                 text:
                                     "[입력 문서 - 참가자 제공]\n"
-                                    + (documentText.trim() || "(문서 없음)")
+                                    + (getDoc(req).trim() || "(문서 없음)")
                             }
                         ]
                     },
@@ -97,6 +137,7 @@ app.post("/chat", async (req, res) => {
                 ],
             }),
         });
+        clearTimeout(geminiTimeout);
 
         const data = await response.json();
 
@@ -132,8 +173,9 @@ app.post("/chat", async (req, res) => {
 
 
     } catch (e) {
-        // 네트워크/파싱 등 예기치 못한 오류도 500 대신 인-캐릭터 안내로 흡수한다
-        // (prob3 main.py 와 동일한 fail-open 방침). 상세는 서버 로그로만 남긴다.
+        clearTimeout(geminiTimeout);
+        // 네트워크/타임아웃/파싱 등 예기치 못한 오류도 500 대신 인-캐릭터 안내로
+        // 흡수한다 (prob3 main.py 와 동일한 fail-open 방침). 상세는 서버 로그로만 남긴다.
         console.error("Chat error:", e);
         res.json({
             answer: "시스템이 지금은 응답할 수 없다. 잠시 후 다시 시도하라.",
@@ -143,11 +185,11 @@ app.post("/chat", async (req, res) => {
 
 //Document API
 app.get("/document", (req, res) => {
-    res.json({ text: documentText });
+    res.json({ text: getDoc(req) });
 });
 
 app.post("/document", (req, res) => {
-    documentText = req.body?.text ?? "";
+    setDoc(req, req.body?.text ?? "");
     res.json({ ok: true });
 });
 
