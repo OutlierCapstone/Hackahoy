@@ -103,3 +103,27 @@
 .recommendBtn:hover {
   opacity: 0.8;
 }
+
+/* page.tsx 가 예전부터 참조하고 있었지만 정의가 없던 클래스.
+   없는 동안에는 추천을 못 받은 버튼이 멀쩡한 모습 그대로 먹통이 됐다. */
+.recommendBtn.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.recommendBtn.disabled:hover {
+  opacity: 0.45;
+}
+
+/* 추천이 없다는 답을 받았을 때 버튼 자리에 대신 놓는 안내문 */
+.recommendNote {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  margin: 0;
+  max-width: 260px;
+  text-align: right;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #5b3a1a;
+}

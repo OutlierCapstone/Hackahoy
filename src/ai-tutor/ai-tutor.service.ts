@@ -69,6 +69,20 @@ const NON_ATTEMPT_PATTERNS = [
   /\/hint\b/i,
 ];
 
+/**
+ * HIDDEN_PROBLEM_IDS 로 숨긴 문제 번호.
+ *
+ * const 가 아니라 함수인 이유는 이 파일 상단 주석과 같다. 모듈 로드 시점에
+ * process.env 를 읽으면 ConfigModule.forRoot() 가 .env 를 넣기 전이라 항상 빈 값이 된다.
+ * 호출 시점에 읽어야 한다.
+ */
+function hiddenProblemIds(): number[] {
+  return (process.env.HIDDEN_PROBLEM_IDS ?? '')
+    .split(',')
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isInteger(n) && n > 0);
+}
+
 export interface HintResult {
   hint: string;
   gated: boolean;
@@ -404,10 +418,7 @@ export class AiTutorService {
    * 여기서 걸러 null 로 돌려보낸다.
    */
   async getAiRecommendation(userId: string) {
-    const hidden = (process.env.HIDDEN_PROBLEM_IDS ?? '')
-      .split(',')
-      .map((s) => Number(s.trim()))
-      .filter((n) => Number.isInteger(n) && n > 0);
+    const hidden = hiddenProblemIds();
 
     const context = await this.getSolvedProblemContext(userId);
 
@@ -488,6 +499,34 @@ export class AiTutorService {
         };
       }),
     );
+
+    // 숨긴 문제를 "이미 푼 것"처럼 끼워 넣어 ai-tutor 의 후보 집합에서 아예 제외한다.
+    //
+    // 왜 필요한가
+    //   recommendations.py 는 유사도 상위 후보 중 solved_ids 에 없는 것만 추리는데,
+    //   보이는 문제를 전부 풀면 후보에 숨긴 문제 하나만 남아 그게 100% 선택된다
+    //   (실측: 1~6 을 푼 상태로 호출하면 3/3 회 모두 "7" 반환).
+    //   그러면 getAiRecommendation 의 hidden 필터가 그것을 null 로 바꾸고,
+    //   레벨업 화면의 추천 버튼이 이유 없이 죽는다.
+    //
+    // 왜 이 방식인가
+    //   solved_ids 는 점수 경로(L36)와 랜덤 폴백(L129) 양쪽에서 모두 제외 기준으로 쓰인다.
+    //   여기 한 곳만 채우면 두 경로가 동시에 막히고 파이썬은 손댈 필요가 없다.
+    //   집합에 쓰이는 것은 problem_id 뿐이고 time_spent/hint_count 는
+    //   last_solved_problem_id 에 해당하는 항목에서만 읽히므로(L87) 0 이어도 무해하다.
+    //   숨긴 문제는 풀 수 없어 last 가 될 수 없다.
+    //
+    // 결과: 풀 문제가 남아 있으면 항상 그것이 추천되고, 전부 풀면 ai-tutor 가
+    //   "모든 문제를 푸셨습니다..." 를 돌려준다. hidden 필터는 이중 안전장치로 남긴다.
+    for (const id of hiddenProblemIds()) {
+      if (!solved_problems.some((p) => p.problem_id === String(id))) {
+        solved_problems.push({
+          problem_id: String(id),
+          time_spent: 0,
+          hint_count: 0,
+        });
+      }
+    }
 
     return {
       last_solved_problem_id: lastId.toString(),
