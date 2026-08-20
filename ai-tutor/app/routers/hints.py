@@ -9,6 +9,7 @@
 import json
 import os
 import re
+import time
 from datetime import datetime
 from urllib.parse import unquote_plus
 
@@ -33,6 +34,90 @@ MAX_LOGS = 10          # 힌트 1회당 참조할 최근 로그 최대 개수
 # 기본값은 기존 값 그대로다. 환경변수를 안 넣으면 동작이 변하지 않는다.
 QUERY_MODEL = os.getenv("AI_TUTOR_QUERY_MODEL", "gemini-3.6-flash")
 HINT_MODEL = os.getenv("AI_TUTOR_HINT_MODEL", "gemini-3.6-flash")
+
+# 힌트 생성 호출의 재시도. google-genai 1.63 은 retry_options 를 명시하지 않으면
+# stop_after_attempt(1) 이라 503 을 한 번 맞고 바로 죽는다.
+GEMINI_RETRY_ATTEMPTS = max(1, int(os.getenv("GEMINI_RETRY_ATTEMPTS", "3")))
+GEMINI_RETRY_BASE_DELAY = float(os.getenv("GEMINI_RETRY_BASE_DELAY", "1.0"))
+
+# 일시적 장애로 판단해 재시도할 신호들. 인증/권한/잘못된 요청은 재시도해도 의미가 없다.
+_RETRYABLE_MARKERS = (
+    "UNAVAILABLE",
+    "RESOURCE_EXHAUSTED",
+    "INTERNAL",
+    "DEADLINE",
+    "TIMEOUT",
+    "503",
+    "429",
+    "500",
+    "504",
+)
+
+
+def _is_retryable(error) -> bool:
+    """Gemini 오류가 재시도할 만한 일시적 장애인지 판정한다."""
+    return any(marker in str(error).upper() for marker in _RETRYABLE_MARKERS)
+
+
+def _generate_with_retry(prompt: str, context: str, level: int = 0) -> str:
+    """힌트를 생성한다. 일시적 장애면 재시도하고, 끝내 실패해도 예외 대신 폴백을 돌려준다.
+
+    google-genai 는 retry_options 를 명시하지 않으면 stop_after_attempt(1) 이라
+    재시도를 전혀 하지 않는다. gemini-3.6-flash 가 503 UNAVAILABLE("high demand")을
+    간헐적으로 내는데 그때마다 힌트 요청이 502 로 죽어 사용자에게는
+    "AI 힌트를 불러오지 못했습니다" 로 보였다. 503 은 즉시 실패라 재시도 비용이 싸다.
+    """
+    last_error = None
+    for attempt in range(1, GEMINI_RETRY_ATTEMPTS + 1):
+        try:
+            response = genai_client.models.generate_content(
+                model=HINT_MODEL,
+                contents=prompt + "\n힌트: ",
+            )
+
+            hint_text = response.text.strip() if response.text else None
+            if hint_text:
+                logger.info(f"Generated hint: {hint_text}")
+                return hint_text
+
+            last_error = "empty response"
+            logger.warning(
+                f"Generated hint is empty. (attempt {attempt}/{GEMINI_RETRY_ATTEMPTS})"
+            )
+        except Exception as e:
+            last_error = e
+            if not _is_retryable(e) or attempt == GEMINI_RETRY_ATTEMPTS:
+                logger.error(f"Gemini API call failed: {e}")
+                break
+            delay = GEMINI_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            logger.warning(
+                f"Gemini 호출 {attempt}/{GEMINI_RETRY_ATTEMPTS} 실패, "
+                f"{delay:.1f}s 후 재시도: {e}"
+            )
+            time.sleep(delay)
+
+    # fail-open. query-synth 와 마찬가지로 힌트도 절대 죽지 않게 한다.
+    # 추가 LLM 호출 없이 이미 검색해 둔 RAG 컨텍스트를 재활용하므로 비용이 들지 않는다.
+    logger.warning(f"힌트 생성 실패 -> 폴백 사용 (level={level}): {last_error}")
+    return _fallback_hint(context)
+
+
+def _fallback_hint(context: str) -> str:
+    """LLM 이 끝내 실패했을 때 쓰는 힌트.
+
+    추가 LLM 호출 없이 이미 검색해 둔 RAG 컨텍스트(자주 막히는 지점)를 그대로
+    돌려주므로 비용이 들지 않고, 사용자는 오류 대신 쓸 수 있는 내용을 받는다.
+    """
+    lines = [line.strip("- ").strip() for line in (context or "").splitlines() if line.strip()]
+    if lines:
+        return (
+            "AI 튜터가 일시적으로 응답하지 못했습니다. 대신 이 문제에서 자주 막히는 지점을 알려드릴게요. "
+            f"{lines[0]} 이 부분을 먼저 확인해 보세요."
+        )
+    return (
+        "AI 튜터가 일시적으로 응답하지 못했습니다. 잠시 후 다시 요청해 주세요. "
+        "그동안 지금까지 시도한 입력과 서버 응답이 어떻게 달라졌는지 비교해 보세요."
+    )
 
 # 힌트 1회당 LLM 호출은 2회(의미쿼리 합성 + 힌트 생성)를 유지한다.
 #
@@ -371,23 +456,4 @@ def generate_hint(request: HintRequest) -> str:
     if request.history.previous_hint:
         prompt += f"\n직전에 제공된 힌트: {request.history.previous_hint}, 이것보다 조금만 더 알려주세요."
 
-    try:
-        response = genai_client.models.generate_content(
-            model=HINT_MODEL,
-            contents=prompt + "\n힌트: ",
-        )
-
-        hint_text = response.text.strip() if response.text else None
-        logger.info(f"Generated hint: {hint_text}")
-
-        if not hint_text:
-            logger.error("Generated hint is empty.")
-            raise HTTPException(status_code=502, detail="Empty response from Gemini")
-
-        return hint_text
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Gemini API call failed: {e}")
-        raise HTTPException(status_code=502, detail="AI service error")
+    return _generate_with_retry(prompt, context, level)
