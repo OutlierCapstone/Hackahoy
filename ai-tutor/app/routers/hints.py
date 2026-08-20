@@ -59,47 +59,50 @@ def _is_retryable(error) -> bool:
     return any(marker in str(error).upper() for marker in _RETRYABLE_MARKERS)
 
 
-def _generate_with_retry(prompt: str, context: str, level: int = 0) -> str:
-    """힌트를 생성한다. 일시적 장애면 재시도하고, 끝내 실패해도 예외 대신 폴백을 돌려준다.
+def _call_gemini_with_retry(model: str, contents: str, label: str) -> str:
+    """Gemini 를 호출하고, 일시적 장애면 재시도한다. 끝내 실패하면 마지막 예외를 올린다.
 
     google-genai 는 retry_options 를 명시하지 않으면 stop_after_attempt(1) 이라
     재시도를 전혀 하지 않는다. gemini-3.6-flash 가 503 UNAVAILABLE("high demand")을
-    간헐적으로 내는데 그때마다 힌트 요청이 502 로 죽어 사용자에게는
-    "AI 힌트를 불러오지 못했습니다" 로 보였다. 503 은 즉시 실패라 재시도 비용이 싸다.
+    간헐적으로 내는데 그때마다 호출이 그대로 죽었다. 503 은 즉시 실패라 재시도가 싸다.
+
+    힌트 생성과 쿼리 합성이 같은 취약점을 공유하므로 둘 다 이 래퍼를 쓴다.
     """
     last_error = None
     for attempt in range(1, GEMINI_RETRY_ATTEMPTS + 1):
         try:
-            response = genai_client.models.generate_content(
-                model=HINT_MODEL,
-                contents=prompt + "\n힌트: ",
-            )
+            response = genai_client.models.generate_content(model=model, contents=contents)
+            text = (response.text or "").strip()
+            if text:
+                return text
 
-            hint_text = response.text.strip() if response.text else None
-            if hint_text:
-                logger.info(f"Generated hint: {hint_text}")
-                return hint_text
-
-            last_error = "empty response"
-            logger.warning(
-                f"Generated hint is empty. (attempt {attempt}/{GEMINI_RETRY_ATTEMPTS})"
-            )
+            last_error = RuntimeError("empty response")
+            logger.warning(f"[{label}] 빈 응답 (attempt {attempt}/{GEMINI_RETRY_ATTEMPTS})")
         except Exception as e:
             last_error = e
             if not _is_retryable(e) or attempt == GEMINI_RETRY_ATTEMPTS:
-                logger.error(f"Gemini API call failed: {e}")
-                break
+                raise
             delay = GEMINI_RETRY_BASE_DELAY * (2 ** (attempt - 1))
             logger.warning(
-                f"Gemini 호출 {attempt}/{GEMINI_RETRY_ATTEMPTS} 실패, "
+                f"[{label}] 호출 {attempt}/{GEMINI_RETRY_ATTEMPTS} 실패, "
                 f"{delay:.1f}s 후 재시도: {e}"
             )
             time.sleep(delay)
 
-    # fail-open. query-synth 와 마찬가지로 힌트도 절대 죽지 않게 한다.
-    # 추가 LLM 호출 없이 이미 검색해 둔 RAG 컨텍스트를 재활용하므로 비용이 들지 않는다.
-    logger.warning(f"힌트 생성 실패 -> 폴백 사용 (level={level}): {last_error}")
-    return _fallback_hint(context)
+    raise last_error
+
+
+def _generate_with_retry(prompt: str, context: str, level: int = 0) -> str:
+    """힌트를 생성한다. 끝내 실패해도 예외 대신 폴백 힌트를 돌려준다(fail-open)."""
+    try:
+        hint_text = _call_gemini_with_retry(HINT_MODEL, prompt + "\n힌트: ", "hint")
+        logger.info(f"Generated hint: {hint_text}")
+        return hint_text
+    except Exception as e:
+        logger.error(f"Gemini API call failed: {e}")
+        # 추가 LLM 호출 없이 이미 검색해 둔 RAG 컨텍스트를 재활용하므로 비용이 들지 않는다.
+        logger.warning(f"힌트 생성 실패 -> 폴백 사용 (level={level}): {e}")
+        return _fallback_hint(context)
 
 
 def _fallback_hint(context: str) -> str:
@@ -315,15 +318,18 @@ def synthesize_query(problem_id: str, distilled: str, techniques: list[str]) -> 
         fallback = "학습자 시도 요약: " + ", ".join(techniques) + "\n" + distilled
 
     try:
-        response = genai_client.models.generate_content(
-            model=QUERY_MODEL,
-            contents=QUERY_PROMPT.format(
+        # 힌트 생성과 동일한 재시도 래퍼를 쓴다. 여기가 503 으로 폴백되면 stage 가
+        # None 이 되어 힌트 레벨 상향 로직이 죽고, HTTP 는 201 이라 아무도 모르는 채로
+        # 힌트 품질만 조용히 떨어진다(08/20 힌트의 25% 가 이 경로였다).
+        raw = _call_gemini_with_retry(
+            QUERY_MODEL,
+            QUERY_PROMPT.format(
                 problem_id=problem_id,
                 techniques=", ".join(techniques) if techniques else "없음",
                 distilled=distilled,
             ),
+            "query-synth",
         )
-        raw = (response.text or "").strip()
         raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
         data = json.loads(raw)
 
