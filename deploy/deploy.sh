@@ -4,7 +4,8 @@
 #
 # 변경 요약
 #   [1.5] Gemini API 키 동기화
-#         - GitHub Actions secret GEMINI_API_KEY 를 ai-tutor/.env 에 원자적으로 반영한다.
+#         - GitHub Actions secret GEMINI_API_KEY 를 ai-tutor 와 prob1 의 .env 에
+#           원자적으로 반영한다.
 #         - 키 값은 어떤 로그에도 출력하지 않는다.
 #         - secret 이 비어 있으면 기존 EC2 값을 유지한다.
 #
@@ -47,51 +48,12 @@ sudo caddy validate --config deploy/Caddyfile --adapter caddyfile
 
 echo "==> [1.5] Gemini API key sync"
 if [ -n "${GEMINI_API_KEY:-}" ]; then
-  # 환경변수 값을 인자로 넘기거나 출력하지 않는다. Python 이 프로세스 환경에서 직접 읽는다.
+  # 환경변수 값을 인자로 넘기거나 출력하지 않는다. 동기화 스크립트가 프로세스
+  # 환경에서 직접 읽고 기존 파일 권한과 다른 설정을 보존한다.
   export GEMINI_API_KEY
-  python3 - <<'PY'
-import os
-import tempfile
-from pathlib import Path
-
-key = os.environ.get("GEMINI_API_KEY", "").strip()
-if not key:
-    raise SystemExit("GEMINI_API_KEY is empty")
-if "\n" in key or "\r" in key:
-    raise SystemExit("GEMINI_API_KEY contains a newline")
-
-path = Path("/home/ubuntu/Hackahoy/ai-tutor/.env")
-existing = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
-updated = []
-replaced = False
-
-for line in existing:
-    if line.lstrip().startswith("GEMINI_API_KEY="):
-        if not replaced:
-            updated.append(f"GEMINI_API_KEY={key}")
-            replaced = True
-        continue
-    updated.append(line)
-
-if not replaced:
-    updated.append(f"GEMINI_API_KEY={key}")
-
-path.parent.mkdir(parents=True, exist_ok=True)
-fd, tmp_name = tempfile.mkstemp(prefix=".env.", dir=path.parent, text=True)
-try:
-    with os.fdopen(fd, "w", encoding="utf-8") as tmp:
-        tmp.write("\n".join(updated).rstrip("\n") + "\n")
-    os.chmod(tmp_name, 0o600)
-    os.replace(tmp_name, path)
-except Exception:
-    try:
-        os.unlink(tmp_name)
-    except FileNotFoundError:
-        pass
-    raise
-
-print("    -> GEMINI_API_KEY synchronized (value hidden)")
-PY
+  python3 deploy/sync_gemini_env.py \
+    /home/ubuntu/Hackahoy/ai-tutor/.env \
+    /home/ubuntu/Hackahoy/Hackahoy/public/challenge_files/prob1/backend/.env
 else
   echo "    -> GEMINI_API_KEY secret is empty; keeping the existing EC2 value"
 fi
@@ -232,6 +194,16 @@ fi
 
 echo "==> [4/6] pm2 reload"
 pm2 startOrReload deploy/ecosystem.config.js --update-env
+
+# Challenge processes are not part of ecosystem.config.js. Restart prob1-be
+# explicitly so it loads both the deployed source and the synchronized paid key.
+PROB1_PID=$(pm2 pid prob1-be 2>/dev/null || true)
+if [[ "$PROB1_PID" =~ ^[1-9][0-9]*$ ]]; then
+  pm2 restart prob1-be
+  echo "    -> prob1-be restarted with synchronized configuration"
+else
+  echo "    -> prob1-be is not registered in PM2; skipped restart"
+fi
 pm2 save
 
 echo "==> [5/6] openresty"
