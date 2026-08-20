@@ -11,7 +11,7 @@ from deploy.sync_gemini_env import main, sync_env_file, validate_key
 
 
 class SyncGeminiEnvTests(unittest.TestCase):
-    def test_replaces_duplicates_and_preserves_other_lines_and_mode(self):
+    def test_replaces_duplicates_preserves_other_lines_and_enforces_private_mode(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / ".env"
             path.write_text(
@@ -27,7 +27,7 @@ class SyncGeminiEnvTests(unittest.TestCase):
                 "KEEP=value\nGEMINI_API_KEY=new-key\n",
             )
             if os.name != "nt":
-                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o640)
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
 
     def test_creates_parent_and_private_file(self):
         with tempfile.TemporaryDirectory() as tmp:

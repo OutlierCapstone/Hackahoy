@@ -49,7 +49,7 @@ sudo caddy validate --config deploy/Caddyfile --adapter caddyfile
 echo "==> [1.5] Gemini API key sync"
 if [ -n "${GEMINI_API_KEY:-}" ]; then
   # 환경변수 값을 인자로 넘기거나 출력하지 않는다. 동기화 스크립트가 프로세스
-  # 환경에서 직접 읽고 기존 파일 권한과 다른 설정을 보존한다.
+  # 환경에서 직접 읽고 다른 설정은 보존하되 비밀 파일 권한은 0600으로 강제한다.
   export GEMINI_API_KEY
   python3 deploy/sync_gemini_env.py \
     /home/ubuntu/Hackahoy/ai-tutor/.env \

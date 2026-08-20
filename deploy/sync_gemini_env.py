@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import os
-import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -39,12 +38,13 @@ def sync_env_file(path: Path, key: str) -> None:
         updated.append(f"GEMINI_API_KEY={normalized}")
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    file_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
     fd, tmp_name = tempfile.mkstemp(prefix=".env.", dir=path.parent, text=True)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as tmp:
             tmp.write("\n".join(updated).rstrip("\n") + "\n")
-        os.chmod(tmp_name, file_mode)
+        # This file contains a deployment secret. Never inherit a permissive
+        # legacy mode (for example 0664) from an existing dotenv file.
+        os.chmod(tmp_name, 0o600)
         os.replace(tmp_name, path)
     except Exception:
         try:
