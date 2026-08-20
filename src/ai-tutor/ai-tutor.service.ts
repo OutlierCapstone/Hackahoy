@@ -236,13 +236,16 @@ export class AiTutorService {
     }
 
     try {
+      // 힌트 1건은 Gemini 호출 2회(query-synth + 생성) + 임베딩이 순차로 돌아
+      // 실측 12~36초가 걸린다. 기존 기본값 40초는 이 범위와 겹쳐 간헐적으로
+      // 504 를 냈고, 사용자에게는 "AI 힌트를 불러오지 못했습니다" 로 보였다.
       const configuredTimeout = Number(
-        this.config.get<string>('AI_TUTOR_TIMEOUT_MS', '40000'),
+        this.config.get<string>('AI_TUTOR_TIMEOUT_MS', '90000'),
       );
       const timeout =
         Number.isFinite(configuredTimeout) && configuredTimeout > 0
           ? configuredTimeout
-          : 40000;
+          : 90000;
       const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context, {
         timeout,
       });
