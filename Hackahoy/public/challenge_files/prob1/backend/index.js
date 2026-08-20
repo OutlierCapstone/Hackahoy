@@ -58,7 +58,11 @@ if (!apiKey) {
     throw new Error("GEMINI_API_KEY missing (.env)");
 }
 
-const MODEL = "models/gemini-3.6-flash";
+const configuredModel = (process.env.PROB1_GEMINI_MODEL || "gemini-3.6-flash").trim()
+    || "gemini-3.6-flash";
+const MODEL = configuredModel.startsWith("models/")
+    ? configuredModel
+    : `models/${configuredModel}`;
 const GEMINI_URL =
     `https://generativelanguage.googleapis.com/v1/${MODEL}:generateContent?key=${apiKey}`;
 
