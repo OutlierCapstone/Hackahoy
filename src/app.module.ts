@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer, BadRequestException } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core'; 
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
@@ -26,6 +26,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { CollectModule } from './collect/collect.module';
 import { AiTutorModule } from './ai-tutor/ai-tutor.module';
 import { SensitiveFieldsInterceptor } from './common/interceptors/sensitive-fields.interceptor';
+import { SecurityInterceptor } from './interceptors/security.interceptor';
 
 @Module({
   imports: [
@@ -73,21 +74,9 @@ import { SensitiveFieldsInterceptor } from './common/interceptors/sensitive-fiel
     EmailService,
     ReportService,
 
-    // 보안 가드 로직
     {
       provide: APP_INTERCEPTOR,
-      useValue: {
-        intercept: (context, next) => {
-          const req = context.switchToHttp().getRequest();
-          if (req.method === 'GET') return next.handle();
-          const body = JSON.stringify(req.body || {}).toLowerCase();
-  
-          if (['<script', 'select ', 'drop ', 'union '].some(word => body.includes(word))) {
-            throw new BadRequestException('보안 위협 감지'); 
-          }
-          return next.handle();
-        },
-      },
+      useClass: SecurityInterceptor,
     },
   ],
 })

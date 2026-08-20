@@ -13,9 +13,10 @@ export class LoggerMiddleware implements NestMiddleware {
       const { statusCode } = res;
       const message = `[${method}] ${originalUrl} ${statusCode} - IP: ${ip} - UA: ${userAgent}`;
 
-      if (statusCode >= 400) {
-        // e.g. 404, 500 응답
-        this.logger.warn(`🚨 보안 위협 가능성: ${message}`);
+      if (statusCode >= 500) {
+        this.logger.error(message);
+      } else if (statusCode >= 400) {
+        this.logger.warn(message);
       } else {
         this.logger.log(message);
       }
