@@ -108,7 +108,7 @@ export default function MapView() {
         height: "100vh",
         overflow: "hidden",
         backgroundColor: "#1F6396",
-        backgroundImage: "url('/assets/backgrounds/main-map.png')",
+        backgroundImage: "url('/assets/backgrounds/main-map.webp')",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
         backgroundSize: "80% auto",
@@ -154,7 +154,7 @@ export default function MapView() {
           <div
             style={{
               width: 680, height: 560,
-              backgroundImage: "url('/assets/backgrounds/main-login.png')",
+              backgroundImage: "url('/assets/backgrounds/main-login.webp')",
               backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
               display: "flex", justifyContent: "flex-start", alignItems: "center",
               boxSizing: "border-box", padding: "40px 80px 40px", position: "relative",

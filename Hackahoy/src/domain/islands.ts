@@ -7,7 +7,7 @@ export const islands = [
     mapX: 30,
     mapY: 55,
     iconImage: PIN,
-    backgroundImage: "/assets/backgrounds/island-1.png",
+    backgroundImage: "/assets/backgrounds/island-1.webp",
   },
   {
     id: "2",
@@ -15,7 +15,7 @@ export const islands = [
     mapX: 55,
     mapY: 45,
     iconImage: PIN,
-    backgroundImage: "/assets/backgrounds/island-2.png",
+    backgroundImage: "/assets/backgrounds/island-2.webp",
   },
   {
     id: "3",
@@ -23,6 +23,6 @@ export const islands = [
     mapX: 75,
     mapY: 55,
     iconImage: PIN,
-    backgroundImage: "/assets/backgrounds/island-3.png",
+    backgroundImage: "/assets/backgrounds/island-3.webp",
   },
 ];

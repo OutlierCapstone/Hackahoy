@@ -9,7 +9,7 @@
 .bg {
   position: absolute;
   inset: 0;
-  background-image: url("/assets/backgrounds/main-map.png");
+  background-image: url("/assets/backgrounds/main-map.webp");
   background-repeat: no-repeat;
   background-position: center;
   background-size: auto 100%;

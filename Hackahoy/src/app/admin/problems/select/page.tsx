@@ -53,7 +53,7 @@ export default function AdminSelectPinPage() {
     <div
       style={{
         position: "relative", width: "100vw", height: "100vh", overflow: "hidden",
-        backgroundImage: "url('/assets/backgrounds/main-map.png')",
+        backgroundImage: "url('/assets/backgrounds/main-map.webp')",
         backgroundRepeat: "no-repeat", backgroundPosition: "center",
         backgroundSize: "80% auto", backgroundColor: "#1F6396",
       }}

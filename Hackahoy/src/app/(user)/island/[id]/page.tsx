@@ -50,7 +50,7 @@ const DEFAULT_SLOTS = [
 ] as const;
 
 const DEFAULT_ISLAND_IMG = '/assets/islands/island-default.png';
-const OCEAN_BG = '/assets/backgrounds/island-map.png';
+const OCEAN_BG = '/assets/backgrounds/island-map.webp';
 
 const SHIP_BY_LEVEL: Record<number, string> = {
   1: '/assets/ships/ship-1.png',
