@@ -237,7 +237,9 @@ export default function ChallengePage() {
     saveUserLog('HINT', { input: flagInput });
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 45000);
+    // 힌트 생성 실측이 12~36초이고 503 재시도가 붙으면 더 늘어난다.
+    // 45초는 그 범위와 겹쳐 브라우저가 먼저 끊는 최약 링크였다(백엔드는 90초).
+    const timeout = window.setTimeout(() => controller.abort(), 100000);
     try {
       const res = await fetch(`${API_BASE_URL}/ai-tutor/hint`, {
         method: 'POST',

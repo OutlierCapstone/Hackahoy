@@ -1,5 +1,13 @@
 /* src/app/globals.css */
 
+/* 이 앱은 픽셀아트 배경 위에 어두운 본문을 올리는 라이트 테마 전용이다.
+   color-scheme 을 선언하지 않으면 Chrome(특히 Android) 의 "웹 콘텐츠 자동 어두운 모드"가
+   본문색 #1a0f0a 을 흰색에 가깝게 반전시켜, 밝은 패널 위에 흰 글씨가 되어 읽을 수 없게 된다.
+   베타 테스터가 "화산섬 글자가 흰색"이라고 보고한 증상이 이것이다. */
+:root {
+  color-scheme: only light;
+}
+
 * {
   box-sizing: border-box;
 }
