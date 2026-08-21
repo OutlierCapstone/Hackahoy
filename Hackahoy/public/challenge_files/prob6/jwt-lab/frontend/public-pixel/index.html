@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>인력 사무소 — 명부</title>
+    <title>인력 사무소 — 구인 게시판</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -16,7 +16,7 @@
          class close-btn, signup-btn
          ========================================================= -->
     <header class="header">
-      <div class="header-left">인력 사무소<span class="brand-mark">·명부</span></div>
+      <div class="header-left">인력 사무소<span class="brand-mark">·구인 게시판</span></div>
 
       <nav class="nav-menu">
         <a href="#">갑판원</a>
@@ -29,12 +29,12 @@
       <div class="header-right">
         <span id="USD">보유 금화 0</span>
         <button class="btn login" id="loginBtn">로그인</button>
-        <button class="btn accession" id="accessionBtn">등록</button>
+        <button class="btn accession" id="accessionBtn">회원가입</button>
 
         <div id="user-profile">
           <span id="user-name">선원</span>
           <div class="profile-menu" id="profileMenu">
-            <a href="dashboard.html" class="profile-menu-link">내 명부</a>
+            <a href="dashboard.html" class="profile-menu-link">내 페이지</a>
             <a href="#" id="logout" class="profile-menu-link">로그아웃</a>
           </div>
         </div>
@@ -43,50 +43,50 @@
 
     <main class="hero">
       <div class="hero-text">
-        <h1>오늘의 일감을 찾으시오</h1>
+        <h1>일자리를 찾으세요</h1>
         <p>
-          항구의 모든 선박이 이곳에 사람을 구하러 온다.
-          명부에 이름을 올리면 일감이 배정된다.
+          여기서 회원가입하고 로그인하면, 지금 모집 중인 일자리를 볼 수 있어요.
+          로그인하면 내 정보가 담긴 '출입증'이 발급됩니다.
         </p>
       </div>
 
       <div class="hero-buttons">
-        <button class="primary-btn signup-btn">명부에 이름 올리기</button>
+        <button class="primary-btn signup-btn">회원가입하기</button>
         <button class="secondary-btn" onclick="location.href='dashboard.html'">
-          내 명부 보기
+          내 페이지 보기
         </button>
       </div>
 
       <section class="notice panel">
-        <h2>사무소 공고</h2>
+        <h2>이용 안내</h2>
         <ul>
-          <li>일감 배정은 등록된 선원에게만 열린다.</li>
-          <li>사무장 전용 명부는 따로 보관된다.</li>
-          <li>신분 확인표는 발급 즉시 본인이 보관하시오.</li>
+          <li>로그인하면 '출입증'이 발급되어 이 브라우저에 저장됩니다.</li>
+          <li>출입증에는 회원님의 '등급'이 적혀 있어요.</li>
+          <li>'관리자' 등급만 사무장실에 들어가 기밀 명부를 볼 수 있습니다.</li>
         </ul>
       </section>
 
       <section class="board">
-        <h2>모집 중인 일감</h2>
+        <h2>모집 중인 일자리</h2>
         <div class="board-grid">
           <article class="board-card">
             <h3>갑판 청소</h3>
-            <p>새벽 조수 전까지 갑판을 정리할 사람.</p>
+            <p>새벽 전까지 갑판을 정리할 사람을 찾습니다.</p>
             <span class="pay">금화 3</span>
           </article>
           <article class="board-card">
             <h3>돛 수선</h3>
-            <p>찢어진 주돛을 꿰맬 손재주 있는 사람.</p>
+            <p>찢어진 돛을 꿰맬 손재주 좋은 사람을 찾습니다.</p>
             <span class="pay">금화 7</span>
           </article>
           <article class="board-card">
             <h3>화물 검수</h3>
-            <p>입항 화물의 수량을 대조할 사람.</p>
+            <p>들어온 화물의 수량을 확인할 사람을 찾습니다.</p>
             <span class="pay">금화 5</span>
           </article>
           <article class="board-card">
             <h3>야간 망보기</h3>
-            <p>돛대 위에서 밤새 수평선을 지킬 사람.</p>
+            <p>돛대 위에서 밤새 수평선을 지킬 사람을 찾습니다.</p>
             <span class="pay">금화 9</span>
           </article>
         </div>
@@ -99,11 +99,11 @@
         <button class="close-btn">&times;</button>
 
         <div class="modal-left">
-          <h2>사무소 이용 안내</h2>
+          <h2>로그인 안내</h2>
           <ul>
-            <li>등록한 이름과 암호로 들어오시오.</li>
-            <li>확인표는 이 기기에 보관된다.</li>
-            <li>권한에 따라 보이는 명부가 다르다.</li>
+            <li>회원가입한 이메일과 비밀번호로 로그인하세요.</li>
+            <li>로그인하면 출입증이 이 브라우저에 저장됩니다.</li>
+            <li>출입증에 적힌 등급에 따라 볼 수 있는 페이지가 달라집니다.</li>
           </ul>
         </div>
 
@@ -111,34 +111,34 @@
           <form id="login-form">
             <h2>로그인</h2>
             <input type="email" id="email" placeholder="이메일" required />
-            <input type="password" id="password" placeholder="암호" required />
-            <button type="submit" class="login-btn">들어가기</button>
+            <input type="password" id="password" placeholder="비밀번호" required />
+            <button type="submit" class="login-btn">로그인</button>
             <p class="signup">
-              아직 명부에 없소?
-              <a id="openSignup" class="signup-btn">이름 올리기</a>
+              아직 회원이 아니신가요?
+              <a id="openSignup" class="signup-btn">회원가입</a>
             </p>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- 등록 모달 -->
+    <!-- 회원가입 모달 -->
     <div id="signupModal" class="modal">
       <div class="modal-content">
         <button class="close-btn">&times;</button>
 
         <div class="modal-right">
           <form id="signup-form" class="signup-form">
-            <h2>명부 등록</h2>
+            <h2>회원가입</h2>
             <input type="email" id="signup-email" placeholder="이메일" required />
             <input type="text" id="signup-name" placeholder="이름" required />
             <input
               type="password"
               id="signup-password"
-              placeholder="암호"
+              placeholder="비밀번호"
               required
             />
-            <button type="submit" class="login-btn">등록하기</button>
+            <button type="submit" class="login-btn">회원가입</button>
           </form>
         </div>
       </div>

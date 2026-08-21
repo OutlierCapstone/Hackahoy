@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>내 명부 — 인력 사무소</title>
+    <title>내 페이지 — 인력 사무소</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body id="dash-body">
@@ -16,7 +16,7 @@
          class close-btn
          ========================================================= -->
     <header class="dash-header">
-      <div class="dash-header-left">인력 사무소<span class="brand-mark">·명부</span></div>
+      <div class="dash-header-left">인력 사무소<span class="brand-mark">·내 페이지</span></div>
 
       <nav class="dash-nav-menu">
         <a href="#">갑판원</a>
@@ -30,7 +30,7 @@
         <div id="user-profile">
           <span id="user-name">선원</span>
           <div class="profile-menu" id="profileMenu">
-            <a href="index.html" class="profile-menu-link">사무소</a>
+            <a href="index.html" class="profile-menu-link">게시판</a>
             <a href="#" id="logout" class="profile-menu-link">로그아웃</a>
           </div>
         </div>
@@ -39,23 +39,23 @@
 
     <main class="dash-main">
       <div class="dash-welcome-box">
-        <h2>어서 오시오, <span id="dash-user-name">선원</span></h2>
+        <h2>안녕하세요, <span id="dash-user-name">선원</span>님</h2>
         <p id="dash-welcome-box-sub">
-          맡은 일감을 명부에 적어 두면 사무소가 관리해 준다.
+          맡은 일을 여기에 적어 두면 사무소가 관리해 드려요.
         </p>
 
         <button class="dash-btn dash-btn-primary" id="create-task-btn">
-          일감 적어두기
+          일 추가하기
         </button>
 
-        <!-- 일감 등록 모달 -->
+        <!-- 일 등록 모달 -->
         <div id="taskModal" class="modal">
           <div class="modal-content">
             <span class="close-btn" id="close-task-modal">&times;</span>
             <form id="taskForm" class="dash-task-form">
-              <h3>일감 기록</h3>
+              <h3>일 추가</h3>
               <label>
-                일감 이름<br />
+                일 이름<br />
                 <input type="text" id="title" required />
               </label>
               <label>
@@ -63,7 +63,7 @@
                 <textarea id="description" rows="3" required></textarea>
               </label>
               <button type="submit" class="dash-btn dash-btn-submit">
-                기록하기
+                추가하기
               </button>
               <p id="taskMessage"></p>
             </form>
@@ -72,16 +72,16 @@
       </div>
 
       <section id="taskList" class="dash-task-list">
-        <h3>내가 맡은 일감</h3>
+        <h3>내가 맡은 일</h3>
         <ul id="taskItems"></ul>
       </section>
 
-      <!-- 사무장 전용 명부. main.js 가 block 으로 켠다 -->
+      <!-- 관리자 전용 기밀 명부. main.js 가 출입증 등급이 관리자면 block 으로 켠다 -->
       <section id="dash-admin-panel" style="display: none">
-        <h3>사무장 전용 명부</h3>
+        <h3>사무장실 — 관리자 전용 기밀 명부</h3>
         <div class="admin-data-box">
           <div id="admin-result">
-            <!-- 유저 목록과 플래그 정보가 여기에 표시됨 -->
+            <!-- 회원 목록과 기밀 정보가 여기에 표시됨 -->
           </div>
         </div>
       </section>
