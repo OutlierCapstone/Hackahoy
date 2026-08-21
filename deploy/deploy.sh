@@ -252,6 +252,16 @@ if [[ "$PROB2_PID" =~ ^[1-9][0-9]*$ ]]; then
 else
   echo "    -> prob2-fe is not registered in PM2; skipped restart"
 fi
+
+# prob7 은 ts-node 로 소스를 직접 실행하므로 빌드는 필요 없지만, 재시작하지 않으면
+# 이전 코드가 계속 떠 있다. 요청별 임시 디렉터리 변경을 반영하려면 재시작이 필요하다.
+PROB7_PID=$(pm2 pid prob7-be 2>/dev/null || true)
+if [[ "$PROB7_PID" =~ ^[1-9][0-9]*$ ]]; then
+  pm2 restart prob7-be
+  echo "    -> prob7-be restarted with per-request upload directories"
+else
+  echo "    -> prob7-be is not registered in PM2; skipped restart"
+fi
 pm2 save
 
 echo "==> [5/6] openresty"
