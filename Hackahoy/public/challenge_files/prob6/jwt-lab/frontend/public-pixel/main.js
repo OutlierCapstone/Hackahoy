@@ -200,7 +200,7 @@ window.addEventListener("DOMContentLoaded", () => {
           }
         })
         .catch((err) => {
-          console.warn("관리자 등급이 아니거나 출입증이 유효하지 않음", err);
+          console.warn("선장님의 활동지가 아니거나 활동지가 유효하지 않음", err);
         });
     }
 
