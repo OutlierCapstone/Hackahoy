@@ -19,7 +19,11 @@ services:
       - "3006:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./frontend/public:/usr/share/nginx/html
+      # 서빙할 정적 디렉터리. 기본은 픽셀 리스킨(public-pixel)이고,
+      # 문제가 생기면 코드 수정 없이 JWT_LAB_PUBLIC_DIR=public 으로 즉시 되돌린다.
+      #   docker compose up -d --force-recreate nginx
+      - ./frontend/${JWT_LAB_PUBLIC_DIR:-public-pixel}:/usr/share/nginx/html
+      # /img/ 는 원본 자산을 그대로 쓴다(리스킨에는 이미지가 없다).
       - ./frontend/public/img:/usr/share/nginx/html/img
     depends_on:
       - frontend
