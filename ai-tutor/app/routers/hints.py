@@ -14,6 +14,7 @@ from datetime import datetime
 from urllib.parse import unquote_plus
 
 from fastapi import APIRouter, HTTPException
+from google.genai import types as genai_types
 
 from app.clients import genai_client, logger, collection
 from app.models import ProblemSolvingHistory, LogEntry, HintRequest
@@ -59,6 +60,24 @@ def _is_retryable(error) -> bool:
     return any(marker in str(error).upper() for marker in _RETRYABLE_MARKERS)
 
 
+# gemini-3.6-flash 는 짧은 힌트(200자)에도 thinking 토큰을 과하게 쓴다.
+# 실측: 기본값이면 thinking 중앙 1143토큰/14.0초. thinking_budget=256 으로 제한하면
+# 485토큰/8.1초 로 시간 42%↓·토큰 58%↓ 이면서 힌트는 그대로 완결된다(4/4).
+# thinking_budget=0 은 이 모델이 거부(400)하므로 작은 양수로 제한한다.
+# 환경변수로 조정 가능하며, 0 이하면 config 없이(기존 동작) 호출한다.
+GEMINI_THINKING_BUDGET = int(os.getenv("AI_TUTOR_THINKING_BUDGET", "256"))
+
+_GENERATE_CONFIG = (
+    genai_types.GenerateContentConfig(
+        thinking_config=genai_types.ThinkingConfig(
+            thinking_budget=GEMINI_THINKING_BUDGET
+        )
+    )
+    if GEMINI_THINKING_BUDGET > 0
+    else None
+)
+
+
 def _call_gemini_with_retry(model: str, contents: str, label: str) -> str:
     """Gemini 를 호출하고, 일시적 장애면 재시도한다. 끝내 실패하면 마지막 예외를 올린다.
 
@@ -71,7 +90,9 @@ def _call_gemini_with_retry(model: str, contents: str, label: str) -> str:
     last_error = None
     for attempt in range(1, GEMINI_RETRY_ATTEMPTS + 1):
         try:
-            response = genai_client.models.generate_content(model=model, contents=contents)
+            response = genai_client.models.generate_content(
+                model=model, contents=contents, config=_GENERATE_CONFIG
+            )
             text = (response.text or "").strip()
             if text:
                 return text
