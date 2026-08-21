@@ -35,6 +35,30 @@ REPO_DIR="/home/ubuntu/Hackahoy"
 BRANCH="main"
 cd "$REPO_DIR"
 
+# bash 는 스크립트를 한 번에 다 읽지 않고 실행하면서 파일 오프셋을 따라 계속 읽는다.
+# 바로 아래 [1/6] 의 `git reset --hard` 가 이 파일 자체를 새 내용으로 교체하면,
+# bash 는 남은 부분을 새 파일의 옛 오프셋부터 읽게 되어 새로 추가된 후반부가
+# 통째로 건너뛰어진다.
+#
+# 실제로 challenge 2 / 6 / 7 배포에서 연속 3회 발생했다. 세 번 모두 배포는 "성공"으로
+# 끝났지만 새로 추가한 빌드·재시작 단계가 실행되지 않아, 코드는 서버에 내려왔는데
+# 프로세스는 옛 코드를 그대로 띄운 상태였다(prob2-fe 8일 무재시작, jwt-lab 컨테이너
+# 9일 무재빌드, prob7-be 9일 무재시작). 매번 사람이 수동으로 복구해야 했다.
+#
+# git 이 건드릴 수 없는 /tmp 사본으로 한 번 재실행해 이 문제를 제거한다.
+# 재실행된 사본은 DEPLOY_SELF_COPY=1 로 이 블록을 건너뛴다.
+if [[ "${DEPLOY_SELF_COPY:-0}" != "1" ]]; then
+  # 이전 실행이 남긴 사본을 먼저 치운다(정상 종료/비정상 종료 모두 대비).
+  rm -f /tmp/hackahoy-deploy-*.sh 2>/dev/null || true
+
+  SELF_COPY="$(mktemp /tmp/hackahoy-deploy-XXXXXXXX.sh)"
+  cp -- "$REPO_DIR/deploy/deploy.sh" "$SELF_COPY"
+  echo "==> [0/6] self-copy 로 재실행 ($SELF_COPY)"
+
+  export DEPLOY_SELF_COPY=1
+  exec bash "$SELF_COPY" "$@"
+fi
+
 echo "==> [1/6] pull ($BRANCH)"
 git fetch --prune origin
 git reset --hard "origin/${BRANCH}"
