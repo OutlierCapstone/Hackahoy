@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>내 페이지 — 인력 사무소</title>
+    <title>내 활동지 — SomeTask 인력 사무소</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body id="dash-body">
@@ -16,7 +16,7 @@
          class close-btn
          ========================================================= -->
     <header class="dash-header">
-      <div class="dash-header-left">인력 사무소<span class="brand-mark">·내 페이지</span></div>
+      <div class="dash-header-left">SomeTask<span class="brand-mark">·내 활동지</span></div>
 
       <nav class="dash-nav-menu">
         <a href="#">갑판원</a>
@@ -30,7 +30,7 @@
         <div id="user-profile">
           <span id="user-name">선원</span>
           <div class="profile-menu" id="profileMenu">
-            <a href="index.html" class="profile-menu-link">게시판</a>
+            <a href="index.html" class="profile-menu-link">일감 공고</a>
             <a href="#" id="logout" class="profile-menu-link">로그아웃</a>
           </div>
         </div>
@@ -76,12 +76,12 @@
         <ul id="taskItems"></ul>
       </section>
 
-      <!-- 관리자 전용 기밀 명부. main.js 가 출입증 등급이 관리자면 block 으로 켠다 -->
+      <!-- 사무장실. main.js 가 활동지가 선장님 것이면 block 으로 켠다 -->
       <section id="dash-admin-panel" style="display: none">
-        <h3>사무장실 — 관리자 전용 기밀 명부</h3>
+        <h3>사무장실 — 선장님의 비밀 공고</h3>
         <div class="admin-data-box">
           <div id="admin-result">
-            <!-- 회원 목록과 기밀 정보가 여기에 표시됨 -->
+            <!-- 선장님의 비밀 공고가 여기에 표시됨 -->
           </div>
         </div>
       </section>
