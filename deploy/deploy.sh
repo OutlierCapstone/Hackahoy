@@ -202,6 +202,10 @@ echo "==> [2.9] challenge 6 (jwt-lab) backend rebuild"
   if docker compose version >/dev/null 2>&1; then
     docker compose up -d --build backend
     echo "    -> jwt-lab backend rebuilt with player-isolated accounts"
+    # 정적 서빙 디렉터리는 nginx 의 bind mount 로 결정된다(JWT_LAB_PUBLIC_DIR).
+    # 값이 바뀌어도 컨테이너를 다시 만들지 않으면 옛 디렉터리를 계속 서빙한다.
+    docker compose up -d --force-recreate nginx
+    echo "    -> jwt-lab nginx recreated (serving ${JWT_LAB_PUBLIC_DIR:-public-pixel})"
   else
     echo "    -> docker compose not available; skipped jwt-lab rebuild" >&2
   fi
