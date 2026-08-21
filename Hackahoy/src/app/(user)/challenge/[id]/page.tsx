@@ -24,9 +24,9 @@ const FIXED_PROBLEM_IDS = new Set([1, 2, 3, 4, 5, 6, 7]);
 
 function getBgImage(problem: Problem): string {
   if (FIXED_PROBLEM_IDS.has(problem.id)) {
-    return `/assets/backgrounds/island-${problem.id}.png`;
+    return `/assets/backgrounds/island-${problem.id}.webp`;
   }
-  return `/assets/backgrounds/default-island.png`;
+  return `/assets/backgrounds/default-island.webp`;
 }
 
 function getHintIcon(problem: Problem): string {
