@@ -1,5 +1,5 @@
 // =====================
-// 공통 로그?�웃
+// 공통 로그아웃
 // =====================
 function logout() {
   localStorage.removeItem("token");
@@ -7,7 +7,7 @@ function logout() {
 }
 
 // =====================
-// DOM 준비되�??�행
+// DOM 준비되면 실행
 // =====================
 window.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
@@ -21,7 +21,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== ?�소 ?�언 =====
+  // ===== 요소 선언 =====
   const profile = document.getElementById("user-profile");
   const loginBtn = document.getElementById("loginBtn");
   const accessionBtn = document.getElementById("accessionBtn");
@@ -30,13 +30,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const userProfile = document.getElementById("user-profile");
   const profileMenu = document.getElementById("profileMenu");
 
-  // ===== ?�용???�름 ?�시 =====
+  // ===== 사용자 이름 표시 =====
   const userNameEls = document.querySelectorAll("#user-name, #dash-user-name");
   userNameEls.forEach((el) => {
     el.textContent = payload?.name || "";
   });
 
-  // ===== 로그???�태???�라 UI ?�시 =====
+  // ===== 로그인 상태에 따라 UI 표시 =====
   const toggleDisplay = (el, show) => {
     if (el) el.style.display = show ? "inline-block" : "none";
   };
@@ -51,19 +51,37 @@ window.addEventListener("DOMContentLoaded", () => {
   logoutBtn?.addEventListener("click", logout);
   document.getElementById("logout-btn")?.addEventListener("click", logout);
 
-  // ===== 로그??모달 처리 =====
+  // ===== 로그인 모달 처리 =====
   const loginModal = document.getElementById("loginModal");
   document.getElementById("loginBtn")?.addEventListener("click", () => {
     if (loginModal) loginModal.style.display = "block";
   });
-  document.querySelector(".close-btn")?.addEventListener("click", () => {
-    if (loginModal) loginModal.style.display = "none";
+  // All .close-btn buttons close the modal they belong to.
+  // querySelector (singular) only bound the first X in the document, so the
+  // signup modal X did nothing. Backdrop click also only handled loginModal and
+  // there was no Esc, so the signup modal could not be closed at all.
+  document.querySelectorAll(".close-btn").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const modal = btn.closest(".modal");
+      if (modal) modal.style.display = "none";
+    }),
+  );
+
+  // Esc also closes any open modal.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".modal").forEach((modal) => {
+      if (getComputedStyle(modal).display !== "none") modal.style.display = "none";
+    });
   });
+  // Backdrop click closes whichever modal was clicked, not just loginModal.
   window.addEventListener("click", (e) => {
-    if (e.target === loginModal) loginModal.style.display = "none";
+    if (e.target instanceof Element && e.target.classList.contains("modal")) {
+      e.target.style.display = "none";
+    }
   });
 
-  // ===== ?�원가??모달 =====
+  // ===== 회원가입 모달 =====
   document.querySelectorAll(".signup-btn").forEach((btn) =>
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -72,7 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }),
   );
 
-  // ===== ?�원가??처리 (?�버 ?�동) =====
+  // ===== 회원가입 처리 (서버 연동) =====
   document.getElementById("signup-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     const email = document.getElementById("signup-email").value.trim();
@@ -92,15 +110,15 @@ window.addEventListener("DOMContentLoaded", () => {
           alert(data.message);
           document.getElementById("signupModal").style.display = "none";
         } else {
-          alert(data.error || "?�원가???�패");
+          alert(data.error || "회원가입 실패");
         }
       })
       .catch((err) => {
-        console.error("?�원가???�류", err);
+        console.error("회원가입 오류", err);
       });
   });
 
-  // ===== 로그??처리 =====
+  // ===== 로그인 처리 =====
   document.getElementById("login-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value.trim();
@@ -115,19 +133,19 @@ window.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         if (data.token) {
           localStorage.setItem("token", data.token);
-          alert("로그???�공!");
+          alert("로그인 성공!");
           document.getElementById("loginModal").style.display = "none";
           window.location.href = "dashboard";
         } else {
-          alert(data.error || "로그???�패");
+          alert(data.error || "로그인 실패");
         }
       })
       .catch((err) => {
-        console.error("로그???�류", err);
+        console.error("로그인 오류", err);
       });
   });
 
-  // ===== ?�롭?�운 =====
+  // ===== 드롭다운 =====
   userProfile?.addEventListener("click", (e) => {
     e.stopPropagation();
     if (profileMenu)
@@ -140,16 +158,16 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =====================
-  // ?�?�보??기능
+  // 대시보드 기능
   // =====================
   if (window.location.pathname.includes("dashboard")) {
     if (!token) {
-      alert("로그?�이 ?�요?�니??");
+      alert("로그인이 필요합니다.");
       window.location.href = "index";
       return;
     }
 
-    //관리자???�만 /admin ?�청
+    //관리자일 때만 /admin 요청
     if (payload.role === "admin") {
       fetch("/admin", {
         headers: { Authorization: `Bearer ${token}` },
@@ -182,11 +200,11 @@ window.addEventListener("DOMContentLoaded", () => {
           }
         })
         .catch((err) => {
-          console.warn("관리자 ?�님 ?�는 ?�증 ?�패", err);
+          console.warn("관리자 아님 또는 인증 실패", err);
         });
     }
 
-    // ?�스???�록
+    // 태스크 등록
     document
       .getElementById("create-task-btn")
       ?.addEventListener("click", () => {
@@ -212,7 +230,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const taskMessage = document.getElementById("taskMessage");
 
       if (!title || !description) {
-        taskMessage.textContent = "모든 ??��???�력?�주?�요.";
+        taskMessage.textContent = "모든 항목을 입력해주세요.";
         return;
       }
 
@@ -243,7 +261,7 @@ window.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("tasks_current", JSON.stringify(tasks));
     });
 
-    // ?�?�된 ?�스??로딩
+    // 저장된 태스크 로딩
     const saved = JSON.parse(localStorage.getItem("tasks_current") || "[]");
     saved.forEach((text) => {
       const li = document.createElement("li");
