@@ -106,7 +106,23 @@ export default function ChallengePage() {
 
   const [aiHint, setAiHint] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  // 마지막으로 받은 힌트가 오류 안내인지 실제 힌트인지 구분한다.
+  // 실제 힌트면 다시 요청하지 않고 그대로 다시 보여준다(중복 차감 방지).
+  const [aiHintIsError, setAiHintIsError] = useState(false);
+  // 로딩이 멈춘 것처럼 보이지 않도록 경과 시간을 초 단위로 보여준다.
+  const [hintElapsed, setHintElapsed] = useState(0);
   const router = useRouter();
+
+  // 힌트 생성 중에는 경과 초를 1초마다 갱신한다.
+  useEffect(() => {
+    if (!isAiLoading) return;
+    setHintElapsed(0);
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setHintElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [isAiLoading]);
 
   const saveUserLog = useCallback(async (type: 'VISIT' | 'SUBMIT' | 'HINT', data: any = {}) => {
     try {
@@ -229,10 +245,22 @@ export default function ChallengePage() {
 
   // 3. AI 힌트
   const handleHintClick = async () => {
-    if (!problem || isAiLoading) return;
-    setIsAiLoading(true);
+    if (!problem) return;
+
+    // 항상 모달은 연다.
     setHintOpen(true);
+
+    // 이미 요청이 진행 중이면 모달만 다시 열고 새로 요청하지 않는다.
+    // (느려서 닫았다가 다시 눌러도 중복 요청/차감이 없다.)
+    if (isAiLoading) return;
+
+    // 이미 받아 둔 정상 힌트가 있으면 다시 요청하지 않고 그대로 보여준다.
+    // 힌트를 받고도 모달을 닫아 놓쳤던 사용자가, 다시 열면 차감 없이 그 힌트를 본다.
+    if (aiHint && !aiHintIsError) return;
+
+    setIsAiLoading(true);
     setAiHint(null);
+    setAiHintIsError(false);
 
     saveUserLog('HINT', { input: flagInput });
 
@@ -255,8 +283,10 @@ export default function ChallengePage() {
         throw new Error('AI tutor returned an empty hint');
       }
       setAiHint(hint);
+      setAiHintIsError(false);
     } catch (err) {
       console.error("힌트 에러:", err);
+      setAiHintIsError(true);
       setAiHint(
         err instanceof DOMException && err.name === 'AbortError'
           ? 'AI 튜터 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.'
@@ -333,7 +363,6 @@ export default function ChallengePage() {
             type="button"
             className={styles.hintBtn}
             onClick={handleHintClick}
-            disabled={isAiLoading}
             aria-label="AI 튜터 힌트 열기"
           >
             <Image src={getHintIcon(problem)} alt="" width={260} height={320} />
@@ -356,7 +385,9 @@ export default function ChallengePage() {
             </div>
             <div className={styles.modalBody}>
               <p className={styles.modalText}>
-                {isAiLoading ? "AI 분석 중... 최대 45초 정도 걸릴 수 있습니다." : (aiHint || problem.hint || "힌트가 없습니다.")}
+                {isAiLoading
+                  ? `AI가 힌트를 분석하고 있어요. 최대 1분 정도 걸릴 수 있어요. (${hintElapsed}초 경과)`
+                  : (aiHint || problem.hint || "힌트가 없습니다.")}
               </p>
             </div>
             <div className={styles.modalFooter}>
