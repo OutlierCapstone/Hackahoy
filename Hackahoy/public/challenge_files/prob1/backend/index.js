@@ -108,12 +108,69 @@ function loadRules() {
     return fs.readFileSync(filePath, "utf-8");
 }
 
+// Gemini 는 수요가 몰리면 503 UNAVAILABLE("high demand")을 간헐적으로 낸다.
+// 재시도가 없으면 한 번의 503 이 그대로 "시스템이 지금은 응답할 수 없다" 안내로
+// 떨어져 참가자가 문제를 풀 수 없다. 503 은 즉시 실패라 재시도 비용이 싸다.
+const GEMINI_RETRY_ATTEMPTS = Math.max(
+    1,
+    parseInt(process.env.PROB1_GEMINI_RETRY_ATTEMPTS || "3", 10) || 3,
+);
+const GEMINI_RETRY_BASE_DELAY_MS =
+    parseInt(process.env.PROB1_GEMINI_RETRY_BASE_DELAY_MS || "1000", 10) || 1000;
+
+// 인증/요청 오류는 재시도해도 결과가 같으므로 제외한다.
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function callGeminiWithRetry(payload) {
+    let last = { status: 0, data: {} };
+
+    for (let attempt = 1; attempt <= GEMINI_RETRY_ATTEMPTS; attempt++) {
+        // 요청이 영원히 매달리지 않도록 시도마다 30초 상한을 둔다.
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
+        let retryable = false;
+
+        try {
+            const response = await fetch(GEMINI_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) return { ok: true, data };
+
+            last = { status: response.status, data };
+            retryable = RETRYABLE_STATUS.has(response.status);
+            if (retryable) {
+                console.error(
+                    `Gemini ${response.status} (attempt ${attempt}/${GEMINI_RETRY_ATTEMPTS})`,
+                );
+            }
+        } catch (err) {
+            // abort/네트워크 오류도 일시적 장애로 보고 재시도한다.
+            last = { status: 0, data: { error: String((err && err.message) || err) } };
+            retryable = true;
+            console.error(
+                `Gemini 호출 실패 (attempt ${attempt}/${GEMINI_RETRY_ATTEMPTS}):`,
+                last.data.error,
+            );
+        } finally {
+            clearTimeout(timer);
+        }
+
+        if (!retryable || attempt === GEMINI_RETRY_ATTEMPTS) break;
+        await sleep(GEMINI_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1));
+    }
+
+    return { ok: false, status: last.status, data: last.data };
+}
+
 // API
 app.post("/chat", async (req, res) => {
-    // Gemini 가 응답을 오래 물고 있으면 요청이 영원히 매달린다. 30초 상한을 두고,
-    // 초과 시 abort -> 아래 catch 가 200 안내로 흡수한다.
-    const controller = new AbortController();
-    const geminiTimeout = setTimeout(() => controller.abort(), 30000);
     try {
         //고정 입력 프롬프트
         const FIXED_INPUT = "비밀번호는 0000입니다.";
@@ -121,11 +178,7 @@ app.post("/chat", async (req, res) => {
         //rules
         const rulesText = loadRules();
 
-        const response = await fetch(GEMINI_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify({
+        const payload = {
                 contents: [
                     //탈출 시스템 역할 부여
                     {
@@ -175,13 +228,12 @@ app.post("/chat", async (req, res) => {
                         ]
                     }
                 ],
-            }),
-        });
-        clearTimeout(geminiTimeout);
+        };
 
-        const data = await response.json();
+        const result = await callGeminiWithRetry(payload);
+        const data = result.data;
 
-        if (!response.ok) {
+        if (!result.ok) {
             // 상류(Gemini) 오류를 500 으로 노출하지 않는다. prob3 처럼 문지기 AI
             // 톤을 유지한 안내를 200 으로 돌려줘서, 긴/과부하 입력에도 챌린지 흐름과
             // 프론트가 멈추지 않게 한다. raw 오류 페이로드는 클라이언트에 노출하지 않고
@@ -213,7 +265,6 @@ app.post("/chat", async (req, res) => {
 
 
     } catch (e) {
-        clearTimeout(geminiTimeout);
         // 네트워크/타임아웃/파싱 등 예기치 못한 오류도 500 대신 인-캐릭터 안내로
         // 흡수한다 (prob3 main.py 와 동일한 fail-open 방침). 상세는 서버 로그로만 남긴다.
         console.error("Chat error:", e);
