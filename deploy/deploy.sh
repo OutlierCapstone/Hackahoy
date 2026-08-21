@@ -162,6 +162,13 @@ echo "==> [2.7] challenge 5 build"
   npm run build
 )
 
+echo "==> [2.8] challenge 2 build"
+(
+  cd Hackahoy/public/challenge_files/prob2
+  npm ci
+  npm run build
+)
+
 echo "==> [2.6] prisma migrate"
 npx prisma migrate deploy
 npx prisma generate
@@ -220,6 +227,16 @@ if [[ "$PROB5_PID" =~ ^[1-9][0-9]*$ ]]; then
   echo "    -> prob5-fe restarted with player-isolated state"
 else
   echo "    -> prob5-fe is not registered in PM2; skipped restart"
+fi
+
+# prob2 도 challenge 내부 계정을 프로세스 메모리에 보관한다. 새 빌드를 로드하면서
+# 이전 공용 mockUserDB 에 남아 있던 다른 플레이어의 계정도 함께 제거한다.
+PROB2_PID=$(pm2 pid prob2-fe 2>/dev/null || true)
+if [[ "$PROB2_PID" =~ ^[1-9][0-9]*$ ]]; then
+  pm2 restart prob2-fe
+  echo "    -> prob2-fe restarted with player-isolated accounts"
+else
+  echo "    -> prob2-fe is not registered in PM2; skipped restart"
 fi
 pm2 save
 

@@ -1,12 +1,38 @@
-const globalAny: any = global;
+// challenge 내부 계정 저장소를 플레이어 키별로 분리한다.
+// 이전에는 global.mockUserDB 하나를 모든 참가자가 공유해서, 한 사람이 어떤 ID로
+// 가입하면 다른 사람은 같은 ID로 가입할 수 없고 남의 계정으로 로그인까지 됐다.
+// 의도된 IDOR(/api/missions?userId=captain 으로 captain 임무와 flag 열람)은 그대로 둔다.
+export type UserDb = Record<string, string>;
 
-if (!globalAny.mockUserDB) {
-  globalAny.mockUserDB = {
-    captain: "hackahoy{ID0R_Capta1n_Secr3t}",
-  };
+const MAX_PLAYER_STATES = 5000;
+
+// captain 계정은 플레이어마다 동일하게 seed 한다. captain 의 비밀번호가 곧 flag 이며
+// 이는 문제 설계의 일부다.
+const createInitialUserDb = (): UserDb => ({
+  captain: "hackahoy{ID0R_Capta1n_Secr3t}",
+});
+
+declare global {
+  var prob2PlayerUserDbs: Map<string, UserDb> | undefined;
 }
 
-export const USER_DB = globalAny.mockUserDB;
+// Next.js 가 API route 를 별도 번들로 로드해도 같은 프로세스에서는 하나의 맵을 쓴다.
+const playerUserDbs = (globalThis.prob2PlayerUserDbs ??= new Map<string, UserDb>());
+
+export function getUserDb(playerKey: string): UserDb {
+  const existing = playerUserDbs.get(playerKey);
+  if (existing) return existing;
+
+  const db = createInitialUserDb();
+  playerUserDbs.set(playerKey, db);
+
+  if (playerUserDbs.size > MAX_PLAYER_STATES) {
+    const oldestKey = playerUserDbs.keys().next().value;
+    if (oldestKey !== undefined) playerUserDbs.delete(oldestKey);
+  }
+
+  return db;
+}
 
 export const MISSION_DB: Record<string, any[]> = {
   // 일반 사용자
