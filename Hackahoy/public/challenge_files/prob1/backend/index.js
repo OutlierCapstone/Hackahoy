@@ -17,20 +17,56 @@ app.use(express.json());
 const MAX_DOCS = 5000; // 메모리 상한. 초과 시 가장 오래된 항목부터 제거(단순 FIFO)
 const documents = new Map();
 
-function getUid(req) {
+const { randomUUID } = require("crypto");
+
+const ANON_COOKIE = "prob1-session";
+const ANON_COOKIE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+function readCookie(req, name) {
     const raw = req.headers && req.headers.cookie ? req.headers.cookie : "";
     for (const part of raw.split(";")) {
         const eq = part.indexOf("=");
         if (eq < 0) continue;
-        if (part.slice(0, eq).trim() === "uid") {
-            try {
-                return decodeURIComponent(part.slice(eq + 1).trim());
-            } catch (_) {
-                return part.slice(eq + 1).trim();
-            }
+        if (part.slice(0, eq).trim() !== name) continue;
+        try {
+            return decodeURIComponent(part.slice(eq + 1).trim());
+        } catch (_) {
+            return part.slice(eq + 1).trim();
         }
     }
-    return "__anon__";
+    return undefined;
+}
+
+// uid 가 없는 접속자(챌린지에 직접 들어온 경우)는 예전에 전부 "__anon__" 한 버킷을
+// 공유해서 서로의 문서를 덮어썼다. 플랫폼 uid 경로는 그대로 두고, 이 경우에만
+// 요청마다 무작위 fallback 쿠키를 발급해 세션 단위로 분리한다.
+app.use((req, res, next) => {
+    const platformUid = (readCookie(req, "uid") || "").trim();
+    if (platformUid) {
+        req.playerKey = platformUid;
+        return next();
+    }
+
+    const existing = readCookie(req, ANON_COOKIE);
+    if (existing && ANON_COOKIE_PATTERN.test(existing)) {
+        req.playerKey = "anon:" + existing;
+        return next();
+    }
+
+    const issued = randomUUID();
+    res.cookie(ANON_COOKIE, issued, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 24 * 60 * 60 * 1000,
+    });
+    req.playerKey = "anon:" + issued;
+    return next();
+});
+
+function getUid(req) {
+    return req.playerKey || "__anon__";
 }
 
 function getDoc(req) {
