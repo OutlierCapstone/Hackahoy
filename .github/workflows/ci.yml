@@ -17,6 +17,9 @@ jobs:
       - name: Build challenge 5 (player state isolation)
         working-directory: Hackahoy/public/challenge_files/prob5/frontend
         run: npm ci && npm run build
+      - name: Build challenge 2 (player account isolation)
+        working-directory: Hackahoy/public/challenge_files/prob2
+        run: npm ci && npm run build
       - name: Lint (정보용, 실패해도 머지 막지 않음)
         run: npm run lint || true
 
