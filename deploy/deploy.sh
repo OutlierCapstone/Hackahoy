@@ -169,6 +169,20 @@ echo "==> [2.8] challenge 2 build"
   npm run build
 )
 
+# challenge 6(jwt-lab)은 pm2 가 아니라 docker compose 로 뜬다. 백엔드 코드가 이미지에
+# 구워지므로 재빌드하지 않으면 새 코드가 반영되지 않는다. 재빌드 과정에서 이전 공용
+# users 배열에 남아 있던 다른 플레이어의 계정도 함께 사라진다.
+echo "==> [2.9] challenge 6 (jwt-lab) backend rebuild"
+(
+  cd Hackahoy/public/challenge_files/prob6/jwt-lab
+  if docker compose version >/dev/null 2>&1; then
+    docker compose up -d --build backend
+    echo "    -> jwt-lab backend rebuilt with player-isolated accounts"
+  else
+    echo "    -> docker compose not available; skipped jwt-lab rebuild" >&2
+  fi
+)
+
 echo "==> [2.6] prisma migrate"
 npx prisma migrate deploy
 npx prisma generate
