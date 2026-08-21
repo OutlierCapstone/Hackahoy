@@ -303,8 +303,11 @@ h1, h2, h3 {
   right: 12px;
   width: 34px;
   height: 34px;
-  font-family: var(--font);
-  font-size: 20px;
+  /* 픽셀 폰트(NeoDGM)에는 × (U+00D7) 글리프가 없어 닫기 버튼이 깨진 박스로
+     떴다. 이 버튼의 × 만 시스템 폰트로 렌더한다. */
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-size: 22px;
+  font-weight: bold;
   line-height: 1;
   color: var(--text);
   background: #4a3a22;
