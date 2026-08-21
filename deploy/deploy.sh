@@ -155,6 +155,13 @@ echo "==> [2.5] 프론트 빌드 (Next.js)"
   fi
 )
 
+echo "==> [2.7] challenge 5 build"
+(
+  cd Hackahoy/public/challenge_files/prob5/frontend
+  npm ci
+  npm run build
+)
+
 echo "==> [2.6] prisma migrate"
 npx prisma migrate deploy
 npx prisma generate
@@ -203,6 +210,16 @@ if [[ "$PROB1_PID" =~ ^[1-9][0-9]*$ ]]; then
   echo "    -> prob1-be restarted with synchronized configuration"
 else
   echo "    -> prob1-be is not registered in PM2; skipped restart"
+fi
+
+# prob5는 플레이어별 상태를 프로세스 메모리에 보관한다. 새 빌드를 로드하면서
+# 이전 공용 배열에 남은 다른 플레이어의 오염 데이터도 함께 제거한다.
+PROB5_PID=$(pm2 pid prob5-fe 2>/dev/null || true)
+if [[ "$PROB5_PID" =~ ^[1-9][0-9]*$ ]]; then
+  pm2 restart prob5-fe
+  echo "    -> prob5-fe restarted with player-isolated state"
+else
+  echo "    -> prob5-fe is not registered in PM2; skipped restart"
 fi
 pm2 save
 

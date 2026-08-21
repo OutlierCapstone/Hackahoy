@@ -1,29 +1,37 @@
 // src/app/api/cargos/update/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
+import { getPlayerSession, jsonForPlayer } from '@/lib/player-session';
 
-export async function POST(request: Request) {
+const MAX_DESTINATION_LENGTH = 64;
+
+export async function POST(request: NextRequest) {
+  const session = getPlayerSession(request);
+
   try {
     const body = await request.json();
     const { cargo_id, destination } = body;
 
-    const trimmedDestination = destination?.trim();
-
-    if (!cargo_id || !trimmedDestination) {
-      return NextResponse.json({ message: '위치를 정확히 입력해주세요.' }, { status: 400 });
+    if (typeof cargo_id !== 'string' || typeof destination !== 'string') {
+      return jsonForPlayer(session, { message: '화물과 위치를 문자열로 입력해주세요.' }, { status: 400 });
     }
 
-    // DB 업데이트 
-    const success = db.updateCargoDestination(cargo_id, trimmedDestination);
+    const trimmedCargoId = cargo_id.trim();
+    const trimmedDestination = destination.trim();
+    if (!trimmedCargoId || !trimmedDestination || trimmedDestination.length > MAX_DESTINATION_LENGTH) {
+      return jsonForPlayer(session, { message: '위치는 1자 이상 64자 이하로 입력해주세요.' }, { status: 400 });
+    }
+
+    const success = db.updateCargoDestination(session.key, trimmedCargoId, trimmedDestination);
 
     if (success) {
-      return NextResponse.json({ message: '배송지가 변경되었습니다.' }, { status: 200 });
+      return jsonForPlayer(session, { message: '배송지가 변경되었습니다.' }, { status: 200 });
     } else {
-      return NextResponse.json({ message: '화물을 찾을 수 없습니다.' }, { status: 404 });
+      return jsonForPlayer(session, { message: '화물을 찾을 수 없습니다.' }, { status: 404 });
     }
 
   } catch (error) {
     console.error("Update API Error:", error);
-    return NextResponse.json({ message: '서버 에러가 발생했습니다.' }, { status: 500 });
+    return jsonForPlayer(session, { message: '서버 에러가 발생했습니다.' }, { status: 500 });
   }
 }

@@ -1,25 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { getPlayerSession, jsonForPlayer } from "@/lib/player-session";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const session = getPlayerSession(req);
+
   try {
     const body = await req.json();
     const { id, pwd } = body;
 
     if (!id || !pwd) {
-      return NextResponse.json({ message: "아이디와 비밀번호를 입력해주세요." }, { status: 400 });
+      return jsonForPlayer(session, { message: "아이디와 비밀번호를 입력해주세요." }, { status: 400 });
     }
 
-    const existingUser = db.getUser(id);
+    const existingUser = db.getUser(session.key, id);
     if (existingUser) {
-      return NextResponse.json({ message: "이미 존재하는 아이디입니다." }, { status: 409 });
+      return jsonForPlayer(session, { message: "이미 존재하는 아이디입니다." }, { status: 409 });
     }
 
-    db.createUser(id, pwd);
+    db.createUser(session.key, id, pwd);
 
-    return NextResponse.json({ message: "회원가입 성공" }, { status: 201 });
+    return jsonForPlayer(session, { message: "회원가입 성공" }, { status: 201 });
 
   } catch (error) {
-    return NextResponse.json({ message: "서버 오류" }, { status: 500 });
+    return jsonForPlayer(session, { message: "서버 오류" }, { status: 500 });
   }
 }
