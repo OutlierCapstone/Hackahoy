@@ -200,7 +200,7 @@ window.addEventListener("DOMContentLoaded", () => {
           }
         })
         .catch((err) => {
-          console.warn("관리자 아님 또는 인증 실패", err);
+          console.warn("관리자 등급이 아니거나 출입증이 유효하지 않음", err);
         });
     }
 
