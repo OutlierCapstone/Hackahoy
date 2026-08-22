@@ -3,11 +3,10 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* 게임 UI는 고정된 밝은 배경 아트를 사용하므로 light 스킴으로 고정한다.
+   (다크모드 자동 반전 시 textarea 등 글자색이 흰색이 되어 안 보이는 문제 방지) */
+html {
+  color-scheme: light;
 }
 
 html,
@@ -33,12 +32,6 @@ body {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }
 
 @font-face {
