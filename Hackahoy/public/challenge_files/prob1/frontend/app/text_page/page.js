@@ -85,6 +85,7 @@ export default function TextPage() {
                         border: 'none',
                         backgroundColor: 'transparent',
                         fontSize: '28px',
+                        color: '#171717',
                         paddingTop: '40px',
                         paddingLeft: '40px',
                         outline: 'none',
