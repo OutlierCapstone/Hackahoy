@@ -252,6 +252,22 @@ def _fmt_bytes(n) -> str:
     return f"{n/1024:.1f}KB" if n >= 1024 else f"{n}B"
 
 
+# AI 튜터/힌트 자체 요청은 챌린지 시도가 아니라 메타 트래픽이다.
+# 컨텍스트에 섞이면 LLM 이 튜터의 자기 엔드포인트(/api/ai/hint)를 공격 대상으로
+# 오인해 "힌트 API 파라미터를 확인하라" 같은 엉뚱한 힌트를 만든다.
+# 1차 방어는 백엔드 getDebugContext 이지만, 어느 호출자가 넘겨도 견고하도록 여기서도 막는다.
+# (NestJS 쪽 NON_ATTEMPT_PATTERNS 와 동일 기준. 챌린지 공격면 /api/chat 은 걸리지 않는다.)
+_META_REQUEST_PATTERNS = [
+    re.compile(r"ai[-/]?tutor", re.IGNORECASE),
+    re.compile(r"/api/ai/", re.IGNORECASE),
+    re.compile(r"/hint\b", re.IGNORECASE),
+]
+
+
+def _is_meta_request(header: str) -> bool:
+    return any(p.search(header) for p in _META_REQUEST_PATTERNS)
+
+
 def distill_logs(logs: list[LogEntry]) -> tuple[str, list[str]]:
     """
     raw 로그 -> 사람이 읽을 수 있는 압축 이벤트 + 감지된 기법 목록.
@@ -263,6 +279,8 @@ def distill_logs(logs: list[LogEntry]) -> tuple[str, list[str]]:
     collapsed = []
     for log in logs[-MAX_LOGS:]:
         header = _decode(getattr(log, "header", "")) or "UNKNOWN"
+        if _is_meta_request(header):
+            continue
         payload = _decode(getattr(log, "body", None))
         status = getattr(log, "status", None)
         size = getattr(log, "resp_bytes", None)
@@ -274,6 +292,11 @@ def distill_logs(logs: list[LogEntry]) -> tuple[str, list[str]]:
         collapsed.append({"key": key, "count": 1,
                           "header": header, "payload": payload,
                           "status": status, "size": size})
+
+    # 메타 요청을 걸러내고 나면 남는 시도가 없을 수 있다(예: 힌트 버튼만 누른 경우).
+    # 빈 문자열을 쿼리로 흘리지 않도록 "기록 없음"으로 처리한다.
+    if not collapsed:
+        return "요청 기록 없음", []
 
     all_techniques: list[str] = []
     lines = []

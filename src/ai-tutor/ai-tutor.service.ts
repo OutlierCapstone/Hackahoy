@@ -333,6 +333,16 @@ export class AiTutorService {
         header = `${header}?${(l as any).query}`;
       }
 
+      // AI 튜터/힌트 자체 요청은 챌린지 시도가 아니라 메타 트래픽이다.
+      // 이걸 로그에 실어 힌트 생성기로 넘기면, LLM 이 튜터 자신의 엔드포인트
+      // (/api/ai/hint)를 공격 대상으로 오인해 "힌트 API 파라미터를 확인하라"는
+      // 엉뚱한 힌트를 만든다(prob3 프롬프트 인젝션 문제에서 실제 발생).
+      // 게이트(countMeaningfulAttempts)와 동일 기준으로 컨텍스트에서도 제외한다.
+      // prob3 의 실제 공격면 /api/chat 은 이 패턴에 걸리지 않아 그대로 남는다.
+      if (NON_ATTEMPT_PATTERNS.some((re) => re.test(header))) {
+        continue;
+      }
+
       entries.push({
         at: l.createdAt,
         timestamp: this.formatDate(l.createdAt),
