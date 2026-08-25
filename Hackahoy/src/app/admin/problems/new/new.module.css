@@ -15,7 +15,7 @@
 .board {
   width: min(800px, 92vw);
   /* 보드 자체의 최대 높이를 화면의 85%로 제한하여 화면 이탈 방지 */
-  max-height: 85vh; 
+  max-height: 85vh;
   padding: 24px 28px;
   position: relative;
 
@@ -28,7 +28,7 @@
     0 16px 40px rgba(0, 0, 0, 0.45);
 
   font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
-  
+
   /* 내부 요소(Title, Form, Footer)를 세로로 정렬 */
   display: flex;
   flex-direction: column;
@@ -36,16 +36,25 @@
 
 .closeBtn {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
 
-  background: none;
-  border: none;
-  padding: 0;
+  width: 36px;
+  height: 34px;
+  padding: 2px 0 0;
+  display: inline-grid;
+  place-items: center;
+  background: linear-gradient(#ffd98a 0 3px, transparent 3px), #eaa64a;
+  border: 3px solid #6e3a10;
+  border-radius: 6px;
+  box-shadow:
+    0 3px 0 #6e3a10,
+    0 3px 0 2px #2a180c;
 
-  font-size: 24px;
-  font-weight: 600;
-  color: #5a2e0f;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  color: #3a210f;
 
   cursor: pointer;
   line-height: 1;
@@ -53,8 +62,21 @@
 }
 
 .closeBtn:active {
-  transform: translateY(0px);
-  filter: brightness(0.98);
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #6e3a10,
+    0 1px 0 2px #2a180c;
+}
+
+.closeBtn:hover,
+.catBtn:hover {
+  filter: brightness(1.06);
+}
+
+.closeBtn:focus-visible,
+.catBtn:focus-visible {
+  outline: 3px solid #ffcf67;
+  outline-offset: 3px;
 }
 
 .title {
@@ -77,7 +99,7 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
-  
+
   /* 입력창이 많아질 경우 내부에서만 스크롤 발생 */
   overflow-y: auto;
   padding-right: 10px;
@@ -199,24 +221,37 @@
 
 .catBtn {
   flex: 1;
-  padding: 8px;
-  border: 2px solid #5a382a;
-  background-color: #fdf6e3;
-  color: #5a382a;
-  font-family: inherit;
-  font-weight: bold;
+  height: 36px;
+  padding: 2px 18px 0;
+  border: 3px solid #6e3a10;
+  border-radius: 6px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.12) 0 3px, transparent 3px), #183750;
+  box-shadow:
+    0 3px 0 #6e3a10,
+    0 3px 0 2px #2a180c;
+  color: #f7dd9b;
+  font-family:
+    'Press Start 2P', 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+  font-size: 11px;
+  line-height: 1;
   cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease,
+    filter 0.1s ease;
 }
 
 .catBtnActive {
-  background-color: #5a382a;
-  color: #ffffff;
+  background: linear-gradient(#ffd98a 0 3px, transparent 3px), #eaa64a;
+  color: #3a210f;
 }
 
-.catBtn:hover {
-  filter: brightness(0.95);
+.catBtn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #6e3a10,
+    0 1px 0 2px #2a180c;
 }
 
 .errorBanner {

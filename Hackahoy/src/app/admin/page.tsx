@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './admin.module.css';
 import { listUsers, setUserBanned, AdminUser } from '@/lib/api/admin';
 import axios from 'axios';
-import { API_BASE_URL } from "@/lib/api/config";
+import { API_BASE_URL } from '@/lib/api/config';
 
 type Role = 'ADMIN' | 'USER';
 
@@ -82,23 +82,14 @@ export default function AdminPage() {
     <section className={styles.board}>
       <div className={styles.headRow}>
         <div className={styles.title}>Admin</div>
-        <div
-          className={styles.topRightActions}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-        >
-          {/* 종 모양 아이콘 추가 */}
+        <div className={styles.topRightActions}>
           <button
             type="button"
             className={styles.bellBtn}
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            onClick={() => router.push('/admin/notifications')} // 이 부분 추가
+            onClick={() => router.push('/admin/notifications')}
+            aria-label="보안 알림 보기"
           >
-            <Image
-              src="/assets/ui/bell.png"
-              alt="Notifications"
-              width={40}
-              height={40}
-            />
+            <Image src="/assets/ui/bell.png" alt="" width={28} height={28} />
           </button>
 
           <div className={styles.searchWrap}>
@@ -138,10 +129,15 @@ export default function AdminPage() {
               <div className={styles.cell}>
                 <button
                   type="button"
-                  className={styles.roleBtn}
+                  className={`${styles.roleBtn} ${
+                    r.role === 'ADMIN' ? styles.roleAdmin : styles.roleUser
+                  }`}
                   onClick={() => toggleRole(r.id)}
+                  aria-label={`${r.nickname} 권한 변경`}
+                  aria-pressed={r.role === 'ADMIN'}
                 >
-                  {r.role === 'ADMIN' ? 'Admin' : 'User'} <span>↕</span>
+                  {r.role === 'ADMIN' ? 'ADMIN' : 'USER'}
+                  <span className={styles.toggleMark}>↕</span>
                 </button>
               </div>
               <div className={styles.cell}>
@@ -149,9 +145,12 @@ export default function AdminPage() {
                   type="button"
                   className={styles.banBox}
                   onClick={() => handleToggleBanned(r.id, r.banned)}
-                  aria-label={`toggle ban ${r.nickname}`}
+                  aria-label={`${r.nickname} 차단 상태 변경`}
+                  aria-pressed={r.banned}
                 >
-                  {r.banned ? <span className={styles.check}>✓</span> : null}
+                  <span className={r.banned ? styles.banned : styles.active}>
+                    {r.banned ? 'BANNED' : 'ACTIVE'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -171,16 +170,10 @@ export default function AdminPage() {
       <div className={styles.footer}>
         <button
           type="button"
-          className={styles.createBtn}
+          className="pixel-btn"
           onClick={() => router.push('/admin/problems/select')}
         >
-          <Image
-            src="/assets/ui/createproblem.png"
-            alt="CREATE PROBLEM"
-            width={160}
-            height={90}
-            priority
-          />
+          CREATE PROBLEM
         </button>
 
         <div className={styles.pager}>
@@ -189,6 +182,7 @@ export default function AdminPage() {
             className={`${styles.pagerIconBtn} ${styles.pagerLeft}`}
             onClick={goPrev}
             disabled={safePage <= 1}
+            aria-label="이전 페이지"
           />
           <div className={styles.pageText}>
             {safePage} / {totalPages}
@@ -198,17 +192,12 @@ export default function AdminPage() {
             className={`${styles.pagerIconBtn} ${styles.pagerRight}`}
             onClick={goNext}
             disabled={safePage >= totalPages}
+            aria-label="다음 페이지"
           />
         </div>
 
-        <button type="button" className={styles.saveBtn} onClick={onSave}>
-          <Image
-            src="/assets/ui/save.png"
-            alt="SAVE"
-            width={160}
-            height={90}
-            priority
-          />
+        <button type="button" className="pixel-btn" onClick={onSave}>
+          SAVE
         </button>
       </div>
     </section>

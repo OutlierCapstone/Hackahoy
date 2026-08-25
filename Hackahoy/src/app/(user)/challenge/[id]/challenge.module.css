@@ -98,7 +98,7 @@
 
 .input {
   width: min(420px, 60vw);
-  height: 40px;
+  height: 34px;
   padding: 0 14px;
 
   border-radius: 8px;
@@ -126,13 +126,10 @@
   color: #8b1111;
 }
 
-/* FLAG 버튼 */
+/* FLAG 버튼 — 공용 .pixel-btn 을 쓰되 입력창과 나란히 서므로 높이만 맞춘다.
+   (전역 .pixel-btn 높이 44px 와 동일) */
 .flagBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  line-height: 0;
+  min-width: 96px;
 }
 
 /* 힌트 클릭 버튼 */

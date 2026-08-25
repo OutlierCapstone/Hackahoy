@@ -128,15 +128,10 @@ export default function MyPage() {
             {/* 추가된 챌린지 리스트 버튼 */}
             <button
               type="button"
-              className={styles.challengeButton}
-              onClick={() => router.push('/challengelist')} // 챌린지 페이지 경로에 맞게 수정하세요
+              className={`pixel-btn ${styles.challengeButton}`}
+              onClick={() => router.push('/challengelist')}
             >
-              <Image
-                src="/assets/ui/challengelist.png"
-                alt="CHALLENGE LIST"
-                width={180} // 이미지 크기에 맞춰 조절
-                height={60}
-              />
+              CHALLENGE LIST
             </button>
           </section>
 
@@ -195,30 +190,20 @@ export default function MyPage() {
             <div className={styles.buttonsRow}>
               <button
                 type="button"
-                className={styles.iconButton}
+                className="pixel-btn pixel-btn--danger"
                 onClick={handleUnsubscribe}
               >
-                <Image
-                  src="/assets/ui/unsubscribe.png"
-                  alt="UNSUBSCRIBE"
-                  width={188}
-                  height={80}
-                />
+                회원 탈퇴
               </button>
 
               <button
                 type="button"
-                className={styles.iconButton}
+                className="pixel-btn"
                 onClick={handleSave}
                 disabled={!nickname.trim()}
                 aria-label="닉네임 저장"
               >
-                <Image
-                  src="/assets/ui/save.png"
-                  alt="SAVE"
-                  width={96}
-                  height={80}
-                />
+                SAVE
               </button>
             </div>
           </section>

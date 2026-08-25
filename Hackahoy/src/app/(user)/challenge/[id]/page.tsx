@@ -339,11 +339,11 @@ export default function ChallengePage() {
               />
               <button
                 type="submit"
-                className={styles.flagBtn}
+                className={`pixel-btn ${styles.flagBtn}`}
                 disabled={submitting || Boolean(problem.solved)}
                 aria-label="flag 제출"
               >
-                <Image src="/assets/ui/flag.png" alt="" width={94} height={70} />
+                FLAG
               </button>
             </form>
             <p
@@ -391,7 +391,7 @@ export default function ChallengePage() {
               </p>
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.okBtn} onClick={() => setHintOpen(false)}>확인</button>
+              <button type="button" className="pixel-btn pixel-btn--sm" onClick={() => setHintOpen(false)}>확인</button>
             </div>
           </div>
         </div>
