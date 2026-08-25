@@ -1,11 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import { FormEvent, useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './new.module.css';
 import axios from 'axios';
-import { API_BASE_URL } from "@/lib/api/config";
+import { API_BASE_URL } from '@/lib/api/config';
 
 function toPinId(v: string | null): number | null {
   if (!v) return null;
@@ -60,13 +59,17 @@ function AdminCreateProblemContent() {
     }
 
     if (!rawFlag.startsWith('hackahoy{') || !rawFlag.endsWith('}')) {
-      setError('Flag 형식이 올바르지 않습니다. hackahoy{...} 형식으로 입력해주세요.');
+      setError(
+        'Flag 형식이 올바르지 않습니다. hackahoy{...} 형식으로 입력해주세요.',
+      );
       setLoading(false);
       return;
     }
 
     if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
-      setError('서버 URL 형식이 올바르지 않습니다. http:// 또는 https://로 시작해야 합니다.');
+      setError(
+        '서버 URL 형식이 올바르지 않습니다. http:// 또는 https://로 시작해야 합니다.',
+      );
       setLoading(false);
       return;
     }
@@ -83,11 +86,9 @@ function AdminCreateProblemContent() {
         writeup: rawWriteUp,
       };
 
-      await axios.post(
-        `${API_BASE_URL}/admin/problems`,
-        payload,
-        { withCredentials: true },
-      );
+      await axios.post(`${API_BASE_URL}/admin/problems`, payload, {
+        withCredentials: true,
+      });
 
       alert('✅ 문제가 성공적으로 등록되었습니다!');
       router.push(`/island/${pinId}`);
@@ -107,6 +108,7 @@ function AdminCreateProblemContent() {
           type="button"
           className={styles.closeBtn}
           onClick={() => router.push('/admin/problems/select')}
+          aria-label="문제 생성 닫기"
         >
           ✕
         </button>
@@ -164,6 +166,7 @@ function AdminCreateProblemContent() {
                 type="button"
                 className={`${styles.catBtn} ${category === 'WEB' ? styles.catBtnActive : ''}`}
                 onClick={() => setCategory('WEB')}
+                aria-pressed={category === 'WEB'}
               >
                 WEB
               </button>
@@ -171,6 +174,7 @@ function AdminCreateProblemContent() {
                 type="button"
                 className={`${styles.catBtn} ${category === 'AI' ? styles.catBtnActive : ''}`}
                 onClick={() => setCategory('AI')}
+                aria-pressed={category === 'AI'}
               >
                 AI
               </button>
@@ -199,13 +203,8 @@ function AdminCreateProblemContent() {
           </div>
 
           <div className={styles.footer}>
-            <button type="submit" className={styles.imgBtn} disabled={loading}>
-              <Image
-                src="/assets/ui/createproblem.png"
-                alt="CREATE"
-                width={170}
-                height={64}
-              />
+            <button type="submit" className="pixel-btn" disabled={loading}>
+              {loading ? '등록 중...' : 'CREATE'}
             </button>
           </div>
         </form>

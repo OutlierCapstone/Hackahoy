@@ -20,6 +20,8 @@ function LevelUpContent() {
 
   // 🔥 [추가] 페이지 로드 시 백엔드에 AI 추천 문제 요청
   useEffect(() => {
+    if (!newShip) return;
+
     const fetchRecommendation = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/ai-tutor/recommend`, {
@@ -41,12 +43,15 @@ function LevelUpContent() {
     };
 
     fetchRecommendation();
-  }, []);
+  }, [newShip]);
+
+  // 쿼리 없이 직접 들어온 경우 렌더 도중 Router 상태를 바꾸면 React 경고가 발생한다.
+  // 화면을 한 번 그린 뒤 안전하게 원래 경로로 돌려보낸다.
+  useEffect(() => {
+    if (!newShip) router.replace(redirect);
+  }, [newShip, redirect, router]);
 
   if (!newShip) {
-    if (typeof window !== 'undefined') {
-      router.replace(redirect);
-    }
     return null;
   }
 
@@ -87,28 +92,31 @@ function LevelUpContent() {
           )}
         </div>
 
+        {/* 추천 문제는 이 화면의 핵심 다음 행동이다. 베타에서 구석의 얇은 PNG 라
+            아무도 못 봤다는 피드백이 있어, 화면 중앙에 큰 1순위 버튼으로 올린다. */}
         <div className={styles.buttonArea}>
+          <div className={styles.recommendBlock}>
+            <p className={styles.recommendHint}>
+              🧭 당신의 풀이 이력을 분석해 다음에 풀기 좋은 문제를 추천해드려요
+            </p>
+            <button
+              type="button"
+              className={`pixel-btn pixel-btn--block ${styles.recommendCta}`}
+              onClick={handleRecommendClick}
+              disabled={!recommendedId}
+            >
+              {recommendedId
+                ? '다음 추천 문제 풀러 가기 →'
+                : '추천 문제 불러오는 중...'}
+            </button>
+          </div>
+
           <button
             type="button"
-            className={styles.imgBtn}
+            className="pixel-btn pixel-btn--secondary"
             onClick={() => router.push(redirect)}
           >
-            <Image src="/assets/ui/continue.png" alt="Continue" width={220} height={70} priority />
-          </button>
-
-          {/* 🔥 추천 버튼 수정: 데이터가 있을 때만 활성화하거나 핸들러 연결 */}
-          <button
-            type="button"
-            className={`${styles.recommendBtn} ${!recommendedId ? styles.disabled : ''}`}
-            onClick={handleRecommendClick}
-            disabled={!recommendedId} // 데이터 없으면 클릭 방지
-          >
-            <Image
-              src="/assets/ui/startrecommand.png"
-              alt="Start Recommended Challenges"
-              width={220}
-              height={30}
-            />
+            메인으로 돌아가기
           </button>
         </div>
       </section>

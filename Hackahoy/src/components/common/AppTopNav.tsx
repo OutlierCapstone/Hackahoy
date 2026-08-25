@@ -8,7 +8,7 @@ import { useAuth } from "@/components/common/AuthContext";
 export default function AppTopNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, openLoginModal } = useAuth();
+  const { user, logout } = useAuth();
 
   const isLoggedIn = !!user;
   
@@ -34,13 +34,9 @@ export default function AppTopNav() {
   }, [isSub, router]);
 
   const right: NavButton[] = useMemo(() => {
+    // 로그인 전에는 랜딩 히어로의 '로그인' 버튼을 쓰므로 상단바 LOGIN 은 숨긴다.
     if (!isLoggedIn) {
-      return [
-        mk("login", () => {
-          if (pathname !== "/") router.push("/");
-          setTimeout(() => openLoginModal(), 0);
-        }),
-      ];
+      return [];
     }
 
     const arr: NavButton[] = [];
@@ -53,7 +49,7 @@ export default function AppTopNav() {
       arr.push(mk("mypage", () => router.push("/mypage")));
     }
 
-    if (isAdmin) {
+    if (isAdmin && !pathname.startsWith("/admin")) {
       arr.push(mk("admin", () => router.push("/admin")));
     }
 
@@ -65,7 +61,7 @@ export default function AppTopNav() {
     );
 
     return arr;
-  }, [isLoggedIn, isMypage, isAdmin, logout, openLoginModal, pathname, router]);
+  }, [isLoggedIn, isMypage, isAdmin, logout, pathname, router]);
   
   return <TopNav left={left} right={right} />;
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useAuth } from "@/components/common/AuthContext";
 import styles from "./TopNav.module.css";
 
@@ -28,7 +27,11 @@ export default function TopNav({
 }) {
   return (
     <header className={styles.bar}>
-      <nav className={styles.inner}>
+      <nav
+        className={`${styles.inner} ${
+          left.some((btn) => btn.type === "back") ? styles.hasBack : ""
+        }`}
+      >
         <div className={styles.side}>{left.map(renderBtn)}</div>
         <div className={styles.sideRight}>{right.map(renderBtn)}</div>
       </nav>
@@ -49,22 +52,20 @@ function renderBtn(btn: NavButton, idx: number) {
     );
   }
 
-  const meta = getMeta(btn.type);
+  const label = getLabel(btn.type);
 
   return (
     <button
       key={`${btn.type}-${idx}`}
       type="button"
-      className={styles.iconBtn}
+      className={`pixel-btn pixel-btn--sm ${styles.navPixelBtn} ${
+        btn.type === "home" ? styles.homeBtn : ""
+      }`}
       onClick={btn.onClick}
       disabled={btn.disabled}
-      aria-label={meta.label}
+      aria-label={label}
     >
-      {meta.img ? (
-        <Image src={meta.img} alt={meta.label} width={meta.w} height={meta.h} priority={meta.priority} />
-      ) : (
-        <span className={styles.text}>{meta.label}</span>
-      )}
+      <span className={styles.navButtonText}>{label}</span>
     </button>
   );
 }
@@ -93,27 +94,21 @@ function MyPageBadge({
   );
 }
 
-function getMeta(type: NavButtonType): {
-  label: string;
-  img?: string;
-  w: number;
-  h: number;
-  priority?: boolean;
-} {
+function getLabel(type: NavButtonType): string {
   switch (type) {
     case "home":
-      return { label: "HOME", img: "/assets/ui/home.png", w: 96, h: 42, priority: true };
+      return "HOME";
     case "logout":
-      return { label: "LOGOUT", img: "/assets/ui/logout.png", w: 140, h: 46, priority: true };
+      return "LOGOUT";
     case "back":
-      return { label: "BACK", img: "/assets/ui/back.png", w: 96, h: 42, priority: true };
+      return "BACK";
     case "login":
-      return { label: "LOGIN", img: "/assets/ui/login.png", w: 140, h: 42, priority: true };
+      return "LOGIN";
     case "admin":
-      return { label: "ADMIN", img: "/assets/ui/admin.png", w: 140, h: 42, priority: true };
+      return "ADMIN";
     case "mypage":
-      return { label: "MYPAGE", w: 0, h: 0 };
+      return "MYPAGE";
     default:
-      return { label: "", w: 0, h: 0 };
+      return "";
   }
 }

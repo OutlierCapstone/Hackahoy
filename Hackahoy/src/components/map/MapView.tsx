@@ -3,7 +3,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import CreateSlotsLayer from "./CreateSlotsLayer";
+import HackahoyLogo from "./HackahoyLogo";
+import TutorialLauncher from "@/components/common/TutorialLauncher";
 import { useAuth } from "@/components/common/AuthContext";
+import styles from "./MapView.module.css";
 
 import {
   loadStore,
@@ -15,7 +18,7 @@ import { getIslands } from "@/lib/api/islands";
 import type { Island } from "@/domain/types/Island";
 
 export default function MapView() {
-  const { user, authReady, loginModalOpen, closeLoginModal, loginAsGuest } = useAuth();
+  const { user, authReady, loginModalOpen, openLoginModal, closeLoginModal, loginAsGuest } = useAuth();
   const [guestPending, setGuestPending] = useState(false);
 
   const isLoggedIn = !!user;
@@ -101,19 +104,7 @@ export default function MapView() {
   };
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-        backgroundColor: "#1F6396",
-        backgroundImage: "url('/assets/backgrounds/main-map.webp')",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        backgroundSize: "80% auto",
-      }}
-    >
+    <div className={styles.viewport}>
       {loading && (
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -123,85 +114,119 @@ export default function MapView() {
         </div>
       )}
 
-      {/* 중앙 배 */}
-      <Image
-        src={shipImgSrc}
-        alt={`Level ${currentLevel} Ship`}
-        width={240}
-        height={220}
-        style={{
-          position: "absolute", left: "55%", top: "63%",
-          transform: "translate(-50%, -50%)", zIndex: 5,
-        }}
-        priority
-      />
+      {/* 지도 씬(배경 + 배 + 마커).
+          로그인 전에는 랜딩처럼 배경을 살짝 블러 처리하고(그 위에 타이틀을 얹는다),
+          로그인 후에는 블러를 풀어 선명한 실제 플레이 화면이 된다. */}
+      <div className={`${styles.mapScene} ${!isLoggedIn ? styles.mapSceneBlurred : ""}`}>
+        {/* 중앙 배 */}
+        <Image
+          src={shipImgSrc}
+          alt={`Level ${currentLevel} Ship`}
+          width={240}
+          height={220}
+          style={{
+            position: "absolute", left: "55%", top: "63%",
+            transform: "translate(-50%, -50%)", zIndex: 5,
+          }}
+          priority
+        />
 
-      <CreateSlotsLayer 
-        mode="play" 
-        occupiedPins={occupiedPins}
-        islands={islands}
-      />
+        <CreateSlotsLayer
+          mode="play"
+          occupiedPins={occupiedPins}
+          islands={islands}
+        />
+      </div>
+
+      {/* 로그인 전 랜딩 히어로 — 화면 중앙에 타이틀 + [게임 설명] + [로그인] */}
+      {!isLoggedIn && (
+        <main className={styles.hero}>
+          <HackahoyLogo />
+
+          <div className={styles.heroActions}>
+            <button
+              type="button"
+              className={`pixel-btn ${styles.heroButton}`}
+              onClick={() =>
+                window.dispatchEvent(new Event("hackahoy:open-tutorial"))
+              }
+            >
+              게임 설명
+            </button>
+            <button
+              type="button"
+              className={`pixel-btn ${styles.heroButton}`}
+              onClick={() => openLoginModal()}
+            >
+              로그인
+            </button>
+          </div>
+        </main>
+      )}
+
+      {/* 사용법 안내 + 우측 하단 도움말(?) 버튼.
+          자동 노출은 하지 않는다(enabled=false). 랜딩의 '게임 설명' 버튼이나
+          '?' 버튼을 눌렀을 때만 열린다. */}
+      <TutorialLauncher enabled={false} />
 
       {/* 로그인 */}
       {loginModalOpen && !isLoggedIn && (
         <div
-          style={{
-            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.55)",
-            display: "flex", justifyContent: "center", alignItems: "center", zIndex: 2000,
-          }}
+          className={styles.loginDim}
           onClick={() => closeLoginModal()}
         >
           <div
-            style={{
-              width: 680, height: 560,
-              backgroundImage: "url('/assets/backgrounds/main-login.webp')",
-              backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
-              display: "flex", justifyContent: "flex-start", alignItems: "center",
-              boxSizing: "border-box", padding: "40px 80px 40px", position: "relative",
-            }}
+            className={styles.loginPanel}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="social-login-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
-              <p className="retro-title text-center" style={{ marginTop: 12, marginBottom: 4 }}>
+            <button
+              type="button"
+              className={styles.loginClose}
+              onClick={() => closeLoginModal()}
+              aria-label="로그인 창 닫기"
+            >
+              ×
+            </button>
+
+            <div className={styles.loginContent}>
+              <h2 id="social-login-title" className={styles.loginTitle}>
                 소셜로 시작하기
-              </p>
-              <p className="text-center" style={{ marginBottom: 24, color: "#f4b452", fontSize: 14 }}>
-                테스트 중입니다
-              </p>
+              </h2>
+              <p className={styles.loginNotice}>소셜 로그인은 점검 중입니다</p>
 
-              {/* 카카오 — 베타 기간 소셜 로그인 점검으로 비활성화 */}
-              <button type="button" className="social-login-btn" disabled style={{ background: "none", border: "none", cursor: "not-allowed", opacity: 0.4, marginBottom: 16 }}>
-                <Image src="/assets/ui/kakao.png" alt="카카오" width={400} height={90} />
+              {/* 베타 기간에는 소셜 로그인이 비활성화되어 있으나, 버튼 형태는 실제 UI와 동일하게 유지한다. */}
+              <button type="button" className={`${styles.socialButton} ${styles.kakaoButton}`} disabled>
+                <span className={`${styles.providerMark} ${styles.kakaoMark}`} aria-hidden />
+                <span>카카오로 시작하기</span>
+                <span className={styles.statusBadge}>점검 중</span>
               </button>
 
-              {/* 네이버 — 베타 기간 소셜 로그인 점검으로 비활성화 */}
-              <button type="button" className="social-login-btn" disabled style={{ background: "none", border: "none", cursor: "not-allowed", opacity: 0.4, marginBottom: 16 }}>
-                <Image src="/assets/ui/naver.png" alt="네이버" width={400} height={90} />
+              <button type="button" className={`${styles.socialButton} ${styles.naverButton}`} disabled>
+                <span className={`${styles.providerMark} ${styles.naverMark}`} aria-hidden>N</span>
+                <span>네이버로 시작하기</span>
+                <span className={styles.statusBadge}>점검 중</span>
               </button>
 
-              {/* 구글 — 베타 기간 소셜 로그인 점검으로 비활성화 */}
-              <button type="button" className="social-login-btn" disabled style={{ background: "none", border: "none", cursor: "not-allowed", opacity: 0.4 }}>
-                <Image src="/assets/ui/google.png" alt="구글" width={400} height={90} />
+              <button type="button" className={`${styles.socialButton} ${styles.googleButton}`} disabled>
+                <span className={`${styles.providerMark} ${styles.googleMark}`} aria-hidden>G</span>
+                <span>Google로 시작하기</span>
+                <span className={styles.statusBadge}>점검 중</span>
               </button>
 
-              {/* 비회원 — 소셜 버튼과 달리 이미지 자산이 없어 CSS 로만 그린다. */}
+              <div className={styles.loginDivider} aria-hidden>
+                <span />
+                <strong>또는</strong>
+                <span />
+              </div>
+
               <button
                 type="button"
                 onClick={handleGuestStart}
                 disabled={guestPending}
-                style={{
-                  marginTop: 12,
-                  width: 400,
-                  padding: "10px 0",
-                  background: "transparent",
-                  border: "2px solid #7b3b0a",
-                  borderRadius: 4,
-                  color: "#f4b452",
-                  fontSize: 18,
-                  letterSpacing: "0.02em",
-                  cursor: guestPending ? "wait" : "pointer",
-                  opacity: guestPending ? 0.6 : 1,
-                }}
+                className={`pixel-btn ${styles.guestButton}`}
               >
                 {guestPending ? "세션을 만드는 중..." : "비회원으로 시작하기"}
               </button>

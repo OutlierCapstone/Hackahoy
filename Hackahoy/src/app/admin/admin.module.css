@@ -32,6 +32,58 @@
   color: #5b2a12;
 }
 
+.topRightActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bellBtn {
+  width: 42px;
+  height: 36px;
+  padding: 1px 0 0;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: linear-gradient(#ffd98a 0 3px, transparent 3px), #eaa64a;
+  border: 3px solid #6e3a10;
+  border-radius: 6px;
+  box-shadow:
+    0 3px 0 #6e3a10,
+    0 3px 0 2px #2a180c;
+  cursor: pointer;
+  image-rendering: pixelated;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease,
+    filter 0.1s ease;
+}
+
+.bellBtn:hover,
+.roleBtn:hover,
+.banBox:hover,
+.pagerIconBtn:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.bellBtn:active,
+.roleBtn:active,
+.banBox:active,
+.pagerIconBtn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #6e3a10,
+    0 1px 0 2px #2a180c;
+}
+
+.bellBtn:focus-visible,
+.roleBtn:focus-visible,
+.banBox:focus-visible,
+.pagerIconBtn:focus-visible {
+  outline: 3px solid #ffcf67;
+  outline-offset: 3px;
+}
+
 .searchWrap {
   display: flex;
   align-items: center;
@@ -79,36 +131,78 @@
 }
 
 .roleBtn {
-  width: 100%;
-  background: transparent;
-  border: none;
+  width: 124px;
+  height: 34px;
+  padding: 2px 12px 0;
+  background: #183750;
+  border: 3px solid #6e3a10;
+  border-radius: 6px;
+  box-shadow:
+    0 3px 0 #6e3a10,
+    0 3px 0 2px #2a180c;
+  color: #f7dd9b;
   cursor: pointer;
-  font-weight: 900;
-  font-size: 20px;
+  font-family:
+    'Press Start 2P', 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+  font-size: 11px;
+  line-height: 1;
   display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 9px;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease,
+    filter 0.1s ease;
+}
+
+.roleAdmin {
+  background: linear-gradient(#ffd98a 0 3px, transparent 3px), #eaa64a;
+  color: #3a210f;
+}
+
+.roleUser {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.12) 0 3px, transparent 3px), #183750;
+  color: #f7dd9b;
+}
+
+.toggleMark {
+  font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+  font-size: 16px;
+  transform: translateY(-1px);
 }
 
 .banBox {
-  width: 70px; 
-  height: 44px;
+  width: 96px;
+  height: 34px;
+  padding: 2px 8px 0;
   border: 3px solid #5b2a12;
-  background: #fff;
+  border-radius: 6px;
+  background: #d8c9a8;
+  box-shadow:
+    0 3px 0 #6e3a10,
+    0 3px 0 2px #2a180c;
   cursor: pointer;
-  position: relative; 
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family:
+    'Press Start 2P', 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
+  font-size: 9px;
+  line-height: 1;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease,
+    filter 0.1s ease;
 }
 
-.check {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
-  font-weight: 900;
-  color: #d11f1f;
-  line-height: 1;
+.active {
+  color: #275d36;
+}
+
+.banned {
+  color: #9e271d;
 }
 
 .footer {
@@ -132,21 +226,29 @@
 .pager {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .pagerIconBtn {
-  width: 70px; 
-  height: 70px;
-  background: transparent;
-  border: none; 
+  width: 40px;
+  height: 34px;
+  background: linear-gradient(#ffd98a 0 3px, transparent 3px), #eaa64a;
+  border: 3px solid #6e3a10;
+  border-radius: 6px;
+  box-shadow:
+    0 3px 0 #6e3a10,
+    0 3px 0 2px #2a180c;
   padding: 0;
   cursor: pointer;
   position: relative;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.05s ease,
+    filter 0.1s ease;
 }
 
 .pagerIconBtn::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -154,16 +256,16 @@
 
   width: 0;
   height: 0;
-  border-top: 14px solid transparent;
-  border-bottom: 14px solid transparent;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
 }
 
 .pagerLeft::before {
-  border-right: 22px solid #5b2a12;
+  border-right: 11px solid #3a210f;
 }
 
 .pagerRight::before {
-  border-left: 22px solid #5b2a12;
+  border-left: 11px solid #3a210f;
 }
 
 .pagerIconBtn:disabled {
@@ -172,7 +274,10 @@
 }
 
 .pageText {
+  min-width: 58px;
+  text-align: center;
+  font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
   font-weight: 900;
-  font-size: 20px;
+  font-size: 18px;
   color: #5b2a12;
 }

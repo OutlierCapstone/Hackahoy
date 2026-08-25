@@ -18,6 +18,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+          rel="stylesheet"
+        />
         <Script
           src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js"
           strategy="beforeInteractive"

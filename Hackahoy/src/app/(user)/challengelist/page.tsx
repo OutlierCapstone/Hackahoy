@@ -3,7 +3,6 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './challengelist.module.css';
 import { API_BASE_URL } from "@/lib/api/config";
@@ -92,30 +91,28 @@ export default function ChallengeListPage() {
   return (
     <main className={styles.pageRoot}>
       <div className={styles.card}>
-        <div className={styles.filterBarContainer}>
-          <Image
-            src="/assets/ui/challengelistbar.png"
-            alt="Filter Bar"
-            width={580}
-            height={60}
-            priority
-          />
-          <div className={styles.filterOverlay}>
-            {['ALL', 'AI', 'WEB', 'SOLVED', 'UNSOLVED'].map((type) => (
-              <button
-                key={type}
-                type="button"
-                className={styles.filterZone}
-                aria-label={`${type} 문제 필터`}
-                aria-pressed={filter === type}
-                onClick={() => {
-                  setFilter(type);
-                  setCurrentPage(0);
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        <header className={styles.boardHeader}>
+          <h1 className={styles.boardTitle}>CHALLENGE BOARD</h1>
+          <span className={styles.boardCount}>{filteredList.length}개의 임무</span>
+        </header>
+
+        <nav className={styles.filterBar} aria-label="문제 필터">
+          {['ALL', 'AI', 'WEB', 'SOLVED', 'UNSOLVED'].map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`${styles.filterTab} ${filter === type ? styles.filterTabActive : ''}`}
+              aria-label={`${type} 문제 필터`}
+              aria-pressed={filter === type}
+              onClick={() => {
+                setFilter(type);
+                setCurrentPage(0);
+              }}
+            >
+              {type}
+            </button>
+          ))}
+        </nav>
 
         <div className={styles.listScroll}>
           {/* 빈 리스트를 말없이 보여주면 고장인지 아닌지 구분이 안 된다. */}
@@ -133,33 +130,24 @@ export default function ChallengeListPage() {
               aria-label={`${p.title}, ${p.solved ? '해결함' : '미해결'}`}
             >
               <span className={styles.challengeTitle}>{p.title}</span>
-              <div className={styles.statusIcon}>
-                <Image
-                  src={
-                    p.solved
-                      ? '/assets/ui/solved.png'
-                      : '/assets/ui/unsolved.png'
-                  }
-                  alt=""
-                  width={130}
-                  height={p.solved ? 40 : 35}
-                />
-              </div>
+              <span
+                className={`${styles.statusBadge} ${
+                  p.solved ? styles.statusSolved : styles.statusUnsolved
+                }`}
+              >
+                <span className={styles.statusMark} aria-hidden>{p.solved ? '✓' : '×'}</span>
+                {p.solved ? 'SOLVED' : 'UNSOLVED'}
+              </span>
             </button>
           ))}
         </div>
 
         <div className={styles.footer}>
           <button
-            className={styles.mypageBtn}
+            className={`pixel-btn pixel-btn--sm ${styles.mypageBtn}`}
             onClick={() => router.push('/mypage')}
           >
-            <Image
-              src="/assets/ui/mypage.png"
-              alt="MYPAGE"
-              width={100}
-              height={40}
-            />
+            MY PAGE
           </button>
           <div className={styles.pagination}>
             <button

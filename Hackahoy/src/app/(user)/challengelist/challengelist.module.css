@@ -1,74 +1,106 @@
 .pageRoot {
   position: relative;
-  width: 100vw;
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #005c9a;
-  background-image: url('/assets/backgrounds/main-map.webp');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 80% auto;
+  width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 84px 24px 36px;
+  overflow: hidden;
+  background: #005c9a url('/assets/backgrounds/main-map.webp') center / 80% auto no-repeat;
 }
 
 .card {
   position: relative;
   z-index: 10;
-  width: min(780px, 92vw);
-  height: min(460px, 72vh);
-  background-color: #0c2237;
-  border: 8px solid #b06320;
-  border-radius: 32px;
-  overflow: hidden;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  padding: 30px;
-  box-sizing: border-box;
+  width: min(880px, 92vw);
+  height: auto;
+  max-height: calc(100dvh - 126px);
+  padding: 28px 34px 26px;
+  overflow: hidden;
+  background: linear-gradient(rgba(255, 255, 255, 0.05) 0 4px, transparent 4px), #0b263c;
+  border: 6px solid #8b4a16;
+  border-radius: 18px;
+  box-shadow: 0 0 0 4px #2a180c, 0 8px 0 4px #2a180c,
+    inset 0 0 0 3px rgba(244, 180, 82, 0.22), 0 18px 34px rgba(0, 0, 0, 0.38);
 }
 
-/* 컨테이너를 이미지 크기에 맞춘다.
- *
- * 예전에는 display:flex + justify-content:center 라 컨테이너가 남는 폭을 다 먹고
- * (실측 704px) 그 안에서 이미지(580px)만 가운데 놓였다. 그런데 .filterOverlay 는
- * left:0; width:100% 라 컨테이너 전체를 덮어서, 클릭존 5등분이 이미지보다
- * 좌우로 62px 씩 넓어졌다. 그 결과 라벨 가장자리를 누르면 옆 필터가 걸렸다
- * (ALL 우측 -> AI, SOLVED 좌측 -> WEB).
- *
- * width:fit-content 로 컨테이너를 이미지에 맞추면 100% 가 곧 이미지 폭이 되어
- * 클릭존과 라벨이 일치한다. 가운데 정렬은 margin-inline:auto 가 대신한다. */
-.filterBarContainer {
-  position: relative;
+.boardHeader {
   display: flex;
-  justify-content: center;
-  width: fit-content;
-  margin-inline: auto;
-  margin-bottom: 25px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding-bottom: 15px;
+  border-bottom: 3px dashed rgba(244, 180, 82, 0.55);
   flex-shrink: 0;
 }
 
-.filterOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+.boardTitle {
+  margin: 0;
+  color: #f4b452;
+  font-family: "Press Start 2P", "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 3px 0 #5c2f0e;
+}
+
+.boardCount {
+  flex-shrink: 0;
+  color: #ffe9c2;
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.filterBar {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: 7px;
+  margin-bottom: 20px;
+  padding: 0 2px 3px;
+  flex-shrink: 0;
 }
 
-.filterZone {
-  flex: 1;
+.filterTab {
   appearance: none;
-  border: 0;
-  background: transparent;
-  padding: 0;
+  min-width: 84px;
+  height: 36px;
+  padding: 2px 15px 0;
+  border: 3px solid #8b4a16;
+  border-radius: 6px;
+  background: #173149;
+  box-shadow: 0 3px 0 #48250c;
+  color: #f4b452;
+  font-family: "Press Start 2P", "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  color: transparent;
-  user-select: none;
+  transition: transform 0.06s ease, filter 0.12s ease, background-color 0.12s ease;
 }
 
-.filterZone:focus-visible,
+.filterTab:hover { filter: brightness(1.16); }
+.filterTab:active { transform: translateY(2px); box-shadow: 0 1px 0 #48250c; }
+
+.filterTabActive {
+  border-color: #6e3a10;
+  background: linear-gradient(#ffd98a 0 3px, transparent 3px), #eaa64a;
+  box-shadow: 0 3px 0 #6e3a10, 0 3px 0 2px #24160b;
+  color: #35200f;
+}
+
+.filterTab:focus-visible,
 .challengeItem:focus-visible,
 .mypageBtn:focus-visible,
 .arrowBtn:focus-visible {
@@ -77,88 +109,157 @@
 }
 
 .listScroll {
-  width: 100%;
-  flex: 1;
   display: flex;
+  flex: 0 0 228px;
   flex-direction: column;
-  gap: 12px;
-  overflow: hidden;
-  /* 아이템 개수와 상관없이 위에서부터 정렬하여 박스 크기 고정 */
   justify-content: flex-start;
-  padding: 10px 0;
+  gap: 13px;
+  width: 100%;
+  min-height: 228px;
+  padding: 2px 3px 8px;
+  overflow: hidden;
 }
 
 .challengeItem {
   appearance: none;
-  height: 60px; /* 모든 개별 박스 높이 고정 */
-  width: 100%;
-  background-color: rgba(176, 99, 32, 0.2);
-  border: 4px solid #b06320;
-  border-radius: 20px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  padding: 0 40px;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: background-color 0.2s;
-  flex-shrink: 0; /* 부모 크기에 따라 줄어들지 않음 */
+  gap: 20px;
+  width: 100%;
+  min-height: 64px;
+  padding: 0 24px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, rgba(244, 180, 82, 0.1), transparent 36%), #173149;
+  border: 3px solid #9a571c;
+  border-radius: 9px;
+  box-shadow: 0 4px 0 #42240e, inset 0 2px 0 rgba(255, 255, 255, 0.04);
+  color: inherit;
   font: inherit;
   text-align: left;
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.14s ease, border-color 0.14s ease;
 }
 
-.challengeItem:hover {
-  background-color: rgba(176, 99, 32, 0.35);
-}
+.challengeItem:hover { border-color: #eaa64a; filter: brightness(1.1); transform: translateX(3px); }
+.challengeItem:active { transform: translate(3px, 2px); box-shadow: 0 2px 0 #42240e; }
 
 .challengeTitle {
-  font-size: 24px;
+  min-width: 0;
+  overflow: hidden;
+  color: #ffad4f;
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: clamp(19px, 1.6vw, 23px);
   font-weight: 700;
-  color: #ff9f34;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.statusIcon {
-  display: flex;
+.statusBadge {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-width: 128px;
+  height: 34px;
+  padding: 2px 11px 0;
+  border: 3px solid var(--status-edge);
+  border-radius: 5px;
+  background: linear-gradient(rgba(255, 255, 255, 0.2) 0 3px, transparent 3px), var(--status-face);
+  box-shadow: 0 3px 0 var(--status-edge), 0 3px 0 2px #21150c;
+  color: var(--status-text);
+  font-family: "Press Start 2P", "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.statusSolved { --status-face: #4fbd62; --status-edge: #1d6229; --status-text: #f1ffe9; }
+.statusUnsolved { --status-face: #d05a3f; --status-edge: #712817; --status-text: #fff1df; }
+
+.statusMark {
+  margin-right: 7px;
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 17px;
+  font-weight: 900;
+  transform: translateY(-1px);
 }
 
 .footer {
-  width: 100%;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 20px;
-  min-height: 50px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 14px;
   flex-shrink: 0;
 }
 
-.mypageBtn {
-  position: absolute;
-  left: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
+.mypageBtn { position: absolute; left: 3px; height: 38px; padding-bottom: 0; }
 
 .pagination {
   display: flex;
-  gap: 20px;
   align-items: center;
+  gap: 12px;
+  padding: 4px 8px 7px;
+  background: rgba(2, 19, 31, 0.66);
+  border: 2px solid #5c3519;
+  border-radius: 7px;
 }
 
 .arrowBtn {
-  background: none;
-  border: none;
-  color: #ff9f34;
-  font-size: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: 3px solid #8b4a16;
+  border-radius: 5px;
+  background: #eaa64a;
+  box-shadow: 0 3px 0 #5f310e;
+  color: #3a210f;
+  font-size: 18px;
+  line-height: 1;
   cursor: pointer;
-  padding: 0 10px;
 }
 
-.arrowBtn:disabled {
-  opacity: 0.3;
-  cursor: default;
+.arrowBtn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #5f310e; }
+.arrowBtn:disabled { cursor: default; opacity: 0.3; filter: grayscale(0.5); }
+
+.pageText {
+  min-width: 48px;
+  color: #ffe9c2;
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 15px;
+  text-align: center;
+}
+
+.statusText {
+  margin: auto;
+  color: #ffe9c2;
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
+  font-size: 18px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .pageRoot { align-items: flex-start; padding: 76px 12px 20px; }
+  .card {
+    width: 100%; height: auto; min-height: 0;
+    padding: 22px 16px 18px; border-width: 4px; border-radius: 13px;
+  }
+  .boardHeader { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .boardTitle { font-size: 15px; }
+  .filterBar { gap: 7px; padding-inline: 2px; }
+  .filterTab { min-width: 72px; height: 34px; padding-inline: 9px; font-size: 9px; }
+  .challengeItem { min-height: 62px; gap: 10px; padding-inline: 14px; }
+  .listScroll { flex-basis: 222px; min-height: 222px; }
+  .challengeTitle { font-size: 17px; }
+  .statusBadge { min-width: 42px; width: 42px; padding-inline: 0; font-size: 0; }
+  .statusMark { margin: 0; font-size: 19px; }
+  .footer { justify-content: space-between; }
+  .mypageBtn { position: static; }
 }

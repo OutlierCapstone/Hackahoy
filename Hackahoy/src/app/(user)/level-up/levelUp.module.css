@@ -10,11 +10,10 @@
 .panel {
   background: rgba(255, 255, 255, 0.85);
   border: 4px solid #8b5a2b;
-  /* 하단 버튼 공간(80px) 확보 및 패딩 유지 */
-  padding: 30px 40px 80px 40px;
+  padding: 30px 40px 34px 40px;
   border-radius: 12px;
   text-align: center;
-  position: relative; /* 추천 버튼 배치의 기준점 */
+  position: relative;
   min-width: 550px;
   font-family: 'NeoDunggeunmo Pro', 'NeoDunggeunmo', monospace;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -65,41 +64,55 @@
   color: #3a210f;
 }
 
-/* 버튼 영역 레이아웃 */
+/* 버튼 영역 레이아웃 — 추천(1순위)을 위, 메인 복귀(2순위)를 아래로 세로 배치 */
 .buttonArea {
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
 }
 
-.imgBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  line-height: 0;
-  image-rendering: pixelated;
-  transition: transform 0.1s ease;
+.recommendBlock {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  /* 추천이 이 화면의 주 행동임을 보이도록 옅은 강조 카드로 감싼다. */
+  padding: 18px 20px;
+  background: rgba(244, 180, 82, 0.16);
+  border: 2px dashed #b06320;
+  border-radius: 12px;
 }
 
-.imgBtn:active {
-  transform: scale(0.95);
+.recommendHint {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #5b3a1a;
+  line-height: 1.4;
 }
 
-/* 추천 버튼을 우측 하단 구석에 절대 위치로 고정 */
-.recommendBtn {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  line-height: 0;
-  image-rendering: pixelated;
-  transition: opacity 0.2s ease;
+/* 시선을 끌기 위한 은은한 맥동. 접근성: 모션 최소화 사용자에겐 끈다. */
+.recommendCta {
+  animation: recommendPulse 1.8s ease-in-out infinite;
 }
 
-.recommendBtn:hover {
-  opacity: 0.8;
+@keyframes recommendPulse {
+  0%, 100% {
+    box-shadow: 0 3px 0 #6e3a10, 0 3px 0 2px #2a180c,
+      0 0 0 0 rgba(244, 180, 82, 0.55);
+  }
+  50% {
+    box-shadow: 0 3px 0 #6e3a10, 0 3px 0 2px #2a180c,
+      0 0 0 12px rgba(244, 180, 82, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recommendCta {
+    animation: none;
+  }
 }

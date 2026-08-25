@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import styles from '../admin.module.css';
 import axios from 'axios';
-import { API_BASE_URL } from "@/lib/api/config";
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface Notification {
   id: number;
@@ -33,9 +32,12 @@ export default function AdminNotificationPage() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/admin/notifications`, {
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          `${API_BASE_URL}/admin/notifications`,
+          {
+            withCredentials: true,
+          },
+        );
         setNotifications(response.data);
       } catch (error) {
         console.error('알림 로딩 실패:', error);
@@ -67,15 +69,26 @@ export default function AdminNotificationPage() {
               <div
                 key={notif.id}
                 className={styles.row}
-                style={{ justifyContent: 'space-between', padding: '10px 20px' }}
+                style={{
+                  justifyContent: 'space-between',
+                  padding: '10px 20px',
+                }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                >
                   <span style={{ color: 'red' }}>🚨</span>
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
                     {notif.message}
                   </span>
                 </div>
-                <div style={{ textAlign: 'right', fontSize: '12px', color: '#888' }}>
+                <div
+                  style={{
+                    textAlign: 'right',
+                    fontSize: '12px',
+                    color: '#888',
+                  }}
+                >
                   {datePart}
                   <br />
                   {timePart}
@@ -86,34 +99,36 @@ export default function AdminNotificationPage() {
         )}
 
         {/* 빈 줄 채우기 (최소 5줄 유지) */}
-        {!loading && notifications.length < 5 &&
+        {!loading &&
+          notifications.length < 5 &&
           Array.from({ length: 4 - notifications.length }).map((_, i) => (
             <div key={`empty-${i}`} className={styles.row}>
               &nbsp;
             </div>
-          ))
-        }
+          ))}
       </div>
 
       <div className={styles.footer} style={{ justifyContent: 'center' }}>
         <div className={styles.pager}>
-          <button className={`${styles.pagerIconBtn} ${styles.pagerLeft}`} />
-          <button className={`${styles.pagerIconBtn} ${styles.pagerRight}`} />
+          <button
+            type="button"
+            className={`${styles.pagerIconBtn} ${styles.pagerLeft}`}
+            aria-label="이전 알림 페이지"
+          />
+          <button
+            type="button"
+            className={`${styles.pagerIconBtn} ${styles.pagerRight}`}
+            aria-label="다음 알림 페이지"
+          />
         </div>
 
         <button
           type="button"
-          className={styles.backBtn}
+          className="pixel-btn pixel-btn--sm"
           onClick={() => router.back()}
-          style={{
-            position: 'absolute',
-            right: '20px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-          }}
+          style={{ position: 'absolute', right: '20px' }}
         >
-          <Image src="/assets/ui/back.png" alt="BACK" width={100} height={50} />
+          BACK
         </button>
       </div>
     </section>

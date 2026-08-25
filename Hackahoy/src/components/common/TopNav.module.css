@@ -35,21 +35,68 @@
   color: #fff;
 }
 
+/* 닉네임 뱃지 — 옆의 픽셀 버튼과 높이·그림자를 동일하게 맞춰 상단바에서 나란히 정렬되게 한다. */
 .badgeBtn {
-  height: 42px;
+  height: 34px;
   padding: 0 14px;
-  border: 3px solid #d08a3c;
-  border-radius: 12px;
+  border: 3px solid #b06e2a;
+  border-radius: 6px;
   background: #fff;
   cursor: pointer;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  box-shadow: 0 3px 0 #b06e2a, 0 3px 0 2px #2a180c;
+  font-family: "NeoDunggeunmo Pro", "NeoDunggeunmo", monospace;
 }
 
 .badgeText {
   font-weight: 800;
   color: #111;
   white-space: nowrap;
+}
+
+/* 상단바는 라벨 span 자체를 1px 내려 공용 버튼과 같은 시각 중심을 사용한다. */
+.navPixelBtn {
+  padding-block: 0;
+}
+
+.navButtonText {
+  display: block;
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+@media (max-width: 520px) {
+  .inner {
+    padding: 10px 8px;
+  }
+
+  .side,
+  .sideRight {
+    gap: 6px;
+  }
+
+  .navPixelBtn {
+    min-width: 72px;
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .badgeBtn {
+    max-width: 150px;
+    padding-inline: 10px;
+  }
+
+  .badgeText {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hasBack .homeBtn {
+    display: none;
+  }
 }
