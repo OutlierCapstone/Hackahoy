@@ -1,7 +1,8 @@
 # Hackahoy local demo
 
-The local demo is the default operating mode after the public beta. AWS remains
-stopped as a reversible fallback and is not required for normal demos.
+The always-on desktop demo is the default operating mode after the public beta.
+AWS compute was decommissioned; one archived EBS snapshot remains as a disaster
+recovery copy and is not required for normal demos.
 
 ## Safety boundary
 
@@ -49,6 +50,16 @@ The GitHub deploy workflow targets a repository self-hosted runner labeled
 `hackahoy-demo`. Pull-request CI remains on GitHub-hosted runners; only pushes
 to `main` or a manual workflow dispatch can deploy the desktop demo.
 
+Docker Desktop, Tailscale, and the signed-in Windows account must be running.
+The `HackahoyDemo` scheduled task starts the stack after sign-in. Compose uses
+`restart: unless-stopped` so services recover after Docker restarts.
+
+Register or refresh the sign-in task from the desktop checkout with:
+
+```powershell
+.\scripts\install-desktop-autostart.ps1
+```
+
 ## Stop or inspect
 
 ```powershell
@@ -66,22 +77,19 @@ repository has no `.gitmodules` mapping or submodule object. The local demo uses
 a safe placeholder for problem 7. Problems 1-6 and the main platform are built
 from tracked sources.
 
-## AWS fallback
+## AWS archive recovery
 
-The fallback EC2 instance keeps its 100 GiB EBS root volume and Elastic IP while
-stopped. Starting the instance restores the same IP and DuckDNS/Caddy route.
-The helper refuses to operate if the active AWS account is not the expected one:
+The EC2 instance, 100 GiB EBS volume, and Elastic IP were removed after the
+desktop deployment was verified. The old public IP and DuckDNS route are not
+preserved. Snapshot `snap-0f1f25ee509333d6c` remains in the `us-east-1` archive
+tier as the recovery source. The helper refuses to inspect a different account:
 
 ```powershell
 .\scripts\aws-fallback.ps1 Status
-.\scripts\aws-fallback.ps1 Start
-.\scripts\aws-fallback.ps1 Stop
+.\scripts\aws-fallback.ps1 RestoreInfo
 ```
 
-Run `aws login` first if the AWS session has expired. Never terminate the
-instance or release its Elastic IP as part of this fallback workflow.
-
-As of 2026-08-26, the instance is stopped, API termination protection is on,
-and snapshot `snap-0f1f25ee509333d6c` was created from the stopped 100 GiB root
-volume. The Elastic IP remains associated, so `Start` restores the same public
-address.
+Run `aws login` first if the AWS session has expired. An archive restore first
+moves the snapshot back to the standard tier, then uses the printed metadata to
+create a bootable volume/AMI and a replacement instance. Restoration is manual,
+takes hours, creates normal AWS charges, and receives a new public address.

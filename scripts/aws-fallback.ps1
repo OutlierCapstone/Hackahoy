@@ -1,13 +1,13 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('Status', 'Start', 'Stop')]
+  [ValidateSet('Status', 'RestoreInfo')]
   [string]$Action = 'Status'
 )
 
 $ErrorActionPreference = 'Stop'
 $expectedAccount = '591359168371'
 $region = 'us-east-1'
-$instanceId = 'i-07be6630da21e2859'
+$snapshotId = 'snap-0f1f25ee509333d6c'
 
 function Assert-AwsExit([string]$operation) {
   if ($LASTEXITCODE -ne 0) {
@@ -21,23 +21,34 @@ if ($account.Trim() -ne $expectedAccount) {
   throw "Refusing to operate on AWS account $($account.Trim()); expected $expectedAccount."
 }
 
-if ($Action -eq 'Start') {
-  aws ec2 start-instances --region $region --instance-ids $instanceId --no-cli-pager | Out-Null
-  Assert-AwsExit 'EC2 start'
-  aws ec2 wait instance-running --region $region --instance-ids $instanceId
-  Assert-AwsExit 'EC2 running waiter'
+if ($Action -eq 'RestoreInfo') {
+  [pscustomobject]@{
+    Region          = $region
+    SnapshotId      = $snapshotId
+    Architecture    = 'x86_64'
+    Virtualization  = 'hvm'
+    RootDeviceName  = '/dev/sda1'
+    EnaSupport      = $true
+    BootMode        = 'uefi-preferred'
+    InstanceType    = 't3a.medium'
+    KeyName         = 'hackahoy'
+    SecurityGroupId = 'sg-00aaff80198a8f601'
+    SubnetId        = 'subnet-0a34bbf353a796de0'
+  } | Format-List
+  Write-Host 'Restore the archived snapshot to the standard tier before creating a volume or registering an AMI.'
+  exit 0
 }
 
-if ($Action -eq 'Stop') {
-  aws ec2 stop-instances --region $region --instance-ids $instanceId --no-cli-pager | Out-Null
-  Assert-AwsExit 'EC2 stop'
-  aws ec2 wait instance-stopped --region $region --instance-ids $instanceId
-  Assert-AwsExit 'EC2 stopped waiter'
-}
-
-aws ec2 describe-instances `
+aws ec2 describe-snapshots `
   --region $region `
-  --instance-ids $instanceId `
-  --query 'Reservations[0].Instances[0].{State:State.Name,InstanceId:InstanceId,Type:InstanceType,PublicIp:PublicIpAddress,RootVolume:BlockDeviceMappings[0].Ebs.VolumeId}' `
+  --snapshot-ids $snapshotId `
+  --query 'Snapshots[0].{SnapshotId:SnapshotId,State:State,StorageTier:StorageTier,VolumeSizeGiB:VolumeSize,StartTime:StartTime}' `
   --output table
-Assert-AwsExit 'EC2 status'
+Assert-AwsExit 'Snapshot status'
+
+aws ec2 describe-snapshot-tier-status `
+  --region $region `
+  --filters "Name=snapshot-id,Values=$snapshotId" `
+  --query 'SnapshotTierStatuses[0].{StorageTier:StorageTier,Operation:LastTieringOperationStatus,Progress:LastTieringProgress}' `
+  --output table
+Assert-AwsExit 'Snapshot tier status'

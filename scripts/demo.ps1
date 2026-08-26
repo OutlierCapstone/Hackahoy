@@ -2,7 +2,8 @@
 param(
   [ValidateSet('Start', 'Stop', 'Status')]
   [string]$Action = 'Start',
-  [switch]$ShareTeam
+  [switch]$ShareTeam,
+  [switch]$NoBuild
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,7 +57,11 @@ if ($ShareTeam) {
   $challengeScheme = 'http'
 }
 
-docker compose -f $compose up -d --build
+if ($NoBuild) {
+  docker compose -f $compose up -d --no-build
+} else {
+  docker compose -f $compose up -d --build
+}
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose failed with exit code $LASTEXITCODE."
 }

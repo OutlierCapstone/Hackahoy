@@ -14,6 +14,8 @@ if (-not (Test-Path -LiteralPath (Join-Path $dockerConfig 'config.json'))) {
 }
 
 $env:DOCKER_CONFIG = $dockerConfig
+$env:COMPOSE_BAKE = 'false'
+$env:COMPOSE_PARALLEL_LIMIT = '1'
 & $demoScript Start -ShareTeam
 
 $status = tailscale status --json | ConvertFrom-Json
