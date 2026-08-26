@@ -12,7 +12,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: [self-hosted, Windows, X64, hackahoy-demo]
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - name: Build, start, and verify the private Tailscale demo
