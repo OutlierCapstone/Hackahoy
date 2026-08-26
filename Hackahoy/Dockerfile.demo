@@ -1,0 +1,23 @@
+FROM node:22-bookworm-slim AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ARG NEXT_PUBLIC_API_BASE_URL=/backend
+ARG NEXT_PUBLIC_CHALLENGE_ROUTING=ports
+ARG NEXT_PUBLIC_CHALLENGE_SCHEME=http
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_CHALLENGE_ROUTING=${NEXT_PUBLIC_CHALLENGE_ROUTING}
+ENV NEXT_PUBLIC_CHALLENGE_SCHEME=${NEXT_PUBLIC_CHALLENGE_SCHEME}
+RUN npm run build
+
+FROM node:22-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
+EXPOSE 3000
+CMD ["node", "server.js"]

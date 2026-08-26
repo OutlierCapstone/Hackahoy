@@ -1,0 +1,226 @@
+name: hackahoy-demo
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: hackahoy_demo
+      POSTGRES_USER: hackahoy
+      POSTGRES_PASSWORD: local-demo-only
+    volumes:
+      - demo-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackahoy -d hackahoy_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  mock-ai:
+    build:
+      context: ./demo/mock-ai
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.demo
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: postgresql://hackahoy:local-demo-only@postgres:5432/hackahoy_demo
+      JWT_SECRET: local-demo-jwt-secret-not-for-production
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: ${DEMO_ORIGIN:-http://localhost:8080}
+      CORS_ORIGINS: ${DEMO_ORIGIN:-http://localhost:8080}
+      COOKIE_SECURE: ${DEMO_COOKIE_SECURE:-false}
+      AI_TUTOR_URL: http://mock-ai:8000
+      HINT_GATE_ENABLED: "false"
+      EMAIL_USER: ""
+      EMAIL_PASS: ""
+      EMAIL_TO: ""
+      GOOGLE_CLIENT_ID: local-demo-disabled
+      GOOGLE_CLIENT_SECRET: local-demo-disabled
+      GOOGLE_CALLBACK_URL: ${DEMO_ORIGIN:-http://localhost:8080}/backend/auth/google/callback
+      KAKAO_CLIENT_ID: local-demo-disabled
+      KAKAO_CALLBACK_URL: ${DEMO_ORIGIN:-http://localhost:8080}/backend/auth/kakao/callback
+      NAVER_CLIENT_ID: local-demo-disabled
+      NAVER_CLIENT_SECRET: local-demo-disabled
+      NAVER_CALLBACK_URL: ${DEMO_ORIGIN:-http://localhost:8080}/backend/auth/naver/callback
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-ai:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('net').connect(4000,'127.0.0.1',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Hackahoy
+      dockerfile: Dockerfile.demo
+      args:
+        NEXT_PUBLIC_API_BASE_URL: /backend
+        NEXT_PUBLIC_CHALLENGE_ROUTING: ports
+        NEXT_PUBLIC_CHALLENGE_SCHEME: ${DEMO_CHALLENGE_SCHEME:-http}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('net').connect(3000,'127.0.0.1',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  gateway:
+    image: caddy:2-alpine
+    ports:
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:8080:8080"
+    volumes:
+      - ./demo/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prob1-backend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob1/backend
+      dockerfile: Dockerfile.demo
+    environment:
+      DEMO_MOCK_AI: "true"
+      GEMINI_API_KEY: ""
+      PROB1_GEMINI_RETRY_ATTEMPTS: "1"
+    restart: unless-stopped
+
+  prob1-frontend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob1/frontend
+      dockerfile: Dockerfile.demo
+      args:
+        PROB1_BACKEND_URL: http://prob1-backend:4001
+    depends_on:
+      - prob1-backend
+    restart: unless-stopped
+
+  prob2:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob2
+      dockerfile: Dockerfile.demo
+    restart: unless-stopped
+
+  prob3-backend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob3/backend
+      dockerfile: Dockerfile.demo
+    environment:
+      DEMO_MOCK_AI: "true"
+      GEMINI_API_KEY: ""
+    restart: unless-stopped
+
+  prob3-frontend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob3
+      dockerfile: Dockerfile.demo
+      args:
+        PROB3_BACKEND_URL: http://prob3-backend:4003
+    depends_on:
+      - prob3-backend
+    restart: unless-stopped
+
+  prob4-backend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob4/backend
+    networks:
+      default:
+        aliases:
+          - radio-backend-prod
+    restart: unless-stopped
+
+  prob4-frontend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob4/frontend
+    depends_on:
+      - prob4-backend
+    restart: unless-stopped
+
+  prob5:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob5/frontend
+      dockerfile: Dockerfile.demo
+    restart: unless-stopped
+
+  prob6-backend:
+    build:
+      context: ./Hackahoy/public/challenge_files/prob6/jwt-lab/backend
+    environment:
+      FLAG: hackahoy{jwt_0wn3d_bypass_lv199}
+    restart: unless-stopped
+
+  prob6:
+    image: nginx:alpine
+    volumes:
+      - ./demo/prob6-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./Hackahoy/public/challenge_files/prob6/jwt-lab/frontend/public-pixel:/usr/share/nginx/html:ro
+      - ./Hackahoy/public/challenge_files/prob6/jwt-lab/frontend/public/img:/srv/prob6-img:ro
+    depends_on:
+      - prob6-backend
+    restart: unless-stopped
+
+  prob7:
+    image: nginx:alpine
+    volumes:
+      - ./demo/prob7-placeholder/index.html:/usr/share/nginx/html/index.html:ro
+    restart: unless-stopped
+
+  openresty:
+    build:
+      context: ./nginx
+    environment:
+      DEMO_MODE: "1"
+      COLLECT_DEBUG: ${DEMO_COLLECT_DEBUG:-0}
+    ports:
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5001:5001"
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5002:5002"
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5003:5003"
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5004:5004"
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5005:5005"
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5006:5006"
+      - "${DEMO_BIND_ADDRESS:-127.0.0.1}:5007:5007"
+    depends_on:
+      backend:
+        condition: service_healthy
+      prob1-frontend:
+        condition: service_started
+      prob2:
+        condition: service_started
+      prob3-frontend:
+        condition: service_started
+      prob4-frontend:
+        condition: service_started
+      prob5:
+        condition: service_started
+      prob6:
+        condition: service_started
+      prob7:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  demo-postgres:

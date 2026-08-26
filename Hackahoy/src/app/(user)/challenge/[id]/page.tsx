@@ -36,9 +36,13 @@ function getHintIcon(problem: Problem): string {
   return `/assets/icons/default-hint.png`;
 }
 
-// 리버스 프록시(OpenResty)가 떠 있는 호스트. 반드시 한 곳으로 고정한다.
-const CHALLENGE_HOST =
-  process.env.NEXT_PUBLIC_CHALLENGE_HOST ?? 'hackahoy.duckdns.org';
+// 운영은 challenge-N.<host> HTTPS, 로컬 데모는 현재 브라우저 호스트의 5001~5007
+// 포트를 쓴다. 호스트를 비워 두면 localhost/LAN/Tailscale 이름을 자동으로 따라간다.
+const CHALLENGE_HOST = process.env.NEXT_PUBLIC_CHALLENGE_HOST ?? '';
+const CHALLENGE_ROUTING =
+  process.env.NEXT_PUBLIC_CHALLENGE_ROUTING ?? 'subdomain';
+const CHALLENGE_SCHEME =
+  process.env.NEXT_PUBLIC_CHALLENGE_SCHEME ?? 'https';
 
 /**
  * 챌린지 진입 주소를 만든다. 화면에 보이는 문자열과 실제 이동 주소가 항상 같다.
@@ -78,9 +82,15 @@ function buildChallengeEntry(
   const hasHttpsProxy = Number.isInteger(challengeNumber)
     && challengeNumber >= 1
     && challengeNumber <= 7;
-  const origin = hasHttpsProxy
-    ? `https://challenge-${challengeNumber}.${CHALLENGE_HOST}`
-    : `http://${CHALLENGE_HOST}:${port}`;
+  const runtimeHost =
+    CHALLENGE_HOST ||
+    (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+  const usePortRouting = CHALLENGE_ROUTING === 'ports';
+  const origin = usePortRouting
+    ? `${CHALLENGE_SCHEME}://${runtimeHost}:${port}`
+    : hasHttpsProxy
+      ? `https://challenge-${challengeNumber}.${runtimeHost}`
+      : `http://${runtimeHost}:${port}`;
   const entry = new URL('/set-uid', origin);
   // uid 가 없으면 파라미터를 붙이지 않는다. 프록시가 "uid 없음" 경고를 남긴다.
   if (userId) entry.searchParams.set('uid', userId);

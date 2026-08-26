@@ -85,7 +85,9 @@ export class AiTutorService {
     private readonly config: ConfigService,
   ) {}
 
-  private readonly AI_TUTOR_URL = 'http://127.0.0.1:8000';
+  private get aiTutorUrl(): string {
+    return this.config.get<string>('AI_TUTOR_URL', 'http://127.0.0.1:8000');
+  }
 
   private get gateEnabled(): boolean {
     return (
@@ -246,7 +248,7 @@ export class AiTutorService {
         Number.isFinite(configuredTimeout) && configuredTimeout > 0
           ? configuredTimeout
           : 90000;
-      const response = await axios.post(`${this.AI_TUTOR_URL}/hint/`, context, {
+      const response = await axios.post(`${this.aiTutorUrl}/hint/`, context, {
         timeout,
       });
       const aiHint = response.data;
@@ -429,7 +431,7 @@ export class AiTutorService {
 
     try {
       const response = await axios.post(
-        `${this.AI_TUTOR_URL}/recommendation/`,
+        `${this.aiTutorUrl}/recommendation/`,
         context,
       );
 
