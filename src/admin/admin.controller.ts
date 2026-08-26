@@ -4,7 +4,7 @@ import { AdminGuard } from '../auth/guards/admin.guard';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service'; // ✅ Prisma 추가
 
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(AdminGuard)
 @Controller('admin')
 export class AdminController {
   constructor(

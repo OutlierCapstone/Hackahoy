@@ -106,23 +106,32 @@ export class AuthController {
     return { success: Boolean(accessSession || guest) };
   }
 
+  // 전역 APP_GUARD 로 JwtAuthGuard·BanCheckGuard·LoginThrottlerGuard 가 이미 모든
+  // 요청에 적용된다. 여기서 다시 @UseGuards 를 걸면 JWT 전략(validate)이 한 번 더 돌아
+  // 인증 요청마다 중복 DB 조회가 생긴다(로딩 지연 원인). 중복 제거.
   @Get('me')
-  @UseGuards(LoginThrottlerGuard, JwtAuthGuard)
   async me(@Req() req: any) {
-
-    return this.auth.getMe(req.user.id);
+    // JWT 전략이 이미 최신 User 전체를 DB 에서 읽어 req.user 에 넣어 준다.
+    // getMe(userId) 로 또 findUnique 하지 않고 그대로 매핑해 DB 조회를 없앤다.
+    const u = req.user;
+    return {
+      userId: u.id,
+      nickname: u.nickname,
+      levelNum: u.levelNum,
+      isAdmin: u.isAdmin,
+      provider: u.provider,
+      providerId: u.providerId,
+    };
   }
 
-  // 닉네임 수정 API
+  // 닉네임 수정 API (JwtAuthGuard 는 전역이라 중복 @UseGuards 제거)
   @Post('update-nickname')
-  @UseGuards(JwtAuthGuard)
   async updateNickname(@Req() req: any, @Body() body: { nickname: string }) {
     const userId = req.user.userId || req.user.id; 
     return this.auth.updateNickname(userId, body.nickname);
   }
 
   @Post('unsubscribe')
-  @UseGuards(JwtAuthGuard)
   async unsubscribe(
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
