@@ -35,6 +35,20 @@ The script prints private tailnet HTTP URLs for the main gateway and all seven
 challenge ports. Traffic between devices is still encrypted by Tailscale. The
 host PC, Docker Desktop, and Tailscale must remain running.
 
+### Always-on desktop host
+
+On the desktop host, use the deploy wrapper from the logged-in desktop account.
+It uses an anonymous Docker Hub config for public image pulls, starts the
+complete stack, and waits for the main health endpoint:
+
+```powershell
+.\scripts\desktop-deploy.ps1
+```
+
+The GitHub deploy workflow targets a repository self-hosted runner labeled
+`hackahoy-demo`. Pull-request CI remains on GitHub-hosted runners; only pushes
+to `main` or a manual workflow dispatch can deploy the desktop demo.
+
 ## Stop or inspect
 
 ```powershell
