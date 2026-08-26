@@ -50,6 +50,11 @@ The GitHub deploy workflow targets a repository self-hosted runner labeled
 `hackahoy-demo`. Pull-request CI remains on GitHub-hosted runners; only pushes
 to `main` or a manual workflow dispatch can deploy the desktop demo.
 
+The desktop runner is installed at `D:\Services\Hackahoy-actions-runner` and
+the `HackahoyGitHubRunner` scheduled task starts it after sign-in. Runner setup
+uses `scripts/install-github-runner.ps1` with a short-lived registration token
+from the repository's Actions runner settings; the token must never be committed.
+
 Docker Desktop, Tailscale, and the signed-in Windows account must be running.
 The `HackahoyDemo` scheduled task starts the stack after sign-in. Compose uses
 `restart: unless-stopped` so services recover after Docker restarts.
