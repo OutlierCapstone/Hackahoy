@@ -130,6 +130,8 @@ export class ProblemService {
       throw new NotFoundException('problem not found');
     }
 
+    // 문제 조회와 "이 사용자가 풀었는지"를 별도 쿼리 두 번으로 하던 것을 한 번으로 합친다.
+    // 로컬(Windows Prisma)은 쿼리당 왕복이 비싸 문제 페이지 진입이 느렸다.
     const problem = await this.prisma.problem.findUnique({
       where: { id: problemId },
       select: {
@@ -140,17 +142,17 @@ export class ProblemService {
         category: true,
         hint: true,
         serverLink: true,
+        ...(userId
+          ? { solved: { where: { userId }, select: { userId: true } } }
+          : {}),
       },
     });
     if (!problem) return problem;
 
-    if (!userId) return { ...problem, solved: false };
-
-    const solved = await this.prisma.solvedHistory.findUnique({
-      where: { userId_problemId: { userId, problemId } },
-      select: { userId: true },
-    });
-    return { ...problem, solved: Boolean(solved) };
+    const { solved, ...rest } = problem as typeof problem & {
+      solved?: { userId: string }[];
+    };
+    return { ...rest, solved: Boolean(solved && solved.length > 0) };
   }
 
   // 4. 문제 전체 리스트 조회 (관리자용 등)
