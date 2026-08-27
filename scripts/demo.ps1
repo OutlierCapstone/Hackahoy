@@ -60,7 +60,34 @@ if ($ShareTeam) {
 if ($NoBuild) {
   docker compose -f $compose up -d --no-build
 } else {
-  docker compose -f $compose up -d --build
+  # Docker Desktop can time out while Compose transfers every build context in
+  # parallel. Build one service at a time so the always-on host stays responsive
+  # and the currently running demo remains available until every image is ready.
+  $buildServices = @(
+    'gemini-ai',
+    'backend',
+    'frontend',
+    'prob1-backend',
+    'prob1-frontend',
+    'prob2',
+    'prob3-backend',
+    'prob3-frontend',
+    'prob4-backend',
+    'prob4-frontend',
+    'prob5',
+    'prob6-backend',
+    'openresty'
+  )
+
+  foreach ($service in $buildServices) {
+    Write-Host "Building demo service: $service"
+    docker compose -f $compose build $service
+    if ($LASTEXITCODE -ne 0) {
+      throw "Docker Compose build failed for $service with exit code $LASTEXITCODE."
+    }
+  }
+
+  docker compose -f $compose up -d --no-build
 }
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose failed with exit code $LASTEXITCODE."
