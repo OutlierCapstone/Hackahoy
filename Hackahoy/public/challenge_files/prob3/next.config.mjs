@@ -11,7 +11,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:4003/api/:path*',
+        destination: `${process.env.PROB3_BACKEND_URL || 'http://localhost:4003'}/api/:path*`,
       },
     ];
   },

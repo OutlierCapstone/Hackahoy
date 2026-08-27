@@ -89,8 +89,9 @@ app.post("/document/reset", (req, res) => {
 });
 
 
+const DEMO_MOCK_AI = (process.env.DEMO_MOCK_AI || "").toLowerCase() === "true";
 const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
+if (!apiKey && !DEMO_MOCK_AI) {
     throw new Error("GEMINI_API_KEY missing (.env)");
 }
 
@@ -177,6 +178,17 @@ app.post("/chat", async (req, res) => {
 
         //rules
         const rulesText = loadRules();
+
+        if (DEMO_MOCK_AI) {
+            const document = getDoc(req).trim();
+            const opened = /규칙|규약|override|열어|hackahoy\{/i.test(document);
+            return res.json({
+                answer: opened
+                    ? rulesText.split("\n").find((line) => line.includes("hackahoy{"))
+                        || "데모 규칙이 재정의되어 문이 열렸다."
+                    : "입항 신고서가 규칙을 충족하지 못했다. 문은 열리지 않는다.",
+            });
+        }
 
         const payload = {
                 contents: [

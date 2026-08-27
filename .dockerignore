@@ -1,0 +1,9 @@
+.git
+.next
+node_modules
+Hackahoy
+ai-tutor
+demo
+coverage
+test
+*.log

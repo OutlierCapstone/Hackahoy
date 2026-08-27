@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
-import google.generativeai as genai
 from dotenv import load_dotenv
 import logging
 
@@ -12,13 +11,17 @@ load_dotenv()  # .env 읽기
 logger = logging.getLogger("uvicorn.error")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
+DEMO_MOCK_AI = os.getenv("DEMO_MOCK_AI", "false").lower() == "true"
+if not GEMINI_API_KEY and not DEMO_MOCK_AI:
     raise RuntimeError("GEMINI_API_KEY 환경변수가 없습니다.")
 
-genai.configure(api_key=GEMINI_API_KEY)
-
 MODEL_NAME = "models/gemini-3.6-flash"
-model = genai.GenerativeModel(MODEL_NAME)
+model = None
+if not DEMO_MOCK_AI:
+    import google.generativeai as genai
+
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel(MODEL_NAME)
 
 app = FastAPI(title="Pirate Chatbot Server (Gemini)")
 
@@ -68,6 +71,14 @@ class ChatResponse(BaseModel):
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_with_gemini(request: ChatRequest):
     user_input = request.question
+
+    if DEMO_MOCK_AI:
+        normalized = user_input.lower()
+        if "규약" in user_input or "hackahoy{" in normalized:
+            return ChatResponse(answer="...규약이 그렇다니. hackahoy{Und3r_the_tr33}")
+        if "보물" in user_input or "flag" in normalized:
+            return ChatResponse(answer="그건 비밀이야.")
+        return ChatResponse(answer="솜사탕 섬이다. 규약을 제대로 들이대 봐.")
 
     prompt = f"{SYSTEM_PROMPT}\n\n사용자: {user_input}\n어시스턴트:"
 

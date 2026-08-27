@@ -1,0 +1,69 @@
+[CmdletBinding()]
+param(
+  [ValidateRange(30, 900)]
+  [int]$HealthTimeoutSeconds = 240,
+  [switch]$NoBuild
+)
+
+$ErrorActionPreference = 'Stop'
+$repo = Split-Path -Parent $PSScriptRoot
+$dockerConfig = Join-Path $repo 'demo\docker-public-config'
+$demoScript = Join-Path $PSScriptRoot 'demo.ps1'
+$secretDirectory = Join-Path $env:LOCALAPPDATA 'Hackahoy\secrets'
+$geminiSecretFile = Join-Path $secretDirectory 'gemini-api-key.dpapi'
+
+if (-not (Test-Path -LiteralPath (Join-Path $dockerConfig 'config.json'))) {
+  throw "Public Docker config is missing: $dockerConfig"
+}
+
+# GitHub Actions supplies the repository secret on deployments. Persist only a
+# Windows DPAPI-encrypted copy so the same signed-in account can restore the
+# demo after a reboot without keeping a plaintext API key in either checkout.
+if (-not [string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) {
+  New-Item -ItemType Directory -Path $secretDirectory -Force | Out-Null
+  $secureKey = ConvertTo-SecureString -String $env:GEMINI_API_KEY -AsPlainText -Force
+  $secureKey | ConvertFrom-SecureString | Set-Content -LiteralPath $geminiSecretFile -Encoding utf8
+} elseif (Test-Path -LiteralPath $geminiSecretFile) {
+  $secureKey = Get-Content -LiteralPath $geminiSecretFile -Raw | ConvertTo-SecureString
+  $keyPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
+  try {
+    $env:GEMINI_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($keyPointer)
+  } finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($keyPointer)
+  }
+} else {
+  throw 'GEMINI_API_KEY is unavailable. Run the GitHub deploy workflow once to provision the encrypted desktop copy.'
+}
+
+$env:DOCKER_CONFIG = $dockerConfig
+$env:COMPOSE_BAKE = 'false'
+$env:COMPOSE_PARALLEL_LIMIT = '1'
+if ($NoBuild) {
+  & $demoScript Start -ShareTeam -NoBuild
+} else {
+  & $demoScript Start -ShareTeam
+}
+
+$status = tailscale status --json | ConvertFrom-Json
+$dnsName = ([string]$status.Self.DNSName).TrimEnd('.')
+if (-not $dnsName) {
+  throw 'Tailscale MagicDNS name is unavailable after deployment.'
+}
+
+$healthUrl = "http://${dnsName}:8080/healthz"
+$deadline = (Get-Date).AddSeconds($HealthTimeoutSeconds)
+$lastError = $null
+do {
+  try {
+    $response = Invoke-WebRequest -UseBasicParsing -Uri $healthUrl -TimeoutSec 10
+    if ($response.StatusCode -eq 200 -and $response.Content.Trim() -eq 'ok') {
+      Write-Host "Desktop demo healthy: http://${dnsName}:8080"
+      exit 0
+    }
+  } catch {
+    $lastError = $_.Exception.Message
+  }
+  Start-Sleep -Seconds 5
+} while ((Get-Date) -lt $deadline)
+
+throw "Desktop demo health check timed out at $healthUrl. Last error: $lastError"
