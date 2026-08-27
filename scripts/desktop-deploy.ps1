@@ -22,9 +22,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $dockerConfig 'config.json'))) {
 if (-not [string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) {
   New-Item -ItemType Directory -Path $secretDirectory -Force | Out-Null
   $secureKey = ConvertTo-SecureString -String $env:GEMINI_API_KEY -AsPlainText -Force
-  $secureKey | ConvertFrom-SecureString | Set-Content -LiteralPath $geminiSecretFile -Encoding utf8
+  $secureKey | ConvertFrom-SecureString | Set-Content -LiteralPath $geminiSecretFile -Encoding utf8 -NoNewline
 } elseif (Test-Path -LiteralPath $geminiSecretFile) {
-  $secureKey = Get-Content -LiteralPath $geminiSecretFile -Raw | ConvertTo-SecureString
+  # Set-Content from older deployments may have left a trailing newline. The
+  # DPAPI payload is hexadecimal, so trim transport whitespace before parsing.
+  $encryptedKey = (Get-Content -LiteralPath $geminiSecretFile -Raw).Trim()
+  $secureKey = $encryptedKey | ConvertTo-SecureString
   $keyPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
   try {
     $env:GEMINI_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($keyPointer)
