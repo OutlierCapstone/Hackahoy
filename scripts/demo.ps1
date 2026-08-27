@@ -58,7 +58,7 @@ if ($ShareTeam) {
 }
 
 if ($NoBuild) {
-  docker compose -f $compose up -d --no-build
+  docker compose -f $compose up -d --no-build --remove-orphans
 } else {
   # Docker Desktop can time out while Compose transfers every build context in
   # parallel. Build one service at a time so the always-on host stays responsive
@@ -87,7 +87,7 @@ if ($NoBuild) {
     }
   }
 
-  docker compose -f $compose up -d --no-build
+  docker compose -f $compose up -d --no-build --remove-orphans
 }
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Compose failed with exit code $LASTEXITCODE."
