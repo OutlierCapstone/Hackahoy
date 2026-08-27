@@ -11,13 +11,15 @@ gateway and ports 5001-5007 to `127.0.0.1`. Team-share mode binds them only to
 the host's Tailscale IPv4 address, not every LAN interface. Use restricted
 device sharing/ACLs and do not forward these ports on a router.
 
-Production secrets and production data are not used. PostgreSQL is seeded with
-local flags, social login is disabled, email is disabled, and AI responses are
-deterministic mocks that make no Gemini requests.
+Production data is not used. PostgreSQL is seeded with local flags, social
+login is disabled, and email is disabled. AI hints and challenge chat for
+problems 1 and 3 use the repository's `GEMINI_API_KEY` secret and therefore can
+incur Gemini usage; the key is never committed to the repository.
 
 ## Start locally
 
 ```powershell
+$env:GEMINI_API_KEY = '<your development key for this process>'
 .\scripts\demo.ps1 Start
 ```
 
@@ -54,6 +56,11 @@ The desktop runner is installed at `D:\Services\Hackahoy-actions-runner` and
 the `HackahoyGitHubRunner` scheduled task starts it after sign-in. Runner setup
 uses `scripts/install-github-runner.ps1` with a short-lived registration token
 from the repository's Actions runner settings; the token must never be committed.
+
+The deploy workflow passes the existing `GEMINI_API_KEY` repository secret to
+the desktop wrapper. The wrapper keeps only a Windows DPAPI-encrypted copy under
+the signed-in account's LocalAppData so automatic restarts can restore it. Do
+not add a plaintext key to either checkout or to Compose files.
 
 Docker Desktop, Tailscale, and the signed-in Windows account must be running.
 The `HackahoyDemo` scheduled task starts the stack after sign-in. Compose uses

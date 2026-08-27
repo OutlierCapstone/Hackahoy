@@ -11,7 +11,7 @@ $env:Path = "$dockerBin;$tailscaleBin;$env:Path"
 
 Start-Transcript -LiteralPath $logPath -Force | Out-Null
 try {
-  & (Join-Path $PSScriptRoot 'demo.ps1') Start -ShareTeam -NoBuild
+  & (Join-Path $PSScriptRoot 'desktop-deploy.ps1') -NoBuild
   if ($LASTEXITCODE -ne 0) {
     throw "Hackahoy demo start failed with exit code $LASTEXITCODE."
   }
