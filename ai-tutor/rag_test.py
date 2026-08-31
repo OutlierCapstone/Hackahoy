@@ -97,5 +97,5 @@ response = genai_client.models.generate_content(
     contents=prompt
 )
 
-print("힌트:")
+print("힌트: ")
 print(response.text)
