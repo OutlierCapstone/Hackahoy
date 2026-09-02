@@ -56,12 +56,13 @@ if (-not $dnsName) {
 $healthUrl = "http://${dnsName}:8080/healthz"
 $deadline = (Get-Date).AddSeconds($HealthTimeoutSeconds)
 $lastError = $null
+$healthy = $false
 do {
   try {
     $response = Invoke-WebRequest -UseBasicParsing -Uri $healthUrl -TimeoutSec 10
     if ($response.StatusCode -eq 200 -and $response.Content.Trim() -eq 'ok') {
-      Write-Host "Desktop demo healthy: http://${dnsName}:8080"
-      exit 0
+      $healthy = $true
+      break
     }
   } catch {
     $lastError = $_.Exception.Message
@@ -69,4 +70,10 @@ do {
   Start-Sleep -Seconds 5
 } while ((Get-Date) -lt $deadline)
 
-throw "Desktop demo health check timed out at $healthUrl. Last error: $lastError"
+if (-not $healthy) {
+  throw "Desktop demo health check timed out at $healthUrl. Last error: $lastError"
+}
+
+& (Join-Path $PSScriptRoot 'verify-prob5-session.ps1') `
+  -BaseUrl "http://${dnsName}:5005"
+Write-Host "Desktop demo healthy: http://${dnsName}:8080"

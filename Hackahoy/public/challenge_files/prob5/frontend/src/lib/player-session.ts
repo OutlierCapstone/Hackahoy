@@ -4,6 +4,15 @@ import { NextRequest, NextResponse } from 'next/server';
 const SESSION_COOKIE = 'prob5-player';
 const FALLBACK_SESSION_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
+function shouldUseSecureCookie(): boolean {
+  const configured = process.env.PROB5_COOKIE_SECURE?.trim().toLowerCase();
+
+  if (configured === 'true') return true;
+  if (configured === 'false') return false;
+
+  return process.env.NODE_ENV === 'production';
+}
+
 export interface PlayerSession {
   key: string;
   newCookie?: string;
@@ -41,7 +50,7 @@ export function jsonForPlayer<T>(
   if (session.newCookie) {
     response.cookies.set(SESSION_COOKIE, session.newCookie, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: shouldUseSecureCookie(),
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24,
