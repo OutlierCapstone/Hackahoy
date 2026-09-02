@@ -167,6 +167,8 @@ services:
     build:
       context: ./Hackahoy/public/challenge_files/prob5/frontend
       dockerfile: Dockerfile.demo
+    environment:
+      PROB5_COOKIE_SECURE: "false"
     restart: unless-stopped
 
   prob6-backend:
