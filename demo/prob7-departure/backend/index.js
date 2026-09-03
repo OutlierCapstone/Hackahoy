@@ -28,6 +28,10 @@ const GEMINI_TIMEOUT_MS = Math.max(
   10_000,
   Number(process.env.GEMINI_TIMEOUT_MS || 60_000)
 );
+const GEMINI_MAX_ATTEMPTS = Math.max(
+  1,
+  Math.min(3, Number(process.env.GEMINI_MAX_ATTEMPTS || 2))
+);
 const FLAG = process.env.FLAG || "";
 
 if (!GEMINI_API_KEY && !DEMO_MOCK_AI) {
@@ -229,7 +233,7 @@ function buildSubmittedForm(remarks) {
   ].join("\n");
 }
 
-async function callGemini(payload) {
+async function callGeminiOnce(payload) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
 
@@ -269,6 +273,27 @@ async function callGemini(payload) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function callGemini(payload) {
+  let result = null;
+
+  for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt += 1) {
+    result = await callGeminiOnce(payload);
+
+    if (result.ok) return result;
+
+    const retryable =
+      result.status === 0 ||
+      result.status === 429 ||
+      (result.status >= 500 && result.status <= 504);
+
+    if (!retryable || attempt === GEMINI_MAX_ATTEMPTS) return result;
+
+    await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+  }
+
+  return result;
 }
 
 function extractTextFromGemini(data) {
