@@ -44,6 +44,7 @@ services:
       COOKIE_SECURE: ${DEMO_COOKIE_SECURE:-false}
       AI_TUTOR_URL: http://gemini-ai:8000
       HINT_GATE_ENABLED: "false"
+      PROB7_FLAG: ${PROB7_FLAG:?PROB7_FLAG is required for the demo}
       EMAIL_USER: ""
       EMAIL_PASS: ""
       EMAIL_TO: ""
@@ -188,10 +189,37 @@ services:
       - prob6-backend
     restart: unless-stopped
 
+  prob7-backend:
+    build:
+      context: ./demo/prob7-departure/backend
+      dockerfile: Dockerfile.demo
+    environment:
+      NODE_ENV: production
+      PORT: "4002"
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY is required for the demo}
+      GEMINI_MODEL: ${PROB7_GEMINI_MODEL:-gemini-3.6-flash}
+      FLAG: ${PROB7_FLAG:?PROB7_FLAG is required for the demo}
+      DEMO_MOCK_AI: "false"
+      FRONTEND_ORIGIN: ${DEMO_ORIGIN:-http://localhost:8080}
+      COOKIE_SECURE: ${DEMO_COOKIE_SECURE:-false}
+      SAIL_COOLDOWN_MS: "8000"
+      MAX_CONCURRENT_JUDGES: "3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   prob7:
-    image: nginx:alpine
-    volumes:
-      - ./demo/prob7-placeholder/index.html:/usr/share/nginx/html/index.html:ro
+    build:
+      context: ./demo/prob7-departure/frontend
+      dockerfile: Dockerfile.demo
+      args:
+        PROB7_BACKEND_URL: http://prob7-backend:4002
+    depends_on:
+      prob7-backend:
+        condition: service_healthy
     restart: unless-stopped
 
   openresty:

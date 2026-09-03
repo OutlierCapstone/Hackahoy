@@ -18,7 +18,14 @@ const problems = [
   { id: 4, islandId: 2, title: '저주 받은 무전기', category: 'WEB', description: 'Command Injection', hint: '입력이 셸로 그대로 가는지 보라.' },
   { id: 5, islandId: 2, title: '전설의 황금 해골 탈취', category: 'WEB', description: 'IDOR', hint: '식별자 규칙을 추측해보라.' },
   { id: 6, islandId: 2, title: '인력 사무소의 명부', category: 'WEB', description: 'JWT 권한상승', hint: '토큰의 서명 알고리즘을 확인하라.' },
-  { id: 7, islandId: 3, title: '과자 마을 출입', category: 'AI', description: '이미지 오분류', hint: '분류기가 무엇을 보고 판단하는지 보라.' },
+  {
+    id: 7,
+    islandId: 3,
+    title: '가짜 출항 신고서',
+    category: 'AI',
+    description: '비고란을 조작해 AI 관제 시스템의 출항 승인을 받아내라.',
+    hint: '수정 가능한 비고란도 신고서 전체의 일부로 함께 판정된다는 점을 이용해 보라.',
+  },
 ];
 
 async function main() {
@@ -29,8 +36,12 @@ async function main() {
       description: p.description,
       hint: p.hint,
       category: p.category,
-      // 로컬 더미 플래그. 실서버 값과 무관하다.
-      correctFlag: `hackahoy{local_dev_${p.id}}`,
+      // 데스크톱 문제 7만 런타임 secret과 제출 정답을 일치시킨다.
+      // 다른 문제는 기존 로컬 더미 플래그를 유지한다.
+      correctFlag:
+        p.id === 7 && process.env.PROB7_FLAG
+          ? process.env.PROB7_FLAG
+          : `hackahoy{local_dev_${p.id}}`,
       serverLink: `http://localhost:${5000 + p.id}`,
     };
 
