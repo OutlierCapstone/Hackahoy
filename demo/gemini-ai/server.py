@@ -11,7 +11,7 @@ API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash").strip()
 MODEL = MODEL.removeprefix("models/") or "gemini-3.6-flash"
 REQUEST_TIMEOUT_SECONDS = max(
-    10, int(os.environ.get("GEMINI_REQUEST_TIMEOUT_SECONDS", "35"))
+    10, int(os.environ.get("GEMINI_REQUEST_TIMEOUT_SECONDS", "20"))
 )
 MAX_ATTEMPTS = max(1, min(3, int(os.environ.get("GEMINI_MAX_ATTEMPTS", "2"))))
 
@@ -42,6 +42,7 @@ def call_gemini(prompt):
             "generationConfig": {
                 "temperature": 0.45,
                 "maxOutputTokens": 256,
+                "thinkingConfig": {"thinkingLevel": "minimal"},
             },
         },
         ensure_ascii=False,
@@ -102,6 +103,14 @@ def build_hint_prompt(body):
 """.strip()
 
 
+def build_fallback_hint(body):
+    problem_id = str(body.get("problem_id", ""))
+    guidance = PROBLEM_GUIDANCE.get(
+        problem_id, "최근 시도와 응답에서 달라진 조건을 하나씩 비교한다."
+    )
+    return f"AI 연결이 잠시 불안정해 기본 힌트를 보여드릴게요. 다음 관찰 포인트: {guidance}"
+
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, value, status=200):
         payload = json.dumps(value, ensure_ascii=False).encode("utf-8")
@@ -129,8 +138,12 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.rstrip("/") == "/hint":
             try:
                 self.send_json(call_gemini(build_hint_prompt(body)))
-            except Exception:
-                self.send_json({"detail": "Gemini request failed"}, 502)
+            except Exception as error:
+                print(
+                    f"Gemini hint fallback: {type(error).__name__}",
+                    flush=True,
+                )
+                self.send_json(build_fallback_hint(body))
             return
 
         if self.path.rstrip("/") == "/recommendation":
@@ -145,4 +158,5 @@ class Handler(BaseHTTPRequestHandler):
         return
 
 
-ThreadingHTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
+if __name__ == "__main__":
+    ThreadingHTTPServer(("0.0.0.0", 8000), Handler).serve_forever()

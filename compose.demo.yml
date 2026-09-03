@@ -22,7 +22,7 @@ services:
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY is required for the demo}
       GEMINI_MODEL: ${AI_TUTOR_HINT_MODEL:-gemini-3.6-flash}
-      GEMINI_REQUEST_TIMEOUT_SECONDS: "35"
+      GEMINI_REQUEST_TIMEOUT_SECONDS: "20"
       GEMINI_MAX_ATTEMPTS: "2"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
