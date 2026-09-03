@@ -10,6 +10,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash").strip()
 MODEL = MODEL.removeprefix("models/") or "gemini-3.6-flash"
+REQUEST_TIMEOUT_SECONDS = max(
+    10, int(os.environ.get("GEMINI_REQUEST_TIMEOUT_SECONDS", "35"))
+)
+MAX_ATTEMPTS = max(1, min(3, int(os.environ.get("GEMINI_MAX_ATTEMPTS", "2"))))
 
 if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY is required")
@@ -44,7 +48,7 @@ def call_gemini(prompt):
     ).encode("utf-8")
 
     last_error = None
-    for attempt in range(3):
+    for attempt in range(MAX_ATTEMPTS):
         request = urllib.request.Request(
             endpoint,
             data=payload,
@@ -52,7 +56,9 @@ def call_gemini(prompt):
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=45) as response:
+            with urllib.request.urlopen(
+                request, timeout=REQUEST_TIMEOUT_SECONDS
+            ) as response:
                 result = json.load(response)
             parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
             text = "".join(part.get("text", "") for part in parts).strip()
@@ -66,7 +72,7 @@ def call_gemini(prompt):
         except (TimeoutError, urllib.error.URLError) as error:
             last_error = error
 
-        if attempt < 2:
+        if attempt < MAX_ATTEMPTS - 1:
             time.sleep(2**attempt)
 
     raise RuntimeError(f"Gemini request failed: {type(last_error).__name__}")
