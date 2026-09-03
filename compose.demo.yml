@@ -198,6 +198,7 @@ services:
       PORT: "4002"
       GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY is required for the demo}
       GEMINI_MODEL: ${PROB7_GEMINI_MODEL:-gemini-3.6-flash}
+      GEMINI_TIMEOUT_MS: "60000"
       FLAG: ${PROB7_FLAG:?PROB7_FLAG is required for the demo}
       DEMO_MOCK_AI: "false"
       FRONTEND_ORIGIN: ${DEMO_ORIGIN:-http://localhost:8080}
