@@ -11,6 +11,7 @@ $dockerConfig = Join-Path $repo 'demo\docker-public-config'
 $demoScript = Join-Path $PSScriptRoot 'demo.ps1'
 $secretDirectory = Join-Path $env:LOCALAPPDATA 'Hackahoy\secrets'
 $geminiSecretFile = Join-Path $secretDirectory 'gemini-api-key.dpapi'
+$prob7FlagSecretFile = Join-Path $secretDirectory 'prob7-flag.dpapi'
 
 if (-not (Test-Path -LiteralPath (Join-Path $dockerConfig 'config.json'))) {
   throw "Public Docker config is missing: $dockerConfig"
@@ -36,6 +37,25 @@ if (-not [string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) {
   }
 } else {
   throw 'GEMINI_API_KEY is unavailable. Run the GitHub deploy workflow once to provision the encrypted desktop copy.'
+}
+
+# Problem 7's flag must never live in the repository or Compose file. Persist a
+# per-user DPAPI copy so scheduled restarts can restore it without plaintext.
+if (-not [string]::IsNullOrWhiteSpace($env:PROB7_FLAG)) {
+  New-Item -ItemType Directory -Path $secretDirectory -Force | Out-Null
+  $secureProb7Flag = ConvertTo-SecureString -String $env:PROB7_FLAG -AsPlainText -Force
+  $secureProb7Flag | ConvertFrom-SecureString | Set-Content -LiteralPath $prob7FlagSecretFile -Encoding utf8 -NoNewline
+} elseif (Test-Path -LiteralPath $prob7FlagSecretFile) {
+  $encryptedProb7Flag = (Get-Content -LiteralPath $prob7FlagSecretFile -Raw).Trim()
+  $secureProb7Flag = $encryptedProb7Flag | ConvertTo-SecureString
+  $flagPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureProb7Flag)
+  try {
+    $env:PROB7_FLAG = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($flagPointer)
+  } finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($flagPointer)
+  }
+} else {
+  throw 'PROB7_FLAG is unavailable. Provision the encrypted desktop copy before deploying problem 7.'
 }
 
 $env:DOCKER_CONFIG = $dockerConfig

@@ -76,6 +76,8 @@ if ($NoBuild) {
     'prob4-frontend',
     'prob5',
     'prob6-backend',
+    'prob7-backend',
+    'prob7',
     'openresty'
   )
 

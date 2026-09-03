@@ -14,9 +14,8 @@ import { ProblemCategory } from '@prisma/client';
  * 문제 데이터를 지우지 않고 노출만 막는다. 목록에서 빠지고, 상세 조회와
  * 플래그 제출도 막힌다. 값을 비우고 재시작하면 그대로 돌아온다.
  *
- * 문제 7(과자 마을)이 대상이다. prob7/ai/clip_infer.py 가 커밋된 적이 없고
- * 서버에 torch 도 없어서, 참가자가 사진을 올리면 "서버 오류가 발생했습니다"
- * 만 보게 된다.
+ * 과거 문제 7 런타임이 준비되지 않았을 때 이 게이트로 숨겼다. 현재 데스크톱
+ * 데모에는 새 문제 7 런타임이 있으므로 운영 환경에서 목록을 비워 공개한다.
  */
 function hiddenProblemIds(): number[] {
   return (process.env.HIDDEN_PROBLEM_IDS ?? '')
