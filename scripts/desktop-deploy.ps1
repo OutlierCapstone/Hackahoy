@@ -94,6 +94,14 @@ if (-not $healthy) {
   throw "Desktop demo health check timed out at $healthUrl. Last error: $lastError"
 }
 
+foreach ($problemNumber in 1..7) {
+  $challengeUrl = "http://${dnsName}:$($problemNumber + 5000)/"
+  $challengeResponse = Invoke-WebRequest -UseBasicParsing -Uri $challengeUrl -TimeoutSec 10
+  if ($challengeResponse.StatusCode -ne 200) {
+    throw "Challenge $problemNumber health check failed at $challengeUrl with HTTP $($challengeResponse.StatusCode)."
+  }
+}
+
 & (Join-Path $PSScriptRoot 'verify-prob5-session.ps1') `
   -BaseUrl "http://${dnsName}:5005"
 Write-Host "Desktop demo healthy: http://${dnsName}:8080"
