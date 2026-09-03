@@ -24,6 +24,10 @@ const DEMO_MOCK_AI =
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = normalizeModel(process.env.GEMINI_MODEL || "gemini-3.6-flash");
+const GEMINI_TIMEOUT_MS = Math.max(
+  10_000,
+  Number(process.env.GEMINI_TIMEOUT_MS || 60_000)
+);
 const FLAG = process.env.FLAG || "";
 
 if (!GEMINI_API_KEY && !DEMO_MOCK_AI) {
@@ -227,7 +231,7 @@ function buildSubmittedForm(remarks) {
 
 async function callGemini(payload) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30000);
+  const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
 
   try {
     const response = await fetch(GEMINI_URL, {
