@@ -21,6 +21,7 @@ type Problem = {
 
 type ConceptExplanation = {
   title: string;
+  headline: string;
   concept: string;
   walkthrough: string;
   cause: string;
@@ -30,6 +31,7 @@ type ConceptExplanation = {
 const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   1: {
     title: 'Context Poisoning',
+    headline: '신뢰할 수 없는 문서와 AI 지시의 경계',
     concept:
       'Context Poisoning은 LLM이 참고하는 문서에 조작된 정보를 삽입하여 AI의 판단을 왜곡하는 공격입니다.',
     walkthrough:
@@ -39,6 +41,7 @@ const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   },
   2: {
     title: 'IDOR(Insecure Direct Object Reference)',
+    headline: '객체 식별자와 접근 권한의 경계',
     concept:
       'IDOR은 URL이나 요청값의 객체 식별자를 변경하여 다른 사용자의 정보에 접근하는 취약점입니다.',
     walkthrough:
@@ -48,6 +51,7 @@ const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   },
   3: {
     title: 'Prompt Injection',
+    headline: '사용자 입력과 시스템 지시의 경계',
     concept:
       'Prompt Injection은 공격자가 새로운 지시를 입력하여 LLM이 기존 지시를 무시하거나 의도하지 않은 행동을 하도록 유도하는 공격입니다.',
     walkthrough:
@@ -57,6 +61,7 @@ const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   },
   4: {
     title: 'OS Command Injection',
+    headline: '사용자 입력과 시스템 명령의 경계',
     concept:
       'OS Command Injection은 사용자 입력이 시스템 명령어에 포함되어 의도하지 않은 운영체제 명령까지 실행되는 취약점입니다.',
     walkthrough:
@@ -66,6 +71,7 @@ const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   },
   5: {
     title: '접근 통제 취약점(BAC, Broken Access Control)',
+    headline: '화면 제한과 서버 권한 검증의 경계',
     concept:
       'Broken Access Control은 인증된 사용자가 자신의 권한 범위를 넘어 다른 사용자의 자원이나 제한된 기능에 접근·수정할 수 있는 취약점입니다.',
     walkthrough:
@@ -75,6 +81,7 @@ const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   },
   6: {
     title: 'JWT 권한 변조',
+    headline: '토큰 내용과 서명 검증의 경계',
     concept:
       'JWT는 Header, Payload, Signature로 구성됩니다. Payload는 누구나 읽거나 수정할 수 있으므로 서버가 서명을 검증해야 변조를 발견할 수 있습니다.',
     walkthrough:
@@ -84,6 +91,7 @@ const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
   },
   7: {
     title: 'Context-level Prompt Injection',
+    headline: '사용자 작성 문서와 공식 승인 기록의 경계',
     concept:
       'Context-level Prompt Injection은 AI가 참고하는 문서의 수정 가능한 영역에 조작된 내용을 넣어 모델의 판단을 왜곡하는 공격입니다.',
     walkthrough:
@@ -505,9 +513,10 @@ export default function ChallengePage() {
             aria-labelledby="concept-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.modalHeader}>
-              <div id="concept-title" className={`${styles.modalTitle} ${styles.conceptTitle}`}>
-                문제 {problem.id}. {concept.title}
+            <div className={`${styles.modalHeader} ${styles.conceptHeader}`}>
+              <div>
+                <div className={styles.conceptEyebrow}>문제 {problem.id} · {concept.title}</div>
+                <h1 id="concept-title" className={styles.conceptHeadline}>{concept.headline}</h1>
               </div>
               <button
                 type="button"
@@ -519,17 +528,26 @@ export default function ChallengePage() {
               </button>
             </div>
             <div className={styles.conceptBody}>
-              <h2>[핵심 개념]</h2>
-              <p>{concept.concept}</p>
-              <h2>[풀이]</h2>
-              <p>{concept.walkthrough}</p>
-              <ul>
-                <li><strong>원인:</strong> {concept.cause}</li>
-                <li><strong>방어:</strong> {concept.defense}</li>
-              </ul>
+              <section className={styles.conceptSummary} aria-labelledby="concept-summary-title">
+                <h2 id="concept-summary-title">핵심 개념</h2>
+                <p>{concept.concept}</p>
+              </section>
+
+              <section className={styles.conceptDetails} aria-labelledby="concept-details-title">
+                <h2 id="concept-details-title">풀이와 대응</h2>
+                <p className={styles.conceptWalkthrough}>{concept.walkthrough}</p>
+                <ul>
+                  <li><strong>원인</strong><span>{concept.cause}</span></li>
+                  <li><strong>방어</strong><span>{concept.defense}</span></li>
+                </ul>
+              </section>
+
+              <p className={styles.conceptNotice}>
+                개념 설명에는 정답, FLAG, 완성된 공격 문자열이 포함되지 않습니다.
+              </p>
             </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className="pixel-btn pixel-btn--sm" onClick={() => setConceptOpen(false)}>확인</button>
+            <div className={`${styles.modalFooter} ${styles.conceptFooter}`}>
+              <button type="button" className="pixel-btn" onClick={() => setConceptOpen(false)}>문제로 돌아가기</button>
             </div>
           </div>
         </div>
