@@ -73,6 +73,12 @@ if (-not $dnsName) {
   throw 'Tailscale MagicDNS name is unavailable after deployment.'
 }
 
+$tailnetIp = [string](tailscale ip -4 | Select-Object -First 1)
+$tailnetIp = $tailnetIp.Trim()
+if (-not $tailnetIp) {
+  throw 'Tailscale IPv4 address is unavailable after deployment.'
+}
+
 $healthUrl = "http://${dnsName}:8080/healthz"
 $deadline = (Get-Date).AddSeconds($HealthTimeoutSeconds)
 $lastError = $null
