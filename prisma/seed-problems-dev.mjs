@@ -8,25 +8,9 @@
 //
 // correctFlag 는 실서버 값이 아니라 로컬 더미다. 절대 실플래그를 여기에 적지 말 것.
 import { PrismaClient } from '@prisma/client';
+import { problems } from './problem-catalog.mjs';
 
 const prisma = new PrismaClient();
-
-const problems = [
-  { id: 1, islandId: 1, title: '입항 신고', category: 'AI', description: 'LLM Data Poisoning', hint: '규칙 파일이 무엇을 신뢰하는지 보라.' },
-  { id: 2, islandId: 1, title: '선장님의 임무 목록 조회', category: 'WEB', description: 'IDOR', hint: '내 것이 아닌 식별자를 넣어보라.' },
-  { id: 3, islandId: 1, title: '검은수염은 보물 위치를 알고 있을까', category: 'AI', description: 'Prompt Injection', hint: '시스템 프롬프트를 덮어쓸 수 있는지 보라.' },
-  { id: 4, islandId: 2, title: '저주 받은 무전기', category: 'WEB', description: 'Command Injection', hint: '입력이 셸로 그대로 가는지 보라.' },
-  { id: 5, islandId: 2, title: '전설의 황금 해골 탈취', category: 'WEB', description: 'IDOR', hint: '식별자 규칙을 추측해보라.' },
-  { id: 6, islandId: 2, title: '인력 사무소의 명부', category: 'WEB', description: 'JWT 권한상승', hint: '토큰의 서명 알고리즘을 확인하라.' },
-  {
-    id: 7,
-    islandId: 3,
-    title: '가짜 출항 신고서',
-    category: 'AI',
-    description: '비고란을 조작해 AI 관제 시스템의 출항 승인을 받아내라.',
-    hint: '수정 가능한 비고란도 신고서 전체의 일부로 함께 판정된다는 점을 이용해 보라.',
-  },
-];
 
 async function main() {
   const isProduction = process.env.NODE_ENV === 'production';
