@@ -12,6 +12,8 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Verify user-facing problem catalog
+        run: npm run test:problem-catalog
       - name: Build (NestJS)
         run: npm run build
       - name: Build challenge 5 (player state isolation)
