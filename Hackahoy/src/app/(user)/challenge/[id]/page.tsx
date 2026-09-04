@@ -427,9 +427,9 @@ export default function ChallengePage() {
                   type="button"
                   className={`pixel-btn pixel-btn--sm ${styles.conceptButton}`}
                   onClick={() => setConceptOpen(true)}
-                  aria-label="보안 개념 설명 열기"
+                  aria-label="개념 설명 열기"
                 >
-                  보안 개념 설명
+                  개념 설명
                 </button>
               </div>
             )}
@@ -520,7 +520,7 @@ export default function ChallengePage() {
               </div>
               <button
                 type="button"
-                aria-label="보안 개념 설명 닫기"
+                aria-label="개념 설명 닫기"
                 className={styles.modalClose}
                 onClick={() => setConceptOpen(false)}
               >
@@ -541,10 +541,6 @@ export default function ChallengePage() {
                   <li><strong>방어</strong><span>{concept.defense}</span></li>
                 </ul>
               </section>
-
-              <p className={styles.conceptNotice}>
-                개념 설명에는 정답, FLAG, 완성된 공격 문자열이 포함되지 않습니다.
-              </p>
             </div>
             <div className={`${styles.modalFooter} ${styles.conceptFooter}`}>
               <button type="button" className="pixel-btn" onClick={() => setConceptOpen(false)}>문제로 돌아가기</button>

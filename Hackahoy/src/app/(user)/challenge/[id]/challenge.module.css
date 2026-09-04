@@ -313,8 +313,7 @@
 }
 
 .conceptSummary p,
-.conceptWalkthrough,
-.conceptNotice {
+.conceptWalkthrough {
   margin: 0;
 }
 
@@ -339,13 +338,6 @@
 
 .conceptDetails li strong {
   color: #7b3b0a;
-}
-
-.conceptNotice {
-  padding-top: 18px;
-  color: #756257;
-  font-size: 13px;
-  line-height: 1.45;
 }
 
 .conceptFooter {
