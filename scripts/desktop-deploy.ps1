@@ -104,4 +104,10 @@ foreach ($problemNumber in 1..7) {
 
 & (Join-Path $PSScriptRoot 'verify-prob5-session.ps1') `
   -BaseUrl "http://${dnsName}:5005"
+& (Join-Path $PSScriptRoot 'verify-guest-session.ps1') `
+  -BaseUrl "http://${dnsName}:8080" `
+  -Origin "http://${dnsName}:8080"
+& (Join-Path $PSScriptRoot 'verify-guest-session.ps1') `
+  -BaseUrl "http://${tailnetIp}:8080" `
+  -Origin "http://${tailnetIp}:8080"
 Write-Host "Desktop demo healthy: http://${dnsName}:8080"

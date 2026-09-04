@@ -23,6 +23,7 @@ if ($Action -eq 'Status') {
 
 $env:DEMO_BIND_ADDRESS = '127.0.0.1'
 $env:DEMO_ORIGIN = 'http://localhost:8080'
+$env:DEMO_ALLOWED_ORIGINS = $env:DEMO_ORIGIN
 $env:DEMO_COOKIE_SECURE = 'false'
 $env:DEMO_CHALLENGE_SCHEME = 'http'
 $mainUrl = $env:DEMO_ORIGIN
@@ -50,6 +51,7 @@ if ($ShareTeam) {
 
   $env:DEMO_BIND_ADDRESS = $tailnetIp
   $env:DEMO_ORIGIN = "http://${dnsName}:8080"
+  $env:DEMO_ALLOWED_ORIGINS = "$($env:DEMO_ORIGIN),http://${tailnetIp}:8080"
   $env:DEMO_COOKIE_SECURE = 'false'
   $env:DEMO_CHALLENGE_SCHEME = 'http'
   $mainUrl = $env:DEMO_ORIGIN
