@@ -42,7 +42,7 @@ services:
       JWT_SECRET: local-demo-jwt-secret-not-for-production
       JWT_EXPIRES_IN: 7d
       FRONTEND_URL: ${DEMO_ORIGIN:-http://localhost:8080}
-      CORS_ORIGINS: ${DEMO_ORIGIN:-http://localhost:8080}
+      CORS_ORIGINS: ${DEMO_ALLOWED_ORIGINS:-http://localhost:8080}
       COOKIE_SECURE: ${DEMO_COOKIE_SECURE:-false}
       AI_TUTOR_URL: http://gemini-ai:8000
       HINT_GATE_ENABLED: "false"

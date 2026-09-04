@@ -4,7 +4,10 @@ function run(method: string, origin?: string) {
   const next = jest.fn();
   const json = jest.fn();
   const status = jest.fn(() => ({ json }));
-  const guard = createOriginGuard(['https://hackahoy.duckdns.org']);
+  const guard = createOriginGuard([
+    'https://hackahoy.duckdns.org',
+    'http://100.114.171.77:8080',
+  ]);
 
   guard({ method, headers: { origin } } as any, { status } as any, next);
   return { next, status, json };
@@ -13,6 +16,10 @@ function run(method: string, origin?: string) {
 describe('origin guard', () => {
   it('allows browser mutations from the frontend origin', () => {
     expect(run('POST', 'https://hackahoy.duckdns.org').next).toHaveBeenCalled();
+  });
+
+  it('allows browser mutations from an explicitly configured Tailscale IP origin', () => {
+    expect(run('POST', 'http://100.114.171.77:8080').next).toHaveBeenCalled();
   });
 
   it('blocks mutations from challenge subdomains', () => {
