@@ -29,30 +29,47 @@ const problems = [
 ];
 
 async function main() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   for (const p of problems) {
-    const data = {
+    const baseData = {
       islandId: p.islandId,
       title: p.title,
       description: p.description,
       hint: p.hint,
       category: p.category,
-      // 데스크톱 문제 7만 런타임 secret과 제출 정답을 일치시킨다.
-      // 다른 문제는 기존 로컬 더미 플래그를 유지한다.
-      correctFlag:
-        p.id === 7 && process.env.PROB7_FLAG
-          ? process.env.PROB7_FLAG
-          : `hackahoy{local_dev_${p.id}}`,
       serverLink: `http://localhost:${5000 + p.id}`,
+    };
+    const localFlag = `hackahoy{local_dev_${p.id}}`;
+    const prob7Flag =
+      p.id === 7 && process.env.PROB7_FLAG
+        ? process.env.PROB7_FLAG
+        : null;
+
+    // 운영 DB의 문제 1~6 플래그는 각 챌린지 런타임과 별도로 동기화된다.
+    // 컨테이너 재기동마다 개발용 더미로 덮어쓰지 않도록 기존 값을 보존한다.
+    // 문제 7은 저장소 밖의 런타임 secret이 있으므로 계속 동기화한다.
+    const updateData = {
+      ...baseData,
+      ...(!isProduction || prob7Flag
+        ? { correctFlag: prob7Flag ?? localFlag }
+        : {}),
     };
 
     await prisma.problem.upsert({
       where: { id: p.id },
-      update: data,
-      create: { id: p.id, ...data },
+      update: updateData,
+      create: {
+        id: p.id,
+        ...baseData,
+        correctFlag: prob7Flag ?? localFlag,
+      },
     });
   }
 
-  console.log(`Problem ${problems.length}건 시드 완료 (로컬 더미 플래그)`);
+  console.log(
+    `Problem ${problems.length}건 시드 완료 (${isProduction ? '운영 플래그 보존' : '로컬 더미 플래그'})`,
+  );
 }
 
 main()
