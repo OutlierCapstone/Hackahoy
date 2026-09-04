@@ -19,6 +19,80 @@ type Problem = {
   solved?: boolean;
 };
 
+type ConceptExplanation = {
+  title: string;
+  concept: string;
+  walkthrough: string;
+  cause: string;
+  defense: string;
+};
+
+const CONCEPT_EXPLANATIONS: Record<number, ConceptExplanation> = {
+  1: {
+    title: 'Context Poisoning',
+    concept:
+      'Context Poisoning은 LLM이 참고하는 문서에 조작된 정보를 삽입하여 AI의 판단을 왜곡하는 공격입니다.',
+    walkthrough:
+      'AI가 판정에 사용하는 외부 문서에 정상적인 점검 기록처럼 보이는 내용을 삽입합니다. AI가 이를 신뢰하면 문지기의 보안 상태를 OPEN으로 잘못 판단합니다.',
+    cause: '신뢰할 수 없는 문서를 검증 없이 AI의 Context에 포함함',
+    defense: '외부 문서의 출처와 무결성을 검증하고, 데이터와 명령을 구분함',
+  },
+  2: {
+    title: 'IDOR(Insecure Direct Object Reference)',
+    concept:
+      'IDOR은 URL이나 요청값의 객체 식별자를 변경하여 다른 사용자의 정보에 접근하는 취약점입니다.',
+    walkthrough:
+      '요청에 포함된 userId를 선장의 ID로 변경합니다. 서버가 정보의 소유자를 확인하지 않아 선장의 임무 정보를 반환합니다.',
+    cause: '로그인 여부만 확인하고 데이터 접근 권한은 검사하지 않음',
+    defense: '서버에서 요청한 사용자와 데이터의 소유자를 확인함',
+  },
+  3: {
+    title: 'Prompt Injection',
+    concept:
+      'Prompt Injection은 공격자가 새로운 지시를 입력하여 LLM이 기존 지시를 무시하거나 의도하지 않은 행동을 하도록 유도하는 공격입니다.',
+    walkthrough:
+      '챗봇이 따르던 기존 규칙을 무시하도록 새로운 지시를 입력합니다. AI가 이 지시를 우선하면 숨겨진 정보가 노출되거나 서비스의 원래 기능에서 벗어난 응답을 생성합니다.',
+    cause: '사용자의 입력과 시스템의 지시를 AI가 완전히 구분하지 못함',
+    defense: '민감한 정보를 프롬프트에 직접 저장하지 않고, 출력 결과를 별도로 검증함',
+  },
+  4: {
+    title: 'OS Command Injection',
+    concept:
+      'OS Command Injection은 사용자 입력이 시스템 명령어에 포함되어 의도하지 않은 운영체제 명령까지 실행되는 취약점입니다.',
+    walkthrough:
+      'ping 입력값에 다른 시스템 명령어가 함께 실행되도록 조작합니다. 입력값이 서버의 exec() 함수에 그대로 전달되면서 추가 명령이 실행됩니다.',
+    cause: '사용자 입력을 시스템 명령어에 직접 연결함',
+    defense: '셸을 사용하지 않고 명령어와 인자를 분리하며 허용된 값만 전달함',
+  },
+  5: {
+    title: '접근 통제 취약점(BAC, Broken Access Control)',
+    concept:
+      'Broken Access Control은 인증된 사용자가 자신의 권한 범위를 넘어 다른 사용자의 자원이나 제한된 기능에 접근·수정할 수 있는 취약점입니다.',
+    walkthrough:
+      '화물 수정 요청의 대상을 선장 소유의 황금 해골로 바꿉니다. 서버가 요청자의 역할과 화물 소유자를 다시 확인하지 않으면 제한된 화물의 목적지가 변경됩니다.',
+    cause: '화면에서만 권한을 제한하고 서버가 수정 대상의 소유자와 역할을 검증하지 않음',
+    defense: '서버에서 요청마다 사용자 권한·자원 소유권·허용된 변경 범위를 검증함',
+  },
+  6: {
+    title: 'JWT 권한 변조',
+    concept:
+      'JWT는 Header, Payload, Signature로 구성됩니다. Payload는 누구나 읽거나 수정할 수 있으므로 서버가 서명을 검증해야 변조를 발견할 수 있습니다.',
+    walkthrough:
+      'JWT의 Payload에 담긴 권한 정보를 관리자 권한으로 변경합니다. 서버가 Signature를 검증하지 않으면 변조된 토큰으로 관리자 기능에 접근할 수 있습니다.',
+    cause: 'JWT를 단순히 decode()하고 서명을 검증하지 않음',
+    defense: '반드시 verify()로 서명을 검증하고 서버에서 권한을 재확인함',
+  },
+  7: {
+    title: 'Context-level Prompt Injection',
+    concept:
+      'Context-level Prompt Injection은 AI가 참고하는 문서의 수정 가능한 영역에 조작된 내용을 넣어 모델의 판단을 왜곡하는 공격입니다.',
+    walkthrough:
+      '출항 신고서의 비고란에 관리자 승인과 검증이 완료된 기록처럼 보이는 내용을 삽입합니다. AI가 이를 신뢰하면 가짜 신고서를 정식 신고서로 오인하여 출항을 승인합니다.',
+    cause: '사용자가 작성한 비고란을 신뢰할 수 있는 승인 기록처럼 처리함',
+    defense: '사용자 입력과 공식 기록을 분리하고, 실제 승인 여부는 서버에서 검증함',
+  },
+};
+
 // 1~7번 문제는 고정 에셋 사용, 그 외는 default
 const FIXED_PROBLEM_IDS = new Set([1, 2, 3, 4, 5, 6, 7]);
 
@@ -102,6 +176,7 @@ export default function ChallengePage() {
   const { id } = useParams<{ id: string }>();
   const [flagInput, setFlagInput] = useState('');
   const [hintOpen, setHintOpen] = useState(false);
+  const [conceptOpen, setConceptOpen] = useState(false);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -311,6 +386,8 @@ export default function ChallengePage() {
   if (loading) return <main className={styles.pageRoot}><div className={styles.statusText}>Loading...</div></main>;
   if (!problem) return <main className={styles.pageRoot}><div className={styles.statusText}>No Problem.</div></main>;
 
+  const concept = CONCEPT_EXPLANATIONS[problem.id];
+
   return (
     <main className={styles.pageRoot}>
       {/* 배경: 1~7번은 고정 에셋, 그 외는 default */}
@@ -336,6 +413,18 @@ export default function ChallengePage() {
                 </p>
               );
             })()}
+            {concept && (
+              <div className={styles.conceptButtonRow}>
+                <button
+                  type="button"
+                  className={`pixel-btn pixel-btn--sm ${styles.conceptButton}`}
+                  onClick={() => setConceptOpen(true)}
+                  aria-label="보안 개념 설명 열기"
+                >
+                  보안 개념 설명
+                </button>
+              </div>
+            )}
             <form className={styles.formRow} onSubmit={onSubmit}>
               <input
                 className={styles.input}
@@ -402,6 +491,45 @@ export default function ChallengePage() {
             </div>
             <div className={styles.modalFooter}>
               <button type="button" className="pixel-btn pixel-btn--sm" onClick={() => setHintOpen(false)}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {conceptOpen && concept && (
+        <div className={styles.modalDim} onClick={() => setConceptOpen(false)}>
+          <div
+            className={`${styles.modal} ${styles.conceptModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="concept-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div id="concept-title" className={`${styles.modalTitle} ${styles.conceptTitle}`}>
+                문제 {problem.id}. {concept.title}
+              </div>
+              <button
+                type="button"
+                aria-label="보안 개념 설명 닫기"
+                className={styles.modalClose}
+                onClick={() => setConceptOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.conceptBody}>
+              <h2>[핵심 개념]</h2>
+              <p>{concept.concept}</p>
+              <h2>[풀이]</h2>
+              <p>{concept.walkthrough}</p>
+              <ul>
+                <li><strong>원인:</strong> {concept.cause}</li>
+                <li><strong>방어:</strong> {concept.defense}</li>
+              </ul>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className="pixel-btn pixel-btn--sm" onClick={() => setConceptOpen(false)}>확인</button>
             </div>
           </div>
         </div>
