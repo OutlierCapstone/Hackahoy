@@ -78,6 +78,9 @@ services:
         NEXT_PUBLIC_API_BASE_URL: /backend
         NEXT_PUBLIC_CHALLENGE_ROUTING: ports
         NEXT_PUBLIC_CHALLENGE_SCHEME: ${DEMO_CHALLENGE_SCHEME:-http}
+        # Empty means "use window.location.hostname". This must override the
+        # retired DuckDNS hostname in Hackahoy/.env.production.
+        NEXT_PUBLIC_CHALLENGE_HOST: ""
     environment:
       NODE_ENV: production
       PORT: "3000"
