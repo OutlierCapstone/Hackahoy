@@ -248,7 +248,7 @@
 }
 
 .conceptModal {
-  width: min(760px, 92vw);
+  width: min(700px, 92vw);
   max-height: 86vh;
   padding: 22px 26px 20px;
   background: #fffaf0;
@@ -399,7 +399,7 @@
 
 @media (max-width: 640px) {
   .conceptModal {
-    width: min(92vw, 760px);
+    width: min(92vw, 700px);
     max-height: 90vh;
     padding: 18px 18px 16px;
   }
