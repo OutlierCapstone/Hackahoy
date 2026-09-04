@@ -108,9 +108,21 @@ export class ProblemService {
     const totalSolvedCount = await this.prisma.solvedHistory.count({
       where: { userId },
     });
-    
-    let newLevel = 1;
-    while (totalSolvedCount >= Math.pow(2, newLevel) - 1) newLevel++;
+
+    let calculatedLevel = 1;
+    while (totalSolvedCount >= Math.pow(2, calculatedLevel) - 1) {
+      calculatedLevel++;
+    }
+
+    // 현재 제공되는 배와 Level 행보다 높은 레벨을 기록하면 외래키 오류가
+    // 발생한다. 문제 수가 7개가 되면서 일곱 번째 정답에서 계산값이 4가
+    // 되었지만 운영 Level 데이터는 1~3까지만 있어 제출이 HTTP 500으로
+    // 끝났다. 실제로 등록된 최고 레벨을 상한으로 사용한다.
+    const highestLevel = await this.prisma.level.findFirst({
+      orderBy: { levelNum: 'desc' },
+      select: { levelNum: true },
+    });
+    const newLevel = Math.min(calculatedLevel, highestLevel?.levelNum ?? 1);
 
     const updated = await this.prisma.user.update({
       where: { id: userId },
