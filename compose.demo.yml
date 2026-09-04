@@ -21,7 +21,9 @@ services:
       context: ./demo/gemini-ai
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY is required for the demo}
-      GEMINI_MODEL: ${AI_TUTOR_HINT_MODEL:-gemini-3.6-flash}
+      # Keep the tutor on a separate, lower-latency model/quota bucket from
+      # the AI challenges, whose behavior depends on gemini-3.6-flash.
+      GEMINI_MODEL: ${AI_TUTOR_HINT_MODEL:-gemini-3.5-flash-lite}
       GEMINI_REQUEST_TIMEOUT_SECONDS: "20"
       GEMINI_MAX_ATTEMPTS: "2"
     healthcheck:
